@@ -13,4 +13,9 @@ public:
     bool operator!=(State& other) { return !(*this == other); }
 
     std::string marshalJSON();
+
+    void setWaterLevel(float_t level) { _waterLevel = std::make_pair(level, true); }
+
+private:
+    std::pair<float_t, bool> _waterLevel;
 };

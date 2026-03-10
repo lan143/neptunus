@@ -168,6 +168,87 @@ void Handler::init()
         request->send(200, "application/json", "{}");
     });
 
+    _server->on("/api/settings/modbus", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        AsyncResponseStream *response = request->beginResponseStream("application/json");
+
+        std::string payload = EDUtils::buildJson([this](JsonObject entity) {
+            auto config = _configMgr->getData();
+
+            entity["modbusSpeed"] = config->modbusSpeed;
+            entity["addressQDY30A"] = config->addressQDY30A;
+            entity["addressWBMAI6"] = config->addressWBMAI6;
+        });
+
+        response->write(payload.c_str());
+        request->send(response);
+    });
+
+    _server->on("/api/settings/modbus", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        if (
+            !request->hasParam("modbusSpeed", true)
+            || !request->hasParam("addressQDY30A", true)
+            || !request->hasParam("addressWBMAI6", true)
+        ) {
+            request->send(422, "application/json", "{\"message\": \"not present modbus params in request\"}");
+            return;
+        }
+
+        const AsyncWebParameter* modbusSpeedParam = request->getParam("modbusSpeed", true);
+        const AsyncWebParameter* addressQDY30AParam = request->getParam("addressQDY30A", true);
+        const AsyncWebParameter* addressWBMAI6Param = request->getParam("addressWBMAI6", true);
+
+        int modbusSpeed;
+        if (EDUtils::str2int(&modbusSpeed, modbusSpeedParam->value().c_str(), 10) != EDUtils::STR2INT_SUCCESS) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect modbus speed\"}");
+            return;
+        }
+
+        switch (modbusSpeed) {
+            case 1200:
+                break;
+            case 2400:
+                break;
+            case 4800:
+                break;
+            case 9600:
+                break;
+            case 19200:
+                break;
+            case 38400:
+                break;
+            case 57600:
+                break;
+            case 115200:
+                break;
+            default:
+                request->send(422, "application/json", "{\"message\": \"Unsupported modbus speed\"}");
+                return;
+        }
+
+        int addressQDY30A;
+        if (EDUtils::str2int(&addressQDY30A, addressQDY30AParam->value().c_str(), 10) != EDUtils::STR2INT_SUCCESS
+            || addressQDY30A < 1 || addressQDY30A > 254) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect address QDY30A\"}");
+            return;
+        }
+
+        int addressWBMAI6;
+        if (EDUtils::str2int(&addressWBMAI6, addressWBMAI6Param->value().c_str(), 10) != EDUtils::STR2INT_SUCCESS
+            || addressWBMAI6 < 1 || addressWBMAI6 > 254) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect address WB-MAI6\"}");
+            return;
+        }
+
+        auto config = _configMgr->getData();
+        config->modbusSpeed = modbusSpeed;
+        config->addressQDY30A = addressQDY30A;
+        config->addressWBMAI6 = addressWBMAI6;
+
+        _configMgr->store();
+
+        request->send(200, "application/json", "{}");
+    });
+
     _server->on("/api/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
 

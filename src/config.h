@@ -29,4 +29,6 @@ struct Config
 
     // modbus
     uint32_t modbusSpeed = 0;
+    uint8_t addressQDY30A = 0;
+    uint8_t addressWBMAI6 = 0;
 };

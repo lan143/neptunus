@@ -10,6 +10,8 @@
 #define I2CSDA 4
 #define I2CSCL 15
 
+#define GPIO_METER 32
+
 #ifndef CONTROLLER_NAME
 #define CONTROLLER_NAME "Neptunus"
 #endif

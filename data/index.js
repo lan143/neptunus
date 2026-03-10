@@ -39,6 +39,22 @@ function loadSettings() {
     });
 }
 
+function loadModbusSettings() {
+    $.ajax({
+        type: 'GET',
+        url: '/api/settings/modbus',
+        dataType: 'json',
+        success: function (data) {
+            $('form#modbus-settings select[name=modbusSpeed]').val(data.modbusSpeed);
+            $('form#modbus-settings input[name=addressQDY30A]').val(data.addressQDY30A);
+            $('form#modbus-settings input[name=addressWBMAI6]').val(data.addressWBMAI6);
+        },
+        error: function (xhr, str) {
+            alert('Errors while loading settings');
+        }
+    });
+}
+
 function updateWiFiStatus() {
     if (updateWiFiStatusInProgress) {
         return;
@@ -65,6 +81,7 @@ function updateWiFiStatus() {
 $(function() {
     loadSettings();
     updateWiFiStatus();
+    loadModbusSettings();
 
     setInterval(updateWiFiStatus, 10000);
 
@@ -139,6 +156,36 @@ $(function() {
             error: function (xhr, str) {
                 var data = JSON.parse(xhr.responseText);
                 alert('Errors while save settings: ' + data.message);
+            }
+        });
+
+        return false;
+    });
+
+    $('form#modbus-settings').submit(function(event) {
+        event.preventDefault();
+
+        $.ajax({
+            type: 'POST',
+            url: '/api/settings/modbus',
+            dataType: 'json',
+            data: {
+                modbusSpeed: $(this).find('select[name=modbusSpeed]').val(),
+                addressQDY30A: $(this).find('input[name=addressQDY30A]').val(),
+                addressWBMAI6: $(this).find('input[name=addressWBMAI6]').val()
+            },
+            success: function (data) {
+                alert('Modbus settings successful changed. Reboot...');
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/reboot',
+                    dataType: 'json'
+                });
+            },
+            error: function (xhr, str) {
+                var data = JSON.parse(xhr.responseText);
+                alert('Errors while save modbus settings: ' + data.message);
             }
         });
 
