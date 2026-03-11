@@ -15,6 +15,7 @@ void Handler::init()
     _server->serveStatic("/bootstrap.min.js", LittleFS, "/bootstrap.min.js");
 
     _healthCheck->registerHandlers(_server);
+    _meterHandler->registerHandler(_server);
 
     _server->on("/api/wifi/list", HTTP_GET, [this](AsyncWebServerRequest *request) {
         /*AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -32,142 +33,6 @@ void Handler::init()
         request->send(response);*/
     });
     
-    _server->on("/api/settings", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        AsyncResponseStream *response = request->beginResponseStream("application/json");
-
-        std::string payload = EDUtils::buildJson([this](JsonObject entity) {
-            Config* config = _configMgr->getData();
-
-            entity["wifiSSID"] = config->network.wifiSSID;
-            entity["wifiPassword"] = config->network.wifiPassword;
-            entity["mqttHost"] = config->mqtt.host;
-            entity["mqttPort"] = config->mqtt.port;
-            entity["mqttLogin"] = config->mqtt.login;
-            entity["mqttPassword"] = config->mqtt.password;
-            entity["mqttIsHADiscovery"] = config->mqttIsHADiscovery;
-            entity["mqttHADiscoveryPrefix"] = config->mqttHADiscoveryPrefix;
-            entity["mqttCommandTopic"] = config->mqttCommandTopic;
-            entity["mqttStateTopic"] = config->mqttStateTopic;
-        });
-
-        response->write(payload.c_str());
-        request->send(response);
-    });
-
-    _server->on("/api/settings/wifi", HTTP_POST, [this](AsyncWebServerRequest *request) {
-        if (!request->hasParam("wifiSSID", true) || !request->hasParam("wifiPassword", true)) {
-            request->send(422, "application/json", "{\"message\": \"not present wifiSSID or wifiPassword in request\"}");
-            return;
-        }
-
-        const AsyncWebParameter* wifiSSID = request->getParam("wifiSSID", true);
-        const AsyncWebParameter* wifiPassword = request->getParam("wifiPassword", true);
-
-        if (wifiSSID->value().length() > WIFI_SSID_LEN-1) {
-            request->send(422, "application/json", "{\"message\": \"WiFi SSID lenght more 32 symbols\"}");
-            return;
-        }
-
-        if (wifiPassword->value().length() > WIFI_PWD_LEN-1) {
-            request->send(422, "application/json", "{\"message\": \"WiFi password lenght more 63 symbols\"}");
-            return;
-        }
-
-        Config* config = _configMgr->getData();
-        std::strcpy(config->network.wifiSSID, wifiSSID->value().c_str());
-        std::strcpy(config->network.wifiPassword, wifiPassword->value().c_str());
-        config->network.isAPMode = false;
-
-        _configMgr->store();
-
-        request->send(200, "application/json", "{}");
-    });
-
-    _server->on("/api/settings/mqtt", HTTP_POST, [this](AsyncWebServerRequest *request) {
-        if (
-            !request->hasParam("host", true)
-            || !request->hasParam("port", true)
-            || !request->hasParam("login", true)
-            || !request->hasParam("password", true)
-            || !request->hasParam("haDiscoveryPrefix", true)
-        ) {
-            request->send(422, "application/json", "{\"message\": \"not present mqtt params in request\"}");
-            return;
-        }
-
-        Config* config = _configMgr->getData();
-        const AsyncWebParameter* host = request->getParam("host", true);
-        const AsyncWebParameter* port = request->getParam("port", true);
-        const AsyncWebParameter* login = request->getParam("login", true);
-        const AsyncWebParameter* password = request->getParam("password", true);
-        const AsyncWebParameter* haDiscoveryPrefix = request->getParam("haDiscoveryPrefix", true);
-        const AsyncWebParameter* ishaDiscoveryEnabled = request->getParam("mqttIsHADiscovery", true);
-        const AsyncWebParameter* stateTopic = request->getParam("stateTopic", true);
-        const AsyncWebParameter* commandTopic = request->getParam("commandTopic", true);
-
-        if (host->value().length() == 0 || host->value().length() > HOST_LEN-1) {
-            request->send(422, "application/json", "{\"message\": \"MQTT host lenght invalid\"}");
-            return;
-        }
-
-        int mqttPort;
-        if (EDUtils::str2int(&mqttPort, port->value().c_str(), 10) != EDUtils::STR2INT_SUCCESS) {
-            request->send(422, "application/json", "{\"message\": \"Incorrect port\"}");
-            return;
-        }
-
-        if (login->value().length() > MQTT_LOGIN_LEN-1) {
-            request->send(422, "application/json", "{\"message\": \"MQTT login length invalid\"}");
-            return;
-        }
-
-        if (password->value().length() > MQTT_PASSWORD_LEN-1) {
-            request->send(422, "application/json", "{\"message\": \"MQTT password length invalid\"}");
-            return;
-        }
-
-        if (haDiscoveryPrefix->value().length() == 0) {
-            request->send(422, "application/json", "{\"message\": \"You must specify mqtt topic name\"}");
-            return;
-        }
-
-        if (haDiscoveryPrefix->value().length() > MQTT_TOPIC_LEN-1) {
-            request->send(422, "application/json", "{\"message\": \"HA discovery prefix length invalid\"}");
-            return;
-        }
-
-        if (stateTopic->value().length() == 0 || stateTopic->value().length() > MQTT_TOPIC_LEN-1) {
-            request->send(422, "application/json", "{\"message\": \"state topic length invalid\"}");
-            return;
-        }
-
-        if (commandTopic->value().length() == 0 || commandTopic->value().length() > MQTT_TOPIC_LEN-1) {
-            request->send(422, "application/json", "{\"message\": \"command topic length invalid\"}");
-            return;
-        }
-
-        strcpy(config->mqtt.host, host->value().c_str());
-        config->mqtt.port = (uint16_t)mqttPort;
-        strcpy(config->mqtt.login, login->value().c_str());
-        strcpy(config->mqtt.password, password->value().c_str());
-        strcpy(config->mqttHADiscoveryPrefix, haDiscoveryPrefix->value().c_str());
-        strcpy(config->mqttStateTopic, stateTopic->value().c_str());
-        strcpy(config->mqttCommandTopic, commandTopic->value().c_str());
-
-        if (strcmp(ishaDiscoveryEnabled->value().c_str(), "true") == 0) {
-            config->mqttIsHADiscovery = true;
-        } else {
-            config->mqttIsHADiscovery = false;
-        }
-
-        if (!_configMgr->store()) {
-            request->send(500, "application/json", "{\"message\": \"failed to save config\"}");
-            return;
-        }
-
-        request->send(200, "application/json", "{}");
-    });
-
     _server->on("/api/settings/modbus", HTTP_GET, [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
 
@@ -301,6 +166,142 @@ void Handler::init()
             }
         });
         response->print(data.c_str());
+        request->send(response);
+    });
+
+    _server->on("/api/settings/wifi", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        if (!request->hasParam("wifiSSID", true) || !request->hasParam("wifiPassword", true)) {
+            request->send(422, "application/json", "{\"message\": \"not present wifiSSID or wifiPassword in request\"}");
+            return;
+        }
+
+        const AsyncWebParameter* wifiSSID = request->getParam("wifiSSID", true);
+        const AsyncWebParameter* wifiPassword = request->getParam("wifiPassword", true);
+
+        if (wifiSSID->value().length() > WIFI_SSID_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"WiFi SSID lenght more 32 symbols\"}");
+            return;
+        }
+
+        if (wifiPassword->value().length() > WIFI_PWD_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"WiFi password lenght more 63 symbols\"}");
+            return;
+        }
+
+        Config* config = _configMgr->getData();
+        std::strcpy(config->network.wifiSSID, wifiSSID->value().c_str());
+        std::strcpy(config->network.wifiPassword, wifiPassword->value().c_str());
+        config->network.isAPMode = false;
+
+        _configMgr->store();
+
+        request->send(200, "application/json", "{}");
+    });
+
+    _server->on("/api/settings/mqtt", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        if (
+            !request->hasParam("host", true)
+            || !request->hasParam("port", true)
+            || !request->hasParam("login", true)
+            || !request->hasParam("password", true)
+            || !request->hasParam("haDiscoveryPrefix", true)
+        ) {
+            request->send(422, "application/json", "{\"message\": \"not present mqtt params in request\"}");
+            return;
+        }
+
+        Config* config = _configMgr->getData();
+        const AsyncWebParameter* host = request->getParam("host", true);
+        const AsyncWebParameter* port = request->getParam("port", true);
+        const AsyncWebParameter* login = request->getParam("login", true);
+        const AsyncWebParameter* password = request->getParam("password", true);
+        const AsyncWebParameter* haDiscoveryPrefix = request->getParam("haDiscoveryPrefix", true);
+        const AsyncWebParameter* ishaDiscoveryEnabled = request->getParam("mqttIsHADiscovery", true);
+        const AsyncWebParameter* stateTopic = request->getParam("stateTopic", true);
+        const AsyncWebParameter* commandTopic = request->getParam("commandTopic", true);
+
+        if (host->value().length() == 0 || host->value().length() > HOST_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"MQTT host lenght invalid\"}");
+            return;
+        }
+
+        int mqttPort;
+        if (EDUtils::str2int(&mqttPort, port->value().c_str(), 10) != EDUtils::STR2INT_SUCCESS) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect port\"}");
+            return;
+        }
+
+        if (login->value().length() > MQTT_LOGIN_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"MQTT login length invalid\"}");
+            return;
+        }
+
+        if (password->value().length() > MQTT_PASSWORD_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"MQTT password length invalid\"}");
+            return;
+        }
+
+        if (haDiscoveryPrefix->value().length() == 0) {
+            request->send(422, "application/json", "{\"message\": \"You must specify mqtt topic name\"}");
+            return;
+        }
+
+        if (haDiscoveryPrefix->value().length() > MQTT_TOPIC_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"HA discovery prefix length invalid\"}");
+            return;
+        }
+
+        if (stateTopic->value().length() == 0 || stateTopic->value().length() > MQTT_TOPIC_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"state topic length invalid\"}");
+            return;
+        }
+
+        if (commandTopic->value().length() == 0 || commandTopic->value().length() > MQTT_TOPIC_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"command topic length invalid\"}");
+            return;
+        }
+
+        strcpy(config->mqtt.host, host->value().c_str());
+        config->mqtt.port = (uint16_t)mqttPort;
+        strcpy(config->mqtt.login, login->value().c_str());
+        strcpy(config->mqtt.password, password->value().c_str());
+        strcpy(config->mqttHADiscoveryPrefix, haDiscoveryPrefix->value().c_str());
+        strcpy(config->mqttStateTopic, stateTopic->value().c_str());
+        strcpy(config->mqttCommandTopic, commandTopic->value().c_str());
+
+        if (strcmp(ishaDiscoveryEnabled->value().c_str(), "true") == 0) {
+            config->mqttIsHADiscovery = true;
+        } else {
+            config->mqttIsHADiscovery = false;
+        }
+
+        if (!_configMgr->store()) {
+            request->send(500, "application/json", "{\"message\": \"failed to save config\"}");
+            return;
+        }
+
+        request->send(200, "application/json", "{}");
+    });
+
+    _server->on("/api/settings", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        AsyncResponseStream *response = request->beginResponseStream("application/json");
+
+        std::string payload = EDUtils::buildJson([this](JsonObject entity) {
+            Config* config = _configMgr->getData();
+
+            entity["wifiSSID"] = config->network.wifiSSID;
+            entity["wifiPassword"] = config->network.wifiPassword;
+            entity["mqttHost"] = config->mqtt.host;
+            entity["mqttPort"] = config->mqtt.port;
+            entity["mqttLogin"] = config->mqtt.login;
+            entity["mqttPassword"] = config->mqtt.password;
+            entity["mqttIsHADiscovery"] = config->mqttIsHADiscovery;
+            entity["mqttHADiscoveryPrefix"] = config->mqttHADiscoveryPrefix;
+            entity["mqttCommandTopic"] = config->mqttCommandTopic;
+            entity["mqttStateTopic"] = config->mqttStateTopic;
+        });
+
+        response->write(payload.c_str());
         request->send(response);
     });
 

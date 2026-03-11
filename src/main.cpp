@@ -16,6 +16,8 @@
 #include "config.h"
 #include "automation/automation.h"
 #include "command/command_consumer.h"
+#include "meter/handler.h"
+#include "meter/meter.h"
 #include "relay/relay_mgr.h"
 #include "state/state.h"
 #include "state/producer.h"
@@ -27,7 +29,8 @@ EDMQTT::MQTT mqtt;
 
 EDWB::WirenBoard wirenboard(Serial2);
 
-PCF8574 relayDriver(0x24);
+PCF8574 inputDriver(INPUT_I2C_ADDRESS);
+PCF8574 relayDriver(RELAYS_I2C_ADDRESS);
 
 RelayMgr relayMgr(&relayDriver);
 
@@ -38,11 +41,16 @@ EDHA::Device* device = nullptr;
 StateProducer stateProducer(&mqtt);
 EDUtils::StateMgr<State> stateMgr(&stateProducer);
 
+EDConfig::DataMgr<MeterState> ringStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/meter.bin"));
+RingStorage ringStorage(&ringStorageDataMgr);
+Meter meter(&inputDriver, &discoveryMgr, &ringStorage, &stateMgr);
+MeterHandler meterHandler(&meter);
+
 Automation automation(&discoveryMgr, &relayMgr, &stateMgr, &wirenboard);
 
 CommandConsumer commandConsumer;
 
-Handler handler(&configMgr, &networkMgr, &healthCheck);
+Handler handler(&configMgr, &networkMgr, &healthCheck, &meterHandler);
 
 bool inited = false;
 
@@ -94,6 +102,7 @@ void setup()
     Wire.setClock(100000);
 
     LOGI("setup", "init PCF8574");
+    inputDriver.begin();
     relayDriver.begin();
 
     LOGI("setup", "init relays");
@@ -142,6 +151,16 @@ void setup()
     LOGI("setup", "state producer init");
     stateProducer.init(configMgr.getData()->mqttStateTopic);
 
+    LOGI("setup", "init meter");
+    ringStorageDataMgr.setDefault([](MeterState* state) {
+        for (int i = 0; i < RING_STORAGE_SIZE; i++) {
+            state->values[i] = 0;
+        }
+    });
+    ringStorageDataMgr.load();
+    ringStorage.init();
+    meter.init(device, configMgr.getData()->mqttStateTopic);
+
     LOGI("setup", "automation init");
     automation.init(device, *configMgr.getData());
 
@@ -166,4 +185,5 @@ void loop()
     stateMgr.loop();
     networkLogger.update();
     automation.update();
+    meter.update();
 }

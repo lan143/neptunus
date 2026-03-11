@@ -11,7 +11,7 @@
 #include "state/state.h"
 
 #define WATER_MIN_LEVEL 0.01f
-#define WATER_MAX_LEVEL 1.5f
+#define WATER_MAX_LEVEL 1.19f
 
 class Automation
 {

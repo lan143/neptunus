@@ -15,7 +15,9 @@ public:
     std::string marshalJSON();
 
     void setWaterLevel(float_t level) { _waterLevel = std::make_pair(level, true); }
+    void setWaterConsumption(float_t consumption) { _waterConsumption = std::make_pair(consumption, true); }
 
 private:
     std::pair<float_t, bool> _waterLevel;
+    std::pair<float_t, bool> _waterConsumption;
 };

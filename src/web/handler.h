@@ -13,15 +13,17 @@
 #include <network/network.h>
 
 #include "config.h"
+#include "meter/handler.h"
 
 class Handler {
 public:
     Handler(
         EDConfig::DataMgr<Config>* configMgr,
         EDNetwork::NetworkMgr* networkMgr,
-        EDHealthCheck::HealthCheck* healthCheck
+        EDHealthCheck::HealthCheck* healthCheck,
+        MeterHandler* meterHandler
     ) : _configMgr(configMgr), _networkMgr(networkMgr),
-        _healthCheck(healthCheck) {
+        _healthCheck(healthCheck), _meterHandler(meterHandler) {
         _server = new AsyncWebServer(80);
     }
 
@@ -32,4 +34,5 @@ private:
     EDConfig::DataMgr<Config>* _configMgr = nullptr;
     EDNetwork::NetworkMgr* _networkMgr = nullptr;
     EDHealthCheck::HealthCheck* _healthCheck = nullptr;
+    MeterHandler* _meterHandler = nullptr;
 };

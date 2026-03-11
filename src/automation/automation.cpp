@@ -6,11 +6,15 @@
 
 void Automation::init(EDHA::Device* device, Config config)
 {
+    _config = config;
     _qdy30a = _wirenboard->addQDY30A(config.addressQDY30A);
     _mai6 = _wirenboard->addMAI6(config.addressWBMAI6);
 
     buildDiscovery(device);
     _constantsLoaded = loadQDY30AConstants();
+    if (!_constantsLoaded) {
+        LOGE("init", "failed to load QDY30A constants");
+    }
 
     inited = true;
 }
@@ -38,10 +42,13 @@ void Automation::update()
         auto enableLevel = middleLevel - middleLevel * 0.1;
         auto disableLevel = middleLevel + middleLevel * 0.1;
 
+        // tmp close bypass valve
+        _relayMgr->getRelay(RELAY_TYPE_BYPASS)->changeState(true);
+
         if (level <= enableLevel) {
-            _relayMgr->getRelay(RELAY_TYPE_DRAINAGE_PUMP)->changeState(true);
+            _relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->changeState(false); // open valve 
         } else if (level >= disableLevel) {
-            _relayMgr->getRelay(RELAY_TYPE_DRAINAGE_PUMP)->changeState(false);
+            _relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->changeState(true); // close valve
         }
 
         if (level <= WATER_MIN_LEVEL) {
@@ -87,6 +94,8 @@ bool Automation::loadQDY30AConstants()
     _unitOfMeasurement = unitOfMeasurement.first;
     _dotPosition = dotPosition.first;
 
+    LOGD("loadQDY30AConstants", "unit of measurement: %d, dot position: %d", _unitOfMeasurement, _dotPosition);
+
     return true;
 }
 
@@ -105,28 +114,29 @@ std::pair<float_t, bool> Automation::getWaterLevel()
         return value;
     }
 
-    float_t convertLevel;
+    float_t convertLevel = (float_t)value.first;
 
-    switch (_dotPosition) {
-        case 1:
-            convertLevel = (float_t)value.first / 10.0f;
+    switch (_unitOfMeasurement) {
+        case 16: // m
             break;
-        case 2:
-            convertLevel = (float_t)value.first / 100.0f;
+        case 17: // cm
+            convertLevel /= 100.0f;
             break;
-        case 3:
-            convertLevel = (float_t)value.first / 1000.0f;
+        case 18: // mm
+            convertLevel /= 1000.0f;
             break;
         default:
             return std::make_pair(0.0f, false);
     }
 
-    switch (_unitOfMeasurement) {
+    switch (_dotPosition) {
         case 1:
-        case 17:
-            convertLevel /= 100.0f;
+            convertLevel /= 10.0f;
             break;
         case 2:
+            convertLevel /= 100.0f;
+            break;
+        case 3:
             convertLevel /= 1000.0f;
             break;
         default:
