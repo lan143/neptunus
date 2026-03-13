@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
+#include <data_mgr.h>
+#include <storage/littlefs_storage.hpp>
 #include <device/qdy30a.h>
 #include <device/wb_mai6.h>
 #include <discovery.h>
@@ -13,6 +15,15 @@
 #define WATER_MIN_LEVEL 0.01f
 #define WATER_MAX_LEVEL 1.19f
 
+struct AutomationState
+{
+    bool autoMode = false;
+    bool fillingBarrelValveOpen = false;
+    bool bypassValveOpen = false;
+    bool pumpStationEnabled = false;
+    bool drainagePumpEnabled = false;
+};
+
 class Automation
 {
 public:
@@ -21,7 +32,10 @@ public:
         RelayMgr* relayMgr,
         EDUtils::StateMgr<State>* stateMgr,
         EDWB::WirenBoard* wirenboard
-    ) : _discoveryMgr(discoveryMgr), _relayMgr(relayMgr), _stateMgr(stateMgr), _wirenboard(wirenboard) {}
+    ) : _discoveryMgr(discoveryMgr), _relayMgr(relayMgr), _stateMgr(stateMgr), _wirenboard(wirenboard)
+    {
+        _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation.bin"));
+    }
 
     void init(EDHA::Device* device, Config config);
     void update();
@@ -32,6 +46,11 @@ private:
 
     std::pair<float_t, bool> getWaterLevel();
 
+    bool changeFillingBarrelValveOpenInternal(bool open);
+    bool changeBypassValveOpenInternal(bool open);
+    bool changePumpStationEnableInternal(bool enable);
+    bool changeDrainagePumpEnableInternal(bool enable);
+
 private:
     uint64_t _lastUpdateTime = 0;
 
@@ -40,6 +59,7 @@ private:
     bool _constantsLoaded = false;
 
 private:
+    EDConfig::DataMgr<AutomationState>* _localStateMgr = nullptr;
     EDHA::DiscoveryMgr* _discoveryMgr = nullptr;
     RelayMgr* _relayMgr = nullptr;
     EDUtils::StateMgr<State>* _stateMgr = nullptr;

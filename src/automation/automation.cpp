@@ -6,6 +6,11 @@
 
 void Automation::init(EDHA::Device* device, Config config)
 {
+    _localStateMgr->setDefault([](AutomationState* state) {
+        state->autoMode = true;
+    });
+    _localStateMgr->load();
+
     _config = config;
     _qdy30a = _wirenboard->addQDY30A(config.addressQDY30A);
     _mai6 = _wirenboard->addMAI6(config.addressWBMAI6);
@@ -14,6 +19,15 @@ void Automation::init(EDHA::Device* device, Config config)
     _constantsLoaded = loadQDY30AConstants();
     if (!_constantsLoaded) {
         LOGE("init", "failed to load QDY30A constants");
+    }
+
+    auto state = _localStateMgr->getData();
+    _stateMgr->getState().changeAutoModeState(state->autoMode);
+    if (!state->autoMode) {
+        _stateMgr->getState().changeFillingBarrelValveState(state->fillingBarrelValveOpen);
+        _stateMgr->getState().changeBypassValveState(state->bypassValveOpen);
+        _stateMgr->getState().changePumpStationState(state->pumpStationEnabled);
+        _stateMgr->getState().changeDrainagePumpState(state->drainagePumpEnabled);
     }
 
     inited = true;
@@ -38,45 +52,44 @@ void Automation::update()
         auto level = levelResult.first;
         _stateMgr->getState().setWaterLevel(level);
 
+        if (!_localStateMgr->getData()->autoMode) {
+            return;
+        }
+
         auto middleLevel = (WATER_MAX_LEVEL - WATER_MIN_LEVEL) / 2 + WATER_MIN_LEVEL;
-        auto enableLevel = middleLevel - middleLevel * 0.1;
-        auto disableLevel = middleLevel + middleLevel * 0.1;
+        auto enableLevel = middleLevel - middleLevel * 0.15;
+        auto disableLevel = middleLevel + middleLevel * 0.15;
+
+        LOGD(
+            "update",
+            "middle level: %f, enable level: %f, disable level: %f, current level: %f",
+            middleLevel,
+            enableLevel,
+            disableLevel,
+            level
+        );
 
         // tmp close bypass valve
-        _relayMgr->getRelay(RELAY_TYPE_BYPASS)->changeState(true);
+        changeBypassValveOpenInternal(false);
 
         if (level <= enableLevel) {
-            _relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->changeState(false); // open valve 
+            changeFillingBarrelValveOpenInternal(true);
         } else if (level >= disableLevel) {
-            _relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->changeState(true); // close valve
+            changeFillingBarrelValveOpenInternal(false);
         }
 
         if (level <= WATER_MIN_LEVEL) {
-            _relayMgr->getRelay(RELAY_TYPE_PUMP_STATION)->changeState(false);
+            changePumpStationEnableInternal(false);
         } else {
-            _relayMgr->getRelay(RELAY_TYPE_PUMP_STATION)->changeState(true);
+            changePumpStationEnableInternal(true);
         }
 
         if (level >= WATER_MAX_LEVEL) {
-            _relayMgr->getRelay(RELAY_TYPE_DRAINAGE_PUMP)->changeState(false);
+            changeDrainagePumpEnableInternal(false);
         } else {
-            _relayMgr->getRelay(RELAY_TYPE_DRAINAGE_PUMP)->changeState(true);
+            changeDrainagePumpEnableInternal(true);
         }
     }
-}
-
-void Automation::buildDiscovery(EDHA::Device* device)
-{
-    const char* chipID = EDUtils::getChipID();
-    _discoveryMgr->addSensor(
-        device,
-        "Barrel water level",
-        "waterLevel",
-        EDUtils::formatString("water_level_neptunus_%s", chipID)
-    )
-        ->setStateTopic(_config.mqttStateTopic)
-        ->setValueTemplate("{{ value_json.waterLevel }}")
-        ->setUnitOfMeasurement("m");
 }
 
 bool Automation::loadQDY30AConstants()
@@ -144,4 +157,153 @@ std::pair<float_t, bool> Automation::getWaterLevel()
     }
 
     return std::make_pair(std::round(convertLevel * 1000.0f) / 1000.0f, true);
+}
+
+bool Automation::changeFillingBarrelValveOpenInternal(bool open)
+{
+    if (!_relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->changeState(!open)) {
+        return false;
+    }
+
+    _stateMgr->getState().changeFillingBarrelValveState(open);
+    if (!_localStateMgr->getData()->autoMode) {
+        _localStateMgr->getData()->fillingBarrelValveOpen = open;
+        _localStateMgr->store();
+    }
+
+    return true;
+}
+
+bool Automation::changeBypassValveOpenInternal(bool open)
+{
+    if (!_relayMgr->getRelay(RELAY_TYPE_BYPASS)->changeState(!open)) {
+        return false;
+    }
+
+    _stateMgr->getState().changeBypassValveState(open);
+    if (!_localStateMgr->getData()->autoMode) {
+        _localStateMgr->getData()->bypassValveOpen = open;
+        _localStateMgr->store();
+    }
+
+    return true;
+}
+
+bool Automation::changePumpStationEnableInternal(bool enable)
+{
+    if (!_relayMgr->getRelay(RELAY_TYPE_PUMP_STATION)->changeState(enable)) {
+        return false;
+    }
+
+    _stateMgr->getState().changePumpStationState(open);
+    if (!_localStateMgr->getData()->autoMode) {
+        _localStateMgr->getData()->pumpStationEnabled = enable;
+        _localStateMgr->store();
+    }
+
+    return true;
+}
+
+bool Automation::changeDrainagePumpEnableInternal(bool enable)
+{
+    if (!_relayMgr->getRelay(RELAY_TYPE_DRAINAGE_PUMP)->changeState(enable)) {
+        return false;
+    }
+
+    _stateMgr->getState().changeDrainagePumpState(open);
+    if (!_localStateMgr->getData()->autoMode) {
+        _localStateMgr->getData()->drainagePumpEnabled = enable;
+        _localStateMgr->store();
+    }
+
+    return true;
+}
+
+void Automation::buildDiscovery(EDHA::Device* device)
+{
+    const char* chipID = EDUtils::getChipID();
+    _discoveryMgr->addSensor(
+        device,
+        "Barrel water level",
+        "waterLevel",
+        EDUtils::formatString("water_level_neptunus_%s", chipID)
+    )
+        ->setStateTopic(_config.mqttStateTopic)
+        ->setValueTemplate("{{ value_json.waterLevel }}")
+        ->setUnitOfMeasurement("m");
+
+    _discoveryMgr->addSwitch(
+        device,
+        "Auto mode",
+        "autoMode",
+        EDUtils::formatString("auto_mode_neptunus_%s", EDUtils::getChipID())
+    )
+        ->setCommandTemplate("{\"autoMode\": {{ value }} }")
+        ->setCommandTopic(_config.mqttCommandTopic)
+        ->setStateTopic(_config.mqttStateTopic)
+        ->setValueTemplate("{{ value_json.autoMode }}")
+        ->setPayloadOn("true")
+        ->setPayloadOff("false")
+        ->setStateOn("true")
+        ->setStateOff("false");
+
+    _discoveryMgr->addSwitch(
+        device,
+        "Filling barrel valve",
+        "fillingBarrelValve",
+        EDUtils::formatString("filling_barrel_valve_neptunus_%s", EDUtils::getChipID())
+    )
+        ->setCommandTemplate("{\"fillingBarrelValve\": {{ value }} }")
+        ->setCommandTopic(_config.mqttCommandTopic)
+        ->setStateTopic(_config.mqttStateTopic)
+        ->setValueTemplate("{{ value_json.fillingBarrelValve }}")
+        ->setPayloadOn("true")
+        ->setPayloadOff("false")
+        ->setStateOn("true")
+        ->setStateOff("false");
+
+    _discoveryMgr->addSwitch(
+        device,
+        "Bypass valve",
+        "bypassValve",
+        EDUtils::formatString("bypass_valve_neptunus_%s", EDUtils::getChipID())
+    )
+        ->setCommandTemplate("{\"bypassValve\": {{ value }} }")
+        ->setCommandTopic(_config.mqttCommandTopic)
+        ->setStateTopic(_config.mqttStateTopic)
+        ->setValueTemplate("{{ value_json.bypassValve }}")
+        ->setPayloadOn("true")
+        ->setPayloadOff("false")
+        ->setStateOn("true")
+        ->setStateOff("false");
+
+    _discoveryMgr->addSwitch(
+        device,
+        "Pump station",
+        "pumpStation",
+        EDUtils::formatString("pump_station_neptunus_%s", EDUtils::getChipID())
+    )
+        ->setCommandTemplate("{\"pumpStation\": {{ value }} }")
+        ->setCommandTopic(_config.mqttCommandTopic)
+        ->setStateTopic(_config.mqttStateTopic)
+        ->setValueTemplate("{{ value_json.pumpStation }}")
+        ->setPayloadOn("true")
+        ->setPayloadOff("false")
+        ->setStateOn("true")
+        ->setStateOff("false");
+
+    _discoveryMgr->addSwitch(
+        device,
+        "Drainage pump",
+        "drainagePump",
+        EDUtils::formatString("drainage_pump_neptunus_%s", EDUtils::getChipID())
+    )
+        ->setCommandTemplate("{\"drainagePump\": {{ value }} }")
+        ->setCommandTopic(_config.mqttCommandTopic)
+        ->setStateTopic(_config.mqttStateTopic)
+        ->setValueTemplate("{{ value_json.drainagePump }}")
+        ->setPayloadOn("true")
+        ->setPayloadOff("false")
+        ->setStateOn("true")
+        ->setStateOff("false");
 }
