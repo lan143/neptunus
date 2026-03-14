@@ -13,15 +13,14 @@ void Automation::init(EDHA::Device* device, Config config)
 
     _config = config;
     _qdy30a = _wirenboard->addQDY30A(config.addressQDY30A);
-    _mai6 = _wirenboard->addMAI6(config.addressWBMAI6);
-
-    _mai6->setSensorTypeN(1, 0x1302); // 4-20 mA sensor
-    _mai6->setMinCalculatedValueN(1, 0);
-    _mai6->setMaxCalculatedValueN(1, 1000); // 10 Bar
-
     _constantsLoaded = loadQDY30AConstants();
     if (!_constantsLoaded) {
         LOGE("init", "failed to load QDY30A constants");
+    }
+
+    _mai6 = _wirenboard->addMAI6(config.addressWBMAI6);
+    if (!setupPressureSensor()) {
+        LOGE("init", "failed to setup pressure sensor");
     }
 
     auto state = _localStateMgr->getData();
@@ -183,6 +182,60 @@ bool Automation::loadQDY30AConstants()
     _dotPosition = dotPosition.first;
 
     LOGD("loadQDY30AConstants", "unit of measurement: %d, dot position: %d", _unitOfMeasurement, _dotPosition);
+
+    return true;
+}
+
+bool Automation::setupPressureSensor()
+{
+    LOGI("setupPressureSensor", "setup");
+
+    auto sensorType = _mai6->getSensorTypeN(1);
+    if (!sensorType.second) {
+        LOGE("setupPressureSensor", "failed to get sensor type");
+        return false;
+    }
+
+    if (sensorType.first != 0x1302) { // 4-20 mA sensor
+        LOGD("setupPressureSensor", "change sensor type");
+
+        if (!_mai6->setSensorTypeN(1, 0x1302)) {
+            LOGE("setupPressureSensor", "failed to update sensor type");
+            return false;
+        }
+    }
+
+    auto minCalculateValue = _mai6->getMinCalculatedValueN(1);
+    if (!minCalculateValue.second) {
+        LOGE("setupPressureSensor", "failed to get min calculated value");
+        return false;
+    }
+
+    if (minCalculateValue.first != 0) {
+        LOGD("setupPressureSensor", "change min calculated value");
+
+        if (!_mai6->setMinCalculatedValueN(1, 0)) {
+            LOGE("setupPressureSensor", "failed to set min calculated value");
+            return false;
+        }
+    }
+
+    auto maxCalculatedValue = _mai6->getMaxCalculatedValueN(1);
+    if (!maxCalculatedValue.second) {
+        LOGE("setupPressureSensor", "failed to get max calculated value");
+        return false;
+    }
+
+    if (maxCalculatedValue.first != 1000) { // 10 Bar
+        LOGD("setupPressureSensor", "change max calculated value");
+
+        if (!_mai6->setMaxCalculatedValueN(1, 1000)) {
+            LOGE("setupPressureSensor", "failed to set max calculated value");
+            return false;
+        }
+    }
+
+    LOGI("setupPressureSensor", "setup complete");
 
     return true;
 }

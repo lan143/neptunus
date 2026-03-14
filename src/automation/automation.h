@@ -50,6 +50,7 @@ public:
 private:
     void buildDiscovery(EDHA::Device* device);
     bool loadQDY30AConstants();
+    bool setupPressureSensor();
 
     std::pair<float_t, bool> getWaterLevel();
 
