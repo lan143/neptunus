@@ -9,6 +9,7 @@
 #include <state/state_mgr.h>
 #include <wirenboard.h>
 
+#include "config.h"
 #include "relay/relay_mgr.h"
 #include "state/state.h"
 
@@ -40,6 +41,12 @@ public:
     void init(EDHA::Device* device, Config config);
     void update();
 
+    bool changeAutoModeEnable(bool enable);
+    bool changeFillingBarrelValveOpen(bool open);
+    bool changeBypassValveOpen(bool open);
+    bool changePumpStationEnable(bool enable);
+    bool changeDrainagePumpEnable(bool enable);
+
 private:
     void buildDiscovery(EDHA::Device* device);
     bool loadQDY30AConstants();
@@ -53,6 +60,7 @@ private:
 
 private:
     uint64_t _lastUpdateTime = 0;
+    uint64_t _pressureSensorLastUpdateTime = 0;
 
     int32_t _unitOfMeasurement = 0;
     int32_t _dotPosition = 0;

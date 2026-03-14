@@ -48,7 +48,7 @@ MeterHandler meterHandler(&meter);
 
 Automation automation(&discoveryMgr, &relayMgr, &stateMgr, &wirenboard);
 
-CommandConsumer commandConsumer;
+CommandConsumer commandConsumer(&automation);
 
 Handler handler(&configMgr, &networkMgr, &healthCheck, &meterHandler);
 

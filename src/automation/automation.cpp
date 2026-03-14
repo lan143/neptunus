@@ -15,7 +15,10 @@ void Automation::init(EDHA::Device* device, Config config)
     _qdy30a = _wirenboard->addQDY30A(config.addressQDY30A);
     _mai6 = _wirenboard->addMAI6(config.addressWBMAI6);
 
-    buildDiscovery(device);
+    _mai6->setSensorTypeN(1, 0x1302); // 4-20 mA sensor
+    _mai6->setMinCalculatedValueN(1, 0);
+    _mai6->setMaxCalculatedValueN(1, 1000); // 10 Bar
+
     _constantsLoaded = loadQDY30AConstants();
     if (!_constantsLoaded) {
         LOGE("init", "failed to load QDY30A constants");
@@ -30,6 +33,8 @@ void Automation::init(EDHA::Device* device, Config config)
         _stateMgr->getState().changeDrainagePumpState(state->drainagePumpEnabled);
     }
 
+    buildDiscovery(device);
+
     inited = true;
 }
 
@@ -38,6 +43,20 @@ void Automation::update()
     if (!inited) {
         LOGE("update", "automation isn't initialized");
         return;
+    }
+
+    if ((_pressureSensorLastUpdateTime + 10000000) < esp_timer_get_time()) {
+        auto pressure = _mai6->getCalculatedValueN(1);
+        if (pressure.second) {
+            float_t calculatedPressure = (float_t)pressure.first / 100.0f;
+            calculatedPressure = std::round(calculatedPressure * 100.0f) / 100.0f;
+
+            _stateMgr->getState().setWaterPressureSupplier(calculatedPressure);
+        } else {
+            LOGE("update", "failed to get supplier water pressure");
+        }
+
+        _pressureSensorLastUpdateTime = esp_timer_get_time();
     }
 
     if ((_lastUpdateTime + 1000000) < esp_timer_get_time()) {
@@ -90,6 +109,62 @@ void Automation::update()
             changeDrainagePumpEnableInternal(true);
         }
     }
+}
+
+bool Automation::changeAutoModeEnable(bool enable)
+{
+    _localStateMgr->getData()->autoMode = enable;
+    _stateMgr->getState().changeAutoModeState(enable);
+
+    return _localStateMgr->store();
+}
+
+bool Automation::changeFillingBarrelValveOpen(bool open)
+{
+    if (_localStateMgr->getData()->autoMode) {
+        return false;
+    }
+
+    _localStateMgr->getData()->fillingBarrelValveOpen = open;
+    _stateMgr->getState().changeFillingBarrelValveState(open);
+
+    return _localStateMgr->store();
+}
+
+bool Automation::changeBypassValveOpen(bool open)
+{
+    if (_localStateMgr->getData()->autoMode) {
+        return false;
+    }
+
+    _localStateMgr->getData()->bypassValveOpen = open;
+    _stateMgr->getState().changeBypassValveState(open);
+
+    return _localStateMgr->store();
+}
+
+bool Automation::changePumpStationEnable(bool enable)
+{
+    if (_localStateMgr->getData()->autoMode) {
+        return false;
+    }
+
+    _localStateMgr->getData()->pumpStationEnabled = enable;
+    _stateMgr->getState().changePumpStationState(enable);
+
+    return _localStateMgr->store();
+}
+
+bool Automation::changeDrainagePumpEnable(bool enable)
+{
+    if (_localStateMgr->getData()->autoMode) {
+        return false;
+    }
+
+    _localStateMgr->getData()->drainagePumpEnabled = enable;
+    _stateMgr->getState().changeDrainagePumpState(enable);
+
+    return _localStateMgr->store();
 }
 
 bool Automation::loadQDY30AConstants()
@@ -231,6 +306,17 @@ void Automation::buildDiscovery(EDHA::Device* device)
         ->setStateTopic(_config.mqttStateTopic)
         ->setValueTemplate("{{ value_json.waterLevel }}")
         ->setUnitOfMeasurement("m");
+
+    _discoveryMgr->addSensor(
+        device,
+        "Water pressure supplier",
+        "waterPressureSupplier",
+        EDUtils::formatString("water_pressure_supplier_neptunus_%s", chipID)
+    )
+        ->setStateTopic(_config.mqttStateTopic)
+        ->setValueTemplate("{{ value_json.waterPressureSupplier }}")
+        ->setDeviceClass("pressure")
+        ->setUnitOfMeasurement("bar");
 
     _discoveryMgr->addSwitch(
         device,
