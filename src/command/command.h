@@ -12,7 +12,7 @@ public:
     std::pair<bool, bool> isFillingBarrelValveOpen() const { return _fillingBarrelValve; }
     std::pair<bool, bool> isBypassValveOpen() const { return _bypassValve; }
     std::pair<bool, bool> isPumpStationEnable() const { return _pumpStation; }
-    std::pair<bool, bool> isDrainagePumpEnable() const { return _pumpStation; }
+    std::pair<bool, bool> isDrainagePumpEnable() const { return _drainagePump; }
 
 private:
     std::pair<bool, bool> _autoMode;

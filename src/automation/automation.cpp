@@ -124,6 +124,10 @@ bool Automation::changeFillingBarrelValveOpen(bool open)
         return false;
     }
 
+    if (!changeFillingBarrelValveOpenInternal(open)) {
+        return false;
+    }
+
     _localStateMgr->getData()->fillingBarrelValveOpen = open;
     _stateMgr->getState().changeFillingBarrelValveState(open);
 
@@ -133,6 +137,10 @@ bool Automation::changeFillingBarrelValveOpen(bool open)
 bool Automation::changeBypassValveOpen(bool open)
 {
     if (_localStateMgr->getData()->autoMode) {
+        return false;
+    }
+
+    if (!changeBypassValveOpenInternal(open)) {
         return false;
     }
 
@@ -148,6 +156,10 @@ bool Automation::changePumpStationEnable(bool enable)
         return false;
     }
 
+    if (!changePumpStationEnableInternal(enable)) {
+        return false;
+    }
+
     _localStateMgr->getData()->pumpStationEnabled = enable;
     _stateMgr->getState().changePumpStationState(enable);
 
@@ -157,6 +169,10 @@ bool Automation::changePumpStationEnable(bool enable)
 bool Automation::changeDrainagePumpEnable(bool enable)
 {
     if (_localStateMgr->getData()->autoMode) {
+        return false;
+    }
+
+    if (!changeDrainagePumpEnableInternal(enable)) {
         return false;
     }
 
