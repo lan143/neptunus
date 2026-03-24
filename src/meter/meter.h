@@ -21,12 +21,13 @@ public:
     void update();
 
     void setInitialValue(float_t value);
-    float_t getCurrentValue() { return toMeterCube(_currentValue); }
+    float_t getCurrentValue() const { return toMeterCube(_currentValue); }
+    bool isFlowOfWaterActive() const { return _isFlowOfWaterActive; }
 
 private:
     void buildDiscovery(EDHA::Device* device, std::string stateTopic);
-    int fromMeterCube(float_t value);
-    float_t toMeterCube(int value);
+    int fromMeterCube(float_t value) const;
+    float_t toMeterCube(int value) const;
 
 private:
     PCF8574* _driver = nullptr;
@@ -39,4 +40,6 @@ private:
     bool _ponentialLockUnlock = false;
     uint32_t _currentValue;
     uint64_t _lastCheckTime;
+    bool _isFlowOfWaterActive = false;
+    uint64_t _lastFlowOfWaterActiveTime = 0;
 };

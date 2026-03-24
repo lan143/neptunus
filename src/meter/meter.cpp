@@ -28,6 +28,8 @@ void Meter::update()
 
                 _ringStorage->writeValue(_currentValue, _lock);
                 _stateMgr->getState().setWaterConsumption(toMeterCube(_currentValue));
+                _isFlowOfWaterActive = true;
+                _lastFlowOfWaterActiveTime = esp_timer_get_time();
             }
         } else if (pinValue == HIGH && _lock) {
             if (!_ponentialLockUnlock) {
@@ -40,6 +42,10 @@ void Meter::update()
         }
 
         _lastCheckTime = millis();
+    }
+
+    if (_isFlowOfWaterActive && (_lastFlowOfWaterActiveTime + 120000000) < esp_timer_get_time()) {
+        _isFlowOfWaterActive = false;
     }
 }
 
@@ -65,12 +71,12 @@ void Meter::buildDiscovery(EDHA::Device* device, std::string stateTopic)
         ->setDeviceClass("water");
 }
 
-int Meter::fromMeterCube(float_t value)
+int Meter::fromMeterCube(float_t value) const
 {
     return (int)((value * 1000) / 10);
 }
 
-float_t Meter::toMeterCube(int value)
+float_t Meter::toMeterCube(int value) const
 {
     return (float_t)(value * 10) / 1000.0f;
 }

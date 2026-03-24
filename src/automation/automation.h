@@ -10,11 +10,14 @@
 #include <wirenboard.h>
 
 #include "config.h"
+#include "meter/meter.h"
 #include "relay/relay_mgr.h"
 #include "state/state.h"
 
 #define WATER_MIN_LEVEL 0.01f
 #define WATER_MAX_LEVEL 1.19f
+#define SWITCH_TO_PUMP_STATION_PRESSURE 3.1f
+#define EMERGENCY_PRESSURE 1.0f
 
 struct AutomationState
 {
@@ -32,8 +35,9 @@ public:
         EDHA::DiscoveryMgr* discoveryMgr,
         RelayMgr* relayMgr,
         EDUtils::StateMgr<State>* stateMgr,
-        EDWB::WirenBoard* wirenboard
-    ) : _discoveryMgr(discoveryMgr), _relayMgr(relayMgr), _stateMgr(stateMgr), _wirenboard(wirenboard)
+        EDWB::WirenBoard* wirenboard,
+        Meter* meter
+    ) : _discoveryMgr(discoveryMgr), _relayMgr(relayMgr), _stateMgr(stateMgr), _wirenboard(wirenboard), _meter(meter)
     {
         _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation.bin"));
     }
@@ -62,6 +66,8 @@ private:
 private:
     uint64_t _lastUpdateTime = 0;
     uint64_t _pressureSensorLastUpdateTime = 0;
+    uint32_t _goodPressureCount = 0;
+    uint32_t _badPressureCount = 0;
 
     int32_t _unitOfMeasurement = 0;
     int32_t _dotPosition = 0;
@@ -77,5 +83,6 @@ private:
     Config _config;
     EDWB::QDY30A* _qdy30a = nullptr;
     EDWB::MAI6* _mai6 = nullptr;
+    Meter* _meter = nullptr;
     bool inited = false;
 };

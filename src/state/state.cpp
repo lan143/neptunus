@@ -13,7 +13,8 @@ bool State::operator==(State& other)
         && _fillingBarrelValve == other._fillingBarrelValve
         && _bypassValve == other._bypassValve
         && _pumpStation == other._pumpStation
-        && _drainagePump == other._drainagePump;
+        && _drainagePump == other._drainagePump
+        && _emergencyMode == other._emergencyMode;
 }
 
 std::string State::marshalJSON()
@@ -49,6 +50,10 @@ std::string State::marshalJSON()
 
         if (_drainagePump.second) {
             entity[F("drainagePump")] = _drainagePump.first ? "true" : "false";
+        }
+
+        if (_emergencyMode.second) {
+            entity[F("emergencyMode")] = _emergencyMode.first ? "true" : "false";
         }
     });
 

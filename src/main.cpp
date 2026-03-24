@@ -46,7 +46,7 @@ RingStorage ringStorage(&ringStorageDataMgr);
 Meter meter(&inputDriver, &discoveryMgr, &ringStorage, &stateMgr);
 MeterHandler meterHandler(&meter);
 
-Automation automation(&discoveryMgr, &relayMgr, &stateMgr, &wirenboard);
+Automation automation(&discoveryMgr, &relayMgr, &stateMgr, &wirenboard, &meter);
 
 CommandConsumer commandConsumer(&automation);
 

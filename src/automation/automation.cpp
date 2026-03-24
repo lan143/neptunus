@@ -51,6 +51,20 @@ void Automation::update()
             calculatedPressure = std::round(calculatedPressure * 100.0f) / 100.0f;
 
             _stateMgr->getState().setWaterPressureSupplier(calculatedPressure);
+
+            if (!_meter->isFlowOfWaterActive()) {
+                if (calculatedPressure > SWITCH_TO_PUMP_STATION_PRESSURE && _goodPressureCount < 24) {
+                    _goodPressureCount++;
+                } else if (calculatedPressure < SWITCH_TO_PUMP_STATION_PRESSURE && _goodPressureCount > 0) {
+                    _goodPressureCount--;
+                }
+
+                if (calculatedPressure < EMERGENCY_PRESSURE && _badPressureCount < 24) {
+                    _badPressureCount++;
+                } else if (calculatedPressure > EMERGENCY_PRESSURE && _badPressureCount > 0) {
+                    _badPressureCount--;
+                }
+            }
         } else {
             LOGE("update", "failed to get supplier water pressure");
         }
@@ -78,17 +92,22 @@ void Automation::update()
         auto enableLevel = middleLevel - middleLevel * 0.15;
         auto disableLevel = middleLevel + middleLevel * 0.15;
 
-        LOGD(
-            "update",
-            "middle level: %f, enable level: %f, disable level: %f, current level: %f",
-            middleLevel,
-            enableLevel,
-            disableLevel,
-            level
-        );
+        bool emergencyMode = false;
+        if (_badPressureCount > 12) { // fill the barrel completely if there is a suspicion of an accident
+            enableLevel = WATER_MAX_LEVEL - WATER_MAX_LEVEL * 0.2f;
+            disableLevel = WATER_MAX_LEVEL - WATER_MAX_LEVEL * 0.1f;
+            emergencyMode = true;
+        }
 
-        // tmp close bypass valve
-        changeBypassValveOpenInternal(false);
+        _stateMgr->getState().changeEmergencyModeState(emergencyMode);
+
+        bool enablePumpStation = true;
+        if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
+            changeBypassValveOpenInternal(true);
+            enablePumpStation = false;
+        } else {
+            changeBypassValveOpenInternal(false);
+        }
 
         if (level <= enableLevel) {
             changeFillingBarrelValveOpenInternal(true);
@@ -97,9 +116,11 @@ void Automation::update()
         }
 
         if (level <= WATER_MIN_LEVEL) {
-            changePumpStationEnableInternal(false);
-        } else {
-            changePumpStationEnableInternal(true);
+            enablePumpStation = false;
+        }
+
+        if (!changePumpStationEnableInternal(enablePumpStation)) {
+            LOGE("update", "failed to change pump station state. enable: %s", enablePumpStation ? "true" : "false");
         }
 
         if (level >= WATER_MAX_LEVEL) {
@@ -107,6 +128,19 @@ void Automation::update()
         } else {
             changeDrainagePumpEnableInternal(true);
         }
+
+        LOGD(
+            "update",
+            "middle level: %f, enable level: %f, disable level: %f, current level: %f, emergency mode: %s, good pressure count: %d, bad pressure count: %d, pump station enable: %s",
+            middleLevel,
+            enableLevel,
+            disableLevel,
+            level,
+            emergencyMode ? "true" : "false",
+            _goodPressureCount,
+            _badPressureCount,
+            enablePumpStation ? "true" : "false"
+        );
     }
 }
 
@@ -461,4 +495,16 @@ void Automation::buildDiscovery(EDHA::Device* device)
         ->setPayloadOff("false")
         ->setStateOn("true")
         ->setStateOff("false");
+
+    _discoveryMgr->addBinarySensor(
+        device,
+        "Emergency mode",
+        "emergency_mode",
+        EDUtils::formatString("emergency_mode_neptunus_%s", chipID)
+    )
+        ->setStateTopic(_config.mqttStateTopic)
+        ->setValueTemplate("{{ value_json.emergencyMode }}")
+        ->setPayloadOn("true")
+        ->setPayloadOff("false")
+        ->setDeviceClass(EDHA::deviceClassBinarySensorProblem);
 }
