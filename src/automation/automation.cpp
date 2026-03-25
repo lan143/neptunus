@@ -25,12 +25,10 @@ void Automation::init(EDHA::Device* device, Config config)
 
     auto state = _localStateMgr->getData();
     _stateMgr->getState().changeAutoModeState(state->autoMode);
-    if (!state->autoMode) {
-        _stateMgr->getState().changeFillingBarrelValveState(state->fillingBarrelValveOpen);
-        _stateMgr->getState().changeBypassValveState(state->bypassValveOpen);
-        _stateMgr->getState().changePumpStationState(state->pumpStationEnabled);
-        _stateMgr->getState().changeDrainagePumpState(state->drainagePumpEnabled);
-    }
+    changeFillingBarrelValveOpenInternal(state->fillingBarrelValveOpen);
+    changeBypassValveOpenInternal(state->bypassValveOpen);
+    changePumpStationEnableInternal(state->pumpStationEnabled);
+    changeDrainagePumpEnableInternal(state->drainagePumpEnabled);
 
     buildDiscovery(device);
 
@@ -51,8 +49,9 @@ void Automation::update()
             calculatedPressure = std::round(calculatedPressure * 100.0f) / 100.0f;
 
             _stateMgr->getState().setWaterPressureSupplier(calculatedPressure);
+            auto fillingBarrel = _relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->isEnabled();
 
-            if (!_meter->isFlowOfWaterActive()) {
+            if (!_meter->isFlowOfWaterActive() && fillingBarrel.second && !fillingBarrel.first) {
                 if (calculatedPressure > SWITCH_TO_PUMP_STATION_PRESSURE && _goodPressureCount < 24) {
                     _goodPressureCount++;
                 } else if (calculatedPressure < SWITCH_TO_PUMP_STATION_PRESSURE && _goodPressureCount > 0) {
@@ -344,10 +343,8 @@ bool Automation::changeFillingBarrelValveOpenInternal(bool open)
     }
 
     _stateMgr->getState().changeFillingBarrelValveState(open);
-    if (!_localStateMgr->getData()->autoMode) {
-        _localStateMgr->getData()->fillingBarrelValveOpen = open;
-        _localStateMgr->store();
-    }
+    _localStateMgr->getData()->fillingBarrelValveOpen = open;
+    _localStateMgr->store();
 
     return true;
 }
@@ -359,10 +356,8 @@ bool Automation::changeBypassValveOpenInternal(bool open)
     }
 
     _stateMgr->getState().changeBypassValveState(open);
-    if (!_localStateMgr->getData()->autoMode) {
-        _localStateMgr->getData()->bypassValveOpen = open;
-        _localStateMgr->store();
-    }
+    _localStateMgr->getData()->bypassValveOpen = open;
+    _localStateMgr->store();
 
     return true;
 }
@@ -373,11 +368,9 @@ bool Automation::changePumpStationEnableInternal(bool enable)
         return false;
     }
 
-    _stateMgr->getState().changePumpStationState(open);
-    if (!_localStateMgr->getData()->autoMode) {
-        _localStateMgr->getData()->pumpStationEnabled = enable;
-        _localStateMgr->store();
-    }
+    _stateMgr->getState().changePumpStationState(enable);
+    _localStateMgr->getData()->pumpStationEnabled = enable;
+    _localStateMgr->store();
 
     return true;
 }
@@ -388,11 +381,9 @@ bool Automation::changeDrainagePumpEnableInternal(bool enable)
         return false;
     }
 
-    _stateMgr->getState().changeDrainagePumpState(open);
-    if (!_localStateMgr->getData()->autoMode) {
-        _localStateMgr->getData()->drainagePumpEnabled = enable;
-        _localStateMgr->store();
-    }
+    _stateMgr->getState().changeDrainagePumpState(enable);
+    _localStateMgr->getData()->drainagePumpEnabled = enable;
+    _localStateMgr->store();
 
     return true;
 }

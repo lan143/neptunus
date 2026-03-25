@@ -11,5 +11,5 @@ bool RelayPCF8574P::changeState(bool enable)
 
 std::pair<bool, bool> RelayPCF8574P::isEnabled() const
 {
-    return std::make_pair(_driver->read(_channel), true);
+    return std::make_pair(_driver->read(_channel) == LOW, true);
 }
