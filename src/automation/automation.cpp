@@ -51,7 +51,7 @@ void Automation::update()
             _stateMgr->getState().setWaterPressureSupplier(calculatedPressure);
             auto fillingBarrel = _relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->isEnabled();
 
-            if (!_meter->isFlowOfWaterActive() && fillingBarrel.second && !fillingBarrel.first) {
+            if (!_meter->isFlowOfWaterActive() && fillingBarrel.second && fillingBarrel.first) {
                 if (calculatedPressure > SWITCH_TO_PUMP_STATION_PRESSURE && _goodPressureCount < 24) {
                     _goodPressureCount++;
                 } else if (calculatedPressure < SWITCH_TO_PUMP_STATION_PRESSURE && _goodPressureCount > 0) {
