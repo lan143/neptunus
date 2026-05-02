@@ -41,12 +41,17 @@ EDHA::Device* device = nullptr;
 StateProducer stateProducer(&mqtt);
 EDUtils::StateMgr<State> stateMgr(&stateProducer);
 
-EDConfig::DataMgr<MeterState> ringStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/meter.bin"));
-RingStorage ringStorage(&ringStorageDataMgr);
-Meter meter(&inputDriver, &discoveryMgr, &ringStorage, &stateMgr);
-MeterHandler meterHandler(&meter);
+EDConfig::DataMgr<MeterState> homeRingStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/meter.bin"));
+RingStorage homeRingStorage(&homeRingStorageDataMgr);
+Meter homeMeter(&inputDriver, &discoveryMgr, &homeRingStorage, &stateMgr);
 
-Automation automation(&discoveryMgr, &relayMgr, &stateMgr, &wirenboard, &meter);
+EDConfig::DataMgr<MeterState> yardRingStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/yard_meter.bin"));
+RingStorage yardRingStorage(&yardRingStorageDataMgr);
+Meter yardMeter(&inputDriver, &discoveryMgr, &yardRingStorage, &stateMgr);
+
+MeterHandler meterHandler(&homeMeter, &yardMeter);
+
+Automation automation(&discoveryMgr, &relayMgr, &stateMgr, &wirenboard, &homeMeter);
 
 CommandConsumer commandConsumer(&automation);
 
@@ -151,15 +156,25 @@ void setup()
     LOGI("setup", "state producer init");
     stateProducer.init(configMgr.getData()->mqttStateTopic);
 
-    LOGI("setup", "init meter");
-    ringStorageDataMgr.setDefault([](MeterState* state) {
+    LOGI("setup", "init home water meter");
+    homeRingStorageDataMgr.setDefault([](MeterState* state) {
         for (int i = 0; i < RING_STORAGE_SIZE; i++) {
             state->values[i] = 0;
         }
     });
-    ringStorageDataMgr.load();
-    ringStorage.init();
-    meter.init(device, configMgr.getData()->mqttStateTopic);
+    homeRingStorageDataMgr.load();
+    homeRingStorage.init();
+    homeMeter.init(device, "Water consumption", "water_consumption", "waterConsumption", 0, 10, configMgr.getData()->mqttStateTopic);
+
+    LOGI("setup", "init yard water meter");
+    yardRingStorageDataMgr.setDefault([](MeterState* state) {
+        for (int i = 0; i < RING_STORAGE_SIZE; i++) {
+            state->values[i] = 0;
+        }
+    });
+    yardRingStorageDataMgr.load();
+    yardRingStorage.init();
+    yardMeter.init(device, "Yard water consumption", "yard_water_consumption", "yardWaterConsumption", 1, 1, configMgr.getData()->mqttStateTopic);
 
     LOGI("setup", "automation init");
     automation.init(device, *configMgr.getData());
@@ -185,5 +200,6 @@ void loop()
     stateMgr.loop();
     networkLogger.update();
     automation.update();
-    meter.update();
+    homeMeter.update();
+    yardMeter.update();
 }

@@ -8,7 +8,8 @@ void MeterHandler::registerHandler(AsyncWebServer* server)
         AsyncResponseStream *response = request->beginResponseStream("application/json");
 
         std::string payload = EDUtils::buildJson([this](JsonObject entity) {
-            entity["initialValue"] = _meter->getCurrentValue();
+            entity["homeWaterInitialValue"] = _homeWaterConsumptionMeter->getCurrentValue();
+            entity["yardWaterInitialValue"] = _yardWaterConsumptionMeter->getCurrentValue();
         });
 
         response->write(payload.c_str());
@@ -16,20 +17,28 @@ void MeterHandler::registerHandler(AsyncWebServer* server)
     });
 
     server->on("/api/settings/meter", HTTP_POST, [this](AsyncWebServerRequest *request) {
-        if (!request->hasParam("initialValue", true)) {
+        if (!request->hasParam("homeWaterInitialValue", true) || !request->hasParam("yardWaterInitialValue", true)) {
             request->send(422, "application/json", "{\"message\": \"not present initial value in request\"}");
             return;
         }
 
-        const AsyncWebParameter* initialValueParam = request->getParam("initialValue", true);
-
         float_t initialValue;
-        if (EDUtils::str2float(&initialValue, initialValueParam->value().c_str()) != EDUtils::STR2INT_SUCCESS) {
-            request->send(422, "application/json", "{\"message\": \"Incorrect modbus speed\"}");
+        const AsyncWebParameter* homeWaterInitialValueParam = request->getParam("homeWaterInitialValue", true);
+        const AsyncWebParameter* yardWaterInitialValueParam = request->getParam("yardWaterInitialValue", true);
+
+        if (EDUtils::str2float(&initialValue, homeWaterInitialValueParam->value().c_str()) != EDUtils::STR2INT_SUCCESS) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect home water initial value\"}");
             return;
         }
 
-        _meter->setInitialValue(initialValue);
+        _homeWaterConsumptionMeter->setInitialValue(initialValue);
+
+        if (EDUtils::str2float(&initialValue, yardWaterInitialValueParam->value().c_str()) != EDUtils::STR2INT_SUCCESS) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect yard water meter initial value\"}");
+            return;
+        }
+
+        _yardWaterConsumptionMeter->setInitialValue(initialValue);
 
         request->send(200, "application/json", "{}");
     });

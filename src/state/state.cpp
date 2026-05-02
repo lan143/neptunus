@@ -8,6 +8,7 @@ bool State::operator==(State& other)
 {
     return _waterLevel == other._waterLevel
         && _waterConsumption == other._waterConsumption
+        && _yardWaterConsumption == other._yardWaterConsumption
         && _waterPressureSupplier == other._waterPressureSupplier
         && _autoMode == other._autoMode
         && _fillingBarrelValve == other._fillingBarrelValve
@@ -26,6 +27,10 @@ std::string State::marshalJSON()
 
         if (_waterConsumption.second) {
             entity[F("waterConsumption")] = _waterConsumption.first;
+        }
+
+        if (_yardWaterConsumption.second) {
+            entity[F("yardWaterConsumption")] = _yardWaterConsumption.first;
         }
 
         if (_waterPressureSupplier.second) {

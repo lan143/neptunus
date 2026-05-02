@@ -17,7 +17,7 @@ public:
         EDUtils::StateMgr<State>* stateMgr
     ) : _driver(driver), _discoveryMgr(discoveryMgr), _stateMgr(stateMgr), _ringStorage(ringStorage) {}
 
-    void init(EDHA::Device* device, std::string stateTopic);
+    void init(EDHA::Device* device, std::string name, std::string escapeName, std::string field, uint8_t pin, uint32_t cost, std::string stateTopic);
     void update();
 
     void setInitialValue(float_t value);
@@ -25,7 +25,7 @@ public:
     bool isFlowOfWaterActive() const { return _isFlowOfWaterActive; }
 
 private:
-    void buildDiscovery(EDHA::Device* device, std::string stateTopic);
+    void buildDiscovery(EDHA::Device* device, std::string name, std::string escapeName, std::string field, std::string stateTopic);
     int fromMeterCube(float_t value) const;
     float_t toMeterCube(int value) const;
 
@@ -42,4 +42,6 @@ private:
     uint64_t _lastCheckTime;
     bool _isFlowOfWaterActive = false;
     uint64_t _lastFlowOfWaterActiveTime = 0;
+    uint8_t _pin = 0;
+    uint32_t _cost = 0;
 };

@@ -4,19 +4,26 @@
 #include "defines.h"
 #include "meter.h"
 
-void Meter::init(EDHA::Device* device, std::string stateTopic)
+void Meter::init(EDHA::Device* device, std::string name, std::string escapeName, std::string field, uint8_t pin, uint32_t cost, std::string stateTopic)
 {
+    _pin = pin;
+    _cost = cost;
+
     _currentValue = _ringStorage->getCurrentValue();
     _lock = _ringStorage->hasLock();
-    buildDiscovery(device, stateTopic);
+    buildDiscovery(device, name, escapeName, field, stateTopic);
 
-    _stateMgr->getState().setWaterConsumption(toMeterCube(_currentValue));
+    if (_pin == 0) {
+        _stateMgr->getState().setWaterConsumption(toMeterCube(_currentValue));
+    } else if (_pin == 1) {
+        _stateMgr->getState().setYardWaterConsumption(toMeterCube(_currentValue));
+    }
 }
 
 void Meter::update()
 {
     if ((_lastCheckTime + 250000) < esp_timer_get_time()) {
-        int pinValue = _driver->read(0);
+        int pinValue = _driver->read(_pin);
 
         if (pinValue == LOW && !_lock) {
             if (!_ponentialLockUnlock) {
@@ -27,7 +34,13 @@ void Meter::update()
                 _currentValue++;
 
                 _ringStorage->writeValue(_currentValue, _lock);
-                _stateMgr->getState().setWaterConsumption(toMeterCube(_currentValue));
+
+                if (_pin == 0) {
+                    _stateMgr->getState().setWaterConsumption(toMeterCube(_currentValue));
+                } else if (_pin == 1) {
+                    _stateMgr->getState().setYardWaterConsumption(toMeterCube(_currentValue));
+                }
+
                 _isFlowOfWaterActive = true;
                 _lastFlowOfWaterActiveTime = esp_timer_get_time();
             }
@@ -56,16 +69,16 @@ void Meter::setInitialValue(float_t value)
     _ringStorage->writeValue(_currentValue, _lock);
 }
 
-void Meter::buildDiscovery(EDHA::Device* device, std::string stateTopic)
+void Meter::buildDiscovery(EDHA::Device* device, std::string name, std::string escapeName, std::string field, std::string stateTopic)
 {
     _discoveryMgr->addSensor(
         device,
-        "Water consumption",
-        "water_consumption",
-        EDUtils::formatString("water_consumption_sensor_neptunus_%s", EDUtils::getChipID())
+        name,
+        escapeName,
+        EDUtils::formatString("%s_sensor_neptunus_%s", escapeName.c_str(), EDUtils::getChipID())
     )
         ->setStateTopic(stateTopic)
-        ->setValueTemplate("{{ value_json.waterConsumption }}")
+        ->setValueTemplate(EDUtils::formatString("{{ value_json.%s }}", field.c_str()))
         ->setUnitOfMeasurement("m³")
         ->setSensorStateClass(EDHA::SENSOR_STATE_CLASS_TOTAL)
         ->setDeviceClass("water");
@@ -73,10 +86,10 @@ void Meter::buildDiscovery(EDHA::Device* device, std::string stateTopic)
 
 int Meter::fromMeterCube(float_t value) const
 {
-    return (int)((value * 1000) / 10);
+    return (int)((value * 1000) / _cost);
 }
 
 float_t Meter::toMeterCube(int value) const
 {
-    return (float_t)(value * 10) / 1000.0f;
+    return (float_t)(value * _cost) / 1000.0f;
 }

@@ -7,10 +7,11 @@
 class MeterHandler
 {
 public:
-    MeterHandler(Meter* meter) : _meter(meter) {};
+    MeterHandler(Meter* homeWaterConsumptionMeter, Meter* yardWaterConsumptionMeter) : _homeWaterConsumptionMeter(homeWaterConsumptionMeter), _yardWaterConsumptionMeter(yardWaterConsumptionMeter) {};
 
     void registerHandler(AsyncWebServer* server);
 
 private:
-    Meter* _meter = nullptr;
+    Meter* _homeWaterConsumptionMeter = nullptr;
+    Meter* _yardWaterConsumptionMeter = nullptr;
 };
