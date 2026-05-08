@@ -88,8 +88,8 @@ void Automation::update()
         }
 
         auto middleLevel = (WATER_MAX_LEVEL - WATER_MIN_LEVEL) / 2 + WATER_MIN_LEVEL;
-        auto enableLevel = middleLevel - middleLevel * 0.15;
-        auto disableLevel = middleLevel + middleLevel * 0.15;
+        auto enableLevel = middleLevel - middleLevel * 0.25;
+        auto disableLevel = middleLevel + middleLevel * 0.25;
 
         bool emergencyMode = false;
         if (_badPressureCount > 12) { // fill the barrel completely if there is a suspicion of an accident
@@ -100,13 +100,13 @@ void Automation::update()
 
         _stateMgr->getState().changeEmergencyModeState(emergencyMode);
 
-        bool enablePumpStation = true;
+        /*bool enablePumpStation = true;
         if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
             changeBypassValveOpenInternal(true);
             enablePumpStation = false;
         } else {
             changeBypassValveOpenInternal(false);
-        }
+        }*/
 
         if (level <= enableLevel) {
             changeFillingBarrelValveOpenInternal(true);
@@ -114,31 +114,24 @@ void Automation::update()
             changeFillingBarrelValveOpenInternal(false);
         }
 
-        if (level <= WATER_MIN_LEVEL) {
+        /*if (level <= WATER_MIN_LEVEL) {
             enablePumpStation = false;
         }
 
         if (!changePumpStationEnableInternal(enablePumpStation)) {
             LOGE("update", "failed to change pump station state. enable: %s", enablePumpStation ? "true" : "false");
-        }
-
-        if (level >= WATER_MAX_LEVEL) {
-            changeDrainagePumpEnableInternal(false);
-        } else {
-            changeDrainagePumpEnableInternal(true);
-        }
+        }*/
 
         LOGD(
             "update",
-            "middle level: %f, enable level: %f, disable level: %f, current level: %f, emergency mode: %s, good pressure count: %d, bad pressure count: %d, pump station enable: %s",
+            "middle level: %f, enable level: %f, disable level: %f, current level: %f, emergency mode: %s, good pressure count: %d, bad pressure count: %d",
             middleLevel,
             enableLevel,
             disableLevel,
             level,
             emergencyMode ? "true" : "false",
             _goodPressureCount,
-            _badPressureCount,
-            enablePumpStation ? "true" : "false"
+            _badPressureCount
         );
     }
 }
@@ -185,10 +178,6 @@ bool Automation::changeBypassValveOpen(bool open)
 
 bool Automation::changePumpStationEnable(bool enable)
 {
-    if (_localStateMgr->getData()->autoMode) {
-        return false;
-    }
-
     if (!changePumpStationEnableInternal(enable)) {
         return false;
     }
@@ -201,10 +190,6 @@ bool Automation::changePumpStationEnable(bool enable)
 
 bool Automation::changeDrainagePumpEnable(bool enable)
 {
-    if (_localStateMgr->getData()->autoMode) {
-        return false;
-    }
-
     if (!changeDrainagePumpEnableInternal(enable)) {
         return false;
     }

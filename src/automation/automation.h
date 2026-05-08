@@ -14,8 +14,8 @@
 #include "relay/relay_mgr.h"
 #include "state/state.h"
 
-#define WATER_MIN_LEVEL 0.01f
-#define WATER_MAX_LEVEL 1.19f
+#define WATER_MIN_LEVEL 0.37f
+#define WATER_MAX_LEVEL 1.2f
 #define SWITCH_TO_PUMP_STATION_PRESSURE 3.1f
 #define EMERGENCY_PRESSURE 1.0f
 
