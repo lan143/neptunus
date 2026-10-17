@@ -10,9 +10,9 @@
 #include <wirenboard.h>
 #include <PCF8574.h>
 #include <relay/relay.h>
+#include <counter/pcf8574.h>
 
 #include "config.h"
-#include "meter/meter.h"
 #include "state/state.h"
 
 #define WATER_MIN_LEVEL 0.37f
@@ -34,7 +34,7 @@ public:
         PCF8574* relayDriver,
         EDUtils::StateMgr<State>* stateMgr,
         EDWB::WirenBoard* wirenboard,
-        Meter* meter
+        EDCommon::Counter::PCF8574P* meter
     ) : _discoveryMgr(discoveryMgr), _mqtt(mqtt), _relayDriver(relayDriver), _stateMgr(stateMgr), _wirenboard(wirenboard), _meter(meter)
     {
         _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation_v2.bin"));
@@ -78,6 +78,6 @@ private:
     Config _config;
     EDCommon::Sensor::WaterLevel* _waterLevelSensor = nullptr;
     EDWB::MAI6* _mai6 = nullptr;
-    Meter* _meter = nullptr;
+    EDCommon::Counter::PCF8574P* _meter = nullptr;
     bool inited = false;
 };

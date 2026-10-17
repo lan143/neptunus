@@ -15,9 +15,11 @@
 #include "defines.h"
 #include "config.h"
 #include "automation/automation.h"
+#include <counter/pcf8574.h>
+
 #include "command/command_consumer.h"
 #include "meter/handler.h"
-#include "meter/meter.h"
+#include "meter/persistence.h"
 #include "state/state.h"
 #include "state/producer.h"
 #include "web/handler.h"
@@ -40,11 +42,13 @@ EDUtils::StateMgr<State> stateMgr(&stateProducer);
 
 EDConfig::DataMgr<MeterState> homeRingStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/meter.bin"));
 RingStorage homeRingStorage(&homeRingStorageDataMgr);
-Meter homeMeter(&inputDriver, &discoveryMgr, &homeRingStorage, &stateMgr);
+RingStoragePersistence homePersistence(&homeRingStorage);
+EDCommon::Counter::PCF8574P homeMeter(&inputDriver);
 
 EDConfig::DataMgr<MeterState> yardRingStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/yard_meter.bin"));
 RingStorage yardRingStorage(&yardRingStorageDataMgr);
-Meter yardMeter(&inputDriver, &discoveryMgr, &yardRingStorage, &stateMgr);
+RingStoragePersistence yardPersistence(&yardRingStorage);
+EDCommon::Counter::PCF8574P yardMeter(&inputDriver);
 
 MeterHandler meterHandler(&homeMeter, &yardMeter);
 
@@ -159,7 +163,13 @@ void setup()
     });
     homeRingStorageDataMgr.load();
     homeRingStorage.init();
-    homeMeter.init(device, "Water consumption", "water_consumption", "waterConsumption", 0, 10, configMgr.getData()->mqttStateTopic);
+    homeMeter.init(0, {
+        EDCommon::Counter::withMQTT(&mqtt, configMgr.getData()->mqttTopicPrefix, "neptunus", "Water consumption"),
+        EDCommon::Counter::withDiscovery(&discoveryMgr, device),
+        EDCommon::Counter::withObjectID("water_consumption"),
+        EDCommon::Counter::withCost(10),
+        EDCommon::Counter::withPersistence(&homePersistence)
+    });
 
     LOGI("setup", "init yard water meter");
     yardRingStorageDataMgr.setDefault([](MeterState* state) {
@@ -169,7 +179,13 @@ void setup()
     });
     yardRingStorageDataMgr.load();
     yardRingStorage.init();
-    yardMeter.init(device, "Yard water consumption", "yard_water_consumption", "yardWaterConsumption", 1, 1, configMgr.getData()->mqttStateTopic);
+    yardMeter.init(1, {
+        EDCommon::Counter::withMQTT(&mqtt, configMgr.getData()->mqttTopicPrefix, "neptunus", "Yard water consumption"),
+        EDCommon::Counter::withDiscovery(&discoveryMgr, device),
+        EDCommon::Counter::withObjectID("yard_water_consumption"),
+        EDCommon::Counter::withCost(1),
+        EDCommon::Counter::withPersistence(&yardPersistence)
+    });
 
     LOGI("setup", "automation init");
     automation.init(device, *configMgr.getData());

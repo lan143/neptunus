@@ -1,17 +1,16 @@
 #pragma once
 
 #include <ESPAsyncWebServer.h>
-
-#include "meter.h"
+#include <counter/pcf8574.h>
 
 class MeterHandler
 {
 public:
-    MeterHandler(Meter* homeWaterConsumptionMeter, Meter* yardWaterConsumptionMeter) : _homeWaterConsumptionMeter(homeWaterConsumptionMeter), _yardWaterConsumptionMeter(yardWaterConsumptionMeter) {};
+    MeterHandler(EDCommon::Counter::PCF8574P* homeWaterConsumptionMeter, EDCommon::Counter::PCF8574P* yardWaterConsumptionMeter) : _homeWaterConsumptionMeter(homeWaterConsumptionMeter), _yardWaterConsumptionMeter(yardWaterConsumptionMeter) {};
 
     void registerHandler(AsyncWebServer* server);
 
 private:
-    Meter* _homeWaterConsumptionMeter = nullptr;
-    Meter* _yardWaterConsumptionMeter = nullptr;
+    EDCommon::Counter::PCF8574P* _homeWaterConsumptionMeter = nullptr;
+    EDCommon::Counter::PCF8574P* _yardWaterConsumptionMeter = nullptr;
 };
