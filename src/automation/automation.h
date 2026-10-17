@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <data_mgr.h>
 #include <storage/littlefs_storage.hpp>
-#include <device/qdy30a.h>
+#include <sensor/water_level.h>
 #include <device/wb_mai6.h>
 #include <discovery.h>
 #include <state/state_mgr.h>
@@ -47,10 +47,7 @@ public:
 
 private:
     void buildDiscovery(EDHA::Device* device);
-    bool loadQDY30AConstants();
     bool setupPressureSensor();
-
-    std::pair<float_t, bool> getWaterLevel();
 
     bool changeFillingBarrelValveOpenInternal(bool open);
     bool changeBypassValveOpenInternal(bool open);
@@ -62,10 +59,6 @@ private:
     uint64_t _pressureSensorLastUpdateTime = 0;
     uint32_t _goodPressureCount = 0;
     uint32_t _badPressureCount = 0;
-
-    int32_t _unitOfMeasurement = 0;
-    int32_t _dotPosition = 0;
-    bool _constantsLoaded = false;
 
 private:
     EDConfig::DataMgr<AutomationState>* _localStateMgr = nullptr;
@@ -83,7 +76,7 @@ private:
     EDCommon::Relay::Relay* _outdoorPumpStationRelay = nullptr;
 
     Config _config;
-    EDWB::QDY30A* _qdy30a = nullptr;
+    EDCommon::Sensor::WaterLevel* _waterLevelSensor = nullptr;
     EDWB::MAI6* _mai6 = nullptr;
     Meter* _meter = nullptr;
     bool inited = false;

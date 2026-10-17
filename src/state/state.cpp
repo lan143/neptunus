@@ -6,8 +6,7 @@
 
 bool State::operator==(State& other)
 {
-    return _waterLevel == other._waterLevel
-        && _waterConsumption == other._waterConsumption
+    return _waterConsumption == other._waterConsumption
         && _yardWaterConsumption == other._yardWaterConsumption
         && _waterPressureSupplier == other._waterPressureSupplier
         && _autoMode == other._autoMode
@@ -17,10 +16,6 @@ bool State::operator==(State& other)
 std::string State::marshalJSON()
 {
     std::string payload = EDUtils::buildJson([this](JsonObject entity) {
-        if (_waterLevel.second) {
-            entity[F("waterLevel")] = _waterLevel.first;
-        }
-
         if (_waterConsumption.second) {
             entity[F("waterConsumption")] = _waterConsumption.first;
         }
