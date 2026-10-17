@@ -27,6 +27,7 @@ function loadSettings() {
             $('form#mqtt input[name=mqttPassword]').val(data.mqttPassword);
             $('form#mqtt input[name=mqttCommandTopic]').val(data.mqttCommandTopic);
             $('form#mqtt input[name=mqttStateTopic]').val(data.mqttStateTopic);
+            $('form#mqtt input[name=mqttTopicPrefix]').val(data.mqttTopicPrefix);
             $('form#mqtt input[name=mqttHADiscoveryPrefix]').val(data.mqttHADiscoveryPrefix);
 
             if (data.mqttIsHADiscovery) {
@@ -142,7 +143,8 @@ $(function() {
                 mqttIsHADiscovery: $(this).find('input[name=mqttIsHADiscovery]').is(':checked'),
                 commandTopic: $(this).find('input[name=mqttCommandTopic]').val(),
                 lightSwitchCommandTopic: $(this).find('input[name=mqttLightSwitchCommandTopic]').val(),
-                stateTopic: $(this).find('input[name=mqttStateTopic]').val()
+                stateTopic: $(this).find('input[name=mqttStateTopic]').val(),
+                mqttTopicPrefix: $(this).find('input[name=mqttTopicPrefix]').val()
             },
             success: function (data) {
                 alert('Settings successful changed. Reboot...');

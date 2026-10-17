@@ -205,6 +205,7 @@ void Handler::init()
             || !request->hasParam("login", true)
             || !request->hasParam("password", true)
             || !request->hasParam("haDiscoveryPrefix", true)
+            || !request->hasParam("mqttTopicPrefix", true)
         ) {
             request->send(422, "application/json", "{\"message\": \"not present mqtt params in request\"}");
             return;
@@ -219,6 +220,7 @@ void Handler::init()
         const AsyncWebParameter* ishaDiscoveryEnabled = request->getParam("mqttIsHADiscovery", true);
         const AsyncWebParameter* stateTopic = request->getParam("stateTopic", true);
         const AsyncWebParameter* commandTopic = request->getParam("commandTopic", true);
+        const AsyncWebParameter* mqttTopicPrefix = request->getParam("mqttTopicPrefix", true);
 
         if (host->value().length() == 0 || host->value().length() > HOST_LEN-1) {
             request->send(422, "application/json", "{\"message\": \"MQTT host lenght invalid\"}");
@@ -261,6 +263,11 @@ void Handler::init()
             return;
         }
 
+        if (mqttTopicPrefix->value().length() == 0 || mqttTopicPrefix->value().length() > MQTT_TOPIC_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"mqtt topic prefix length invalid\"}");
+            return;
+        }
+
         strcpy(config->mqtt.host, host->value().c_str());
         config->mqtt.port = (uint16_t)mqttPort;
         strcpy(config->mqtt.login, login->value().c_str());
@@ -268,6 +275,7 @@ void Handler::init()
         strcpy(config->mqttHADiscoveryPrefix, haDiscoveryPrefix->value().c_str());
         strcpy(config->mqttStateTopic, stateTopic->value().c_str());
         strcpy(config->mqttCommandTopic, commandTopic->value().c_str());
+        strcpy(config->mqttTopicPrefix, mqttTopicPrefix->value().c_str());
 
         if (strcmp(ishaDiscoveryEnabled->value().c_str(), "true") == 0) {
             config->mqttIsHADiscovery = true;
@@ -299,6 +307,7 @@ void Handler::init()
             entity["mqttHADiscoveryPrefix"] = config->mqttHADiscoveryPrefix;
             entity["mqttCommandTopic"] = config->mqttCommandTopic;
             entity["mqttStateTopic"] = config->mqttStateTopic;
+            entity["mqttTopicPrefix"] = config->mqttTopicPrefix;
         });
 
         response->write(payload.c_str());

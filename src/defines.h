@@ -19,6 +19,13 @@
 #define CONTROLLER_NAME "Neptunus"
 #endif
 
+#define RELAY_CHANNEL_FILLING_BARREL        0
+#define RELAY_CHANNEL_BYPASS                1
+#define RELAY_CHANNEL_HOME_PUMP_STATION     2
+#define RELAY_CHANNEL_DRAINAGE_PUMP         3
+#define RELAY_CHANNEL_FILLING_RAINWATER_PIT 4
+#define RELAY_CHANNEL_OUTDOOR_PUMP_STATION  5
+
 const char deviceName[] = CONTROLLER_NAME;
 const char deviceModel[] = "KC868-A6";
 const char deviceManufacturer[] = "Kincony";

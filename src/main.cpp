@@ -18,7 +18,6 @@
 #include "command/command_consumer.h"
 #include "meter/handler.h"
 #include "meter/meter.h"
-#include "relay/relay_mgr.h"
 #include "state/state.h"
 #include "state/producer.h"
 #include "web/handler.h"
@@ -31,8 +30,6 @@ EDWB::WirenBoard wirenboard(Serial2);
 
 PCF8574 inputDriver(INPUT_I2C_ADDRESS);
 PCF8574 relayDriver(RELAYS_I2C_ADDRESS);
-
-RelayMgr relayMgr(&relayDriver);
 
 EDHealthCheck::HealthCheck healthCheck;
 EDHA::DiscoveryMgr discoveryMgr;
@@ -51,7 +48,7 @@ Meter yardMeter(&inputDriver, &discoveryMgr, &yardRingStorage, &stateMgr);
 
 MeterHandler meterHandler(&homeMeter, &yardMeter);
 
-Automation automation(&discoveryMgr, &relayMgr, &stateMgr, &wirenboard, &homeMeter);
+Automation automation(&discoveryMgr, &mqtt, &relayDriver, &stateMgr, &wirenboard, &homeMeter);
 
 CommandConsumer commandConsumer(&automation);
 
@@ -81,6 +78,7 @@ void setup()
         snprintf(config->mqttStateTopic, MQTT_TOPIC_LEN, "neptunus/%s/state", EDUtils::getChipID());
         snprintf(config->mqttCommandTopic, MQTT_TOPIC_LEN, "neptunus/%s/set", EDUtils::getChipID());
         snprintf(config->mqttHADiscoveryPrefix, MQTT_TOPIC_LEN, "homeassistant");
+        snprintf(config->mqttTopicPrefix, MQTT_TOPIC_LEN, "neptunus/%s", EDUtils::getChipID());
 
         strcpy(config->log.host, "192.168.1.2");
         config->log.port = 5555;
@@ -109,9 +107,6 @@ void setup()
     LOGI("setup", "init PCF8574");
     inputDriver.begin();
     relayDriver.begin();
-
-    LOGI("setup", "init relays");
-    relayMgr.init();
 
     LOGI("setup", "init network");
     networkMgr.init(configMgr.getData()->network, false);

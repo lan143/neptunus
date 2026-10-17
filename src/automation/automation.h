@@ -8,24 +8,21 @@
 #include <discovery.h>
 #include <state/state_mgr.h>
 #include <wirenboard.h>
+#include <PCF8574.h>
+#include <relay/relay.h>
 
 #include "config.h"
 #include "meter/meter.h"
-#include "relay/relay_mgr.h"
 #include "state/state.h"
 
 #define WATER_MIN_LEVEL 0.37f
 #define WATER_MAX_LEVEL 1.2f
-#define SWITCH_TO_PUMP_STATION_PRESSURE 3.1f
+#define SWITCH_TO_HOME_PUMP_STATION_PRESSURE 3.1f
 #define EMERGENCY_PRESSURE 1.0f
 
 struct AutomationState
 {
     bool autoMode = false;
-    bool fillingBarrelValveOpen = false;
-    bool bypassValveOpen = false;
-    bool pumpStationEnabled = false;
-    bool drainagePumpEnabled = false;
 };
 
 class Automation
@@ -33,23 +30,20 @@ class Automation
 public:
     Automation(
         EDHA::DiscoveryMgr* discoveryMgr,
-        RelayMgr* relayMgr,
+        EDMQTT::MQTT* mqtt,
+        PCF8574* relayDriver,
         EDUtils::StateMgr<State>* stateMgr,
         EDWB::WirenBoard* wirenboard,
         Meter* meter
-    ) : _discoveryMgr(discoveryMgr), _relayMgr(relayMgr), _stateMgr(stateMgr), _wirenboard(wirenboard), _meter(meter)
+    ) : _discoveryMgr(discoveryMgr), _mqtt(mqtt), _relayDriver(relayDriver), _stateMgr(stateMgr), _wirenboard(wirenboard), _meter(meter)
     {
-        _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation.bin"));
+        _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation_v2.bin"));
     }
 
     void init(EDHA::Device* device, Config config);
     void update();
 
     bool changeAutoModeEnable(bool enable);
-    bool changeFillingBarrelValveOpen(bool open);
-    bool changeBypassValveOpen(bool open);
-    bool changePumpStationEnable(bool enable);
-    bool changeDrainagePumpEnable(bool enable);
 
 private:
     void buildDiscovery(EDHA::Device* device);
@@ -60,7 +54,7 @@ private:
 
     bool changeFillingBarrelValveOpenInternal(bool open);
     bool changeBypassValveOpenInternal(bool open);
-    bool changePumpStationEnableInternal(bool enable);
+    bool changeHomePumpStationEnableInternal(bool enable);
     bool changeDrainagePumpEnableInternal(bool enable);
 
 private:
@@ -76,9 +70,17 @@ private:
 private:
     EDConfig::DataMgr<AutomationState>* _localStateMgr = nullptr;
     EDHA::DiscoveryMgr* _discoveryMgr = nullptr;
-    RelayMgr* _relayMgr = nullptr;
+    EDMQTT::MQTT* _mqtt = nullptr;
+    PCF8574* _relayDriver = nullptr;
     EDUtils::StateMgr<State>* _stateMgr = nullptr;
     EDWB::WirenBoard* _wirenboard = nullptr;
+
+    EDCommon::Relay::Relay* _fillingBarrelRelay = nullptr;
+    EDCommon::Relay::Relay* _bypassRelay = nullptr;
+    EDCommon::Relay::Relay* _homePumpStationRelay = nullptr;
+    EDCommon::Relay::Relay* _drainagePumpRelay = nullptr;
+    EDCommon::Relay::Relay* _rainwaterPitRelay = nullptr;
+    EDCommon::Relay::Relay* _outdoorPumpStationRelay = nullptr;
 
     Config _config;
     EDWB::QDY30A* _qdy30a = nullptr;

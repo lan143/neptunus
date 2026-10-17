@@ -1,5 +1,6 @@
 #include <log/log.h>
 #include <Utils.h>
+#include <relay/pcf8574.h>
 
 #include "config.h"
 #include "automation.h"
@@ -23,12 +24,52 @@ void Automation::init(EDHA::Device* device, Config config)
         LOGE("init", "failed to setup pressure sensor");
     }
 
+    std::string topicPrefix = _config.mqttTopicPrefix;
+
+    auto fillingBarrelRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
+    fillingBarrelRelay->init(RELAY_CHANNEL_FILLING_BARREL, {
+        EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Filling Barrel Valve"),
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+    });
+    _fillingBarrelRelay = fillingBarrelRelay;
+
+    auto bypassRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
+    bypassRelay->init(RELAY_CHANNEL_BYPASS, {
+        EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Bypass Valve"),
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+    });
+    _bypassRelay = bypassRelay;
+
+    auto homePumpStationRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
+    homePumpStationRelay->init(RELAY_CHANNEL_HOME_PUMP_STATION, {
+        EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Home pump station"),
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+    });
+    _homePumpStationRelay = homePumpStationRelay;
+
+    auto drainagePumpRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
+    drainagePumpRelay->init(RELAY_CHANNEL_DRAINAGE_PUMP, {
+        EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Drainage Pump"),
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+    });
+    _drainagePumpRelay = drainagePumpRelay;
+
+    auto rainwaterPitRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
+    rainwaterPitRelay->init(RELAY_CHANNEL_FILLING_RAINWATER_PIT, {
+        EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Filling Rainwater Pit"),
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+    });
+    _rainwaterPitRelay = rainwaterPitRelay;
+
+    auto outdoorPumpStationRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
+    outdoorPumpStationRelay->init(RELAY_CHANNEL_OUTDOOR_PUMP_STATION, {
+        EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Outdoor pump station"),
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+    });
+    _outdoorPumpStationRelay = outdoorPumpStationRelay;
+
     auto state = _localStateMgr->getData();
     _stateMgr->getState().changeAutoModeState(state->autoMode);
-    changeFillingBarrelValveOpenInternal(state->fillingBarrelValveOpen);
-    changeBypassValveOpenInternal(state->bypassValveOpen);
-    changePumpStationEnableInternal(state->pumpStationEnabled);
-    changeDrainagePumpEnableInternal(state->drainagePumpEnabled);
 
     buildDiscovery(device);
 
@@ -42,6 +83,13 @@ void Automation::update()
         return;
     }
 
+    _fillingBarrelRelay->update();
+    _bypassRelay->update();
+    _homePumpStationRelay->update();
+    _drainagePumpRelay->update();
+    _rainwaterPitRelay->update();
+    _outdoorPumpStationRelay->update();
+
     if ((_pressureSensorLastUpdateTime + 10000000) < esp_timer_get_time()) {
         auto pressure = _mai6->getCalculatedValueN(1);
         if (pressure.second) {
@@ -49,12 +97,12 @@ void Automation::update()
             calculatedPressure = std::round(calculatedPressure * 100.0f) / 100.0f;
 
             _stateMgr->getState().setWaterPressureSupplier(calculatedPressure);
-            auto fillingBarrel = _relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->isEnabled();
+            auto fillingBarrel = _fillingBarrelRelay->isEnabled();
 
             if (!_meter->isFlowOfWaterActive() && fillingBarrel.second && fillingBarrel.first) {
-                if (calculatedPressure > SWITCH_TO_PUMP_STATION_PRESSURE && _goodPressureCount < 24) {
+                if (calculatedPressure > SWITCH_TO_HOME_PUMP_STATION_PRESSURE && _goodPressureCount < 24) {
                     _goodPressureCount++;
-                } else if (calculatedPressure < SWITCH_TO_PUMP_STATION_PRESSURE && _goodPressureCount > 0) {
+                } else if (calculatedPressure < SWITCH_TO_HOME_PUMP_STATION_PRESSURE && _goodPressureCount > 0) {
                     _goodPressureCount--;
                 }
 
@@ -66,6 +114,7 @@ void Automation::update()
             }
         } else {
             LOGE("update", "failed to get supplier water pressure");
+            _stateMgr->getState().setWaterPressureSupplier(0.0f);
         }
 
         _pressureSensorLastUpdateTime = esp_timer_get_time();
@@ -100,10 +149,10 @@ void Automation::update()
 
         _stateMgr->getState().changeEmergencyModeState(emergencyMode);
 
-        /*bool enablePumpStation = true;
+        /*bool enableHomePumpStation = true;
         if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
             changeBypassValveOpenInternal(true);
-            enablePumpStation = false;
+            enableHomePumpStation = false;
         } else {
             changeBypassValveOpenInternal(false);
         }*/
@@ -115,11 +164,11 @@ void Automation::update()
         }
 
         /*if (level <= WATER_MIN_LEVEL) {
-            enablePumpStation = false;
+            enableHomePumpStation = false;
         }
 
-        if (!changePumpStationEnableInternal(enablePumpStation)) {
-            LOGE("update", "failed to change pump station state. enable: %s", enablePumpStation ? "true" : "false");
+        if (!changeHomePumpStationEnableInternal(enableHomePumpStation)) {
+            LOGE("update", "failed to change pump station state. enable: %s", enableHomePumpStation ? "true" : "false");
         }*/
 
         LOGD(
@@ -140,62 +189,6 @@ bool Automation::changeAutoModeEnable(bool enable)
 {
     _localStateMgr->getData()->autoMode = enable;
     _stateMgr->getState().changeAutoModeState(enable);
-
-    return _localStateMgr->store();
-}
-
-bool Automation::changeFillingBarrelValveOpen(bool open)
-{
-    if (_localStateMgr->getData()->autoMode) {
-        return false;
-    }
-
-    if (!changeFillingBarrelValveOpenInternal(open)) {
-        return false;
-    }
-
-    _localStateMgr->getData()->fillingBarrelValveOpen = open;
-    _stateMgr->getState().changeFillingBarrelValveState(open);
-
-    return _localStateMgr->store();
-}
-
-bool Automation::changeBypassValveOpen(bool open)
-{
-    if (_localStateMgr->getData()->autoMode) {
-        return false;
-    }
-
-    if (!changeBypassValveOpenInternal(open)) {
-        return false;
-    }
-
-    _localStateMgr->getData()->bypassValveOpen = open;
-    _stateMgr->getState().changeBypassValveState(open);
-
-    return _localStateMgr->store();
-}
-
-bool Automation::changePumpStationEnable(bool enable)
-{
-    if (!changePumpStationEnableInternal(enable)) {
-        return false;
-    }
-
-    _localStateMgr->getData()->pumpStationEnabled = enable;
-    _stateMgr->getState().changePumpStationState(enable);
-
-    return _localStateMgr->store();
-}
-
-bool Automation::changeDrainagePumpEnable(bool enable)
-{
-    if (!changeDrainagePumpEnableInternal(enable)) {
-        return false;
-    }
-
-    _localStateMgr->getData()->drainagePumpEnabled = enable;
-    _stateMgr->getState().changeDrainagePumpState(enable);
 
     return _localStateMgr->store();
 }
@@ -323,54 +316,40 @@ std::pair<float_t, bool> Automation::getWaterLevel()
 
 bool Automation::changeFillingBarrelValveOpenInternal(bool open)
 {
-    if (!_relayMgr->getRelay(RELAY_TYPE_FILLING_BARREL)->changeState(!open)) {
-        return false;
+    auto desired = !open;
+    auto current = _fillingBarrelRelay->isEnabled();
+    if (current.second && current.first == desired) {
+        return true;
     }
-
-    _stateMgr->getState().changeFillingBarrelValveState(open);
-    _localStateMgr->getData()->fillingBarrelValveOpen = open;
-    _localStateMgr->store();
-
-    return true;
+    return _fillingBarrelRelay->setState(desired);
 }
 
 bool Automation::changeBypassValveOpenInternal(bool open)
 {
-    if (!_relayMgr->getRelay(RELAY_TYPE_BYPASS)->changeState(!open)) {
-        return false;
+    auto desired = !open;
+    auto current = _bypassRelay->isEnabled();
+    if (current.second && current.first == desired) {
+        return true;
     }
-
-    _stateMgr->getState().changeBypassValveState(open);
-    _localStateMgr->getData()->bypassValveOpen = open;
-    _localStateMgr->store();
-
-    return true;
+    return _bypassRelay->setState(desired);
 }
 
-bool Automation::changePumpStationEnableInternal(bool enable)
+bool Automation::changeHomePumpStationEnableInternal(bool enable)
 {
-    if (!_relayMgr->getRelay(RELAY_TYPE_PUMP_STATION)->changeState(enable)) {
-        return false;
+    auto current = _homePumpStationRelay->isEnabled();
+    if (current.second && current.first == enable) {
+        return true;
     }
-
-    _stateMgr->getState().changePumpStationState(enable);
-    _localStateMgr->getData()->pumpStationEnabled = enable;
-    _localStateMgr->store();
-
-    return true;
+    return _homePumpStationRelay->setState(enable);
 }
 
 bool Automation::changeDrainagePumpEnableInternal(bool enable)
 {
-    if (!_relayMgr->getRelay(RELAY_TYPE_DRAINAGE_PUMP)->changeState(enable)) {
-        return false;
+    auto current = _drainagePumpRelay->isEnabled();
+    if (current.second && current.first == enable) {
+        return true;
     }
-
-    _stateMgr->getState().changeDrainagePumpState(enable);
-    _localStateMgr->getData()->drainagePumpEnabled = enable;
-    _localStateMgr->store();
-
-    return true;
+    return _drainagePumpRelay->setState(enable);
 }
 
 void Automation::buildDiscovery(EDHA::Device* device)
@@ -407,66 +386,6 @@ void Automation::buildDiscovery(EDHA::Device* device)
         ->setCommandTopic(_config.mqttCommandTopic)
         ->setStateTopic(_config.mqttStateTopic)
         ->setValueTemplate("{{ value_json.autoMode }}")
-        ->setPayloadOn("true")
-        ->setPayloadOff("false")
-        ->setStateOn("true")
-        ->setStateOff("false");
-
-    _discoveryMgr->addSwitch(
-        device,
-        "Filling barrel valve",
-        "fillingBarrelValve",
-        EDUtils::formatString("filling_barrel_valve_neptunus_%s", EDUtils::getChipID())
-    )
-        ->setCommandTemplate("{\"fillingBarrelValve\": {{ value }} }")
-        ->setCommandTopic(_config.mqttCommandTopic)
-        ->setStateTopic(_config.mqttStateTopic)
-        ->setValueTemplate("{{ value_json.fillingBarrelValve }}")
-        ->setPayloadOn("true")
-        ->setPayloadOff("false")
-        ->setStateOn("true")
-        ->setStateOff("false");
-
-    _discoveryMgr->addSwitch(
-        device,
-        "Bypass valve",
-        "bypassValve",
-        EDUtils::formatString("bypass_valve_neptunus_%s", EDUtils::getChipID())
-    )
-        ->setCommandTemplate("{\"bypassValve\": {{ value }} }")
-        ->setCommandTopic(_config.mqttCommandTopic)
-        ->setStateTopic(_config.mqttStateTopic)
-        ->setValueTemplate("{{ value_json.bypassValve }}")
-        ->setPayloadOn("true")
-        ->setPayloadOff("false")
-        ->setStateOn("true")
-        ->setStateOff("false");
-
-    _discoveryMgr->addSwitch(
-        device,
-        "Pump station",
-        "pumpStation",
-        EDUtils::formatString("pump_station_neptunus_%s", EDUtils::getChipID())
-    )
-        ->setCommandTemplate("{\"pumpStation\": {{ value }} }")
-        ->setCommandTopic(_config.mqttCommandTopic)
-        ->setStateTopic(_config.mqttStateTopic)
-        ->setValueTemplate("{{ value_json.pumpStation }}")
-        ->setPayloadOn("true")
-        ->setPayloadOff("false")
-        ->setStateOn("true")
-        ->setStateOff("false");
-
-    _discoveryMgr->addSwitch(
-        device,
-        "Drainage pump",
-        "drainagePump",
-        EDUtils::formatString("drainage_pump_neptunus_%s", EDUtils::getChipID())
-    )
-        ->setCommandTemplate("{\"drainagePump\": {{ value }} }")
-        ->setCommandTopic(_config.mqttCommandTopic)
-        ->setStateTopic(_config.mqttStateTopic)
-        ->setValueTemplate("{{ value_json.drainagePump }}")
         ->setPayloadOn("true")
         ->setPayloadOff("false")
         ->setStateOn("true")

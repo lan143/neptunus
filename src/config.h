@@ -8,7 +8,7 @@
 
 #include "defines.h"
 
-#define CURRENT_VERSION 1
+#define CURRENT_VERSION 2
 
 #define MQTT_TOPIC_LEN 64
 
@@ -26,6 +26,7 @@ struct Config
     char mqttHADiscoveryPrefix[MQTT_TOPIC_LEN] = {0};
     char mqttCommandTopic[MQTT_TOPIC_LEN] = {0};
     char mqttStateTopic[MQTT_TOPIC_LEN] = {0};
+    char mqttTopicPrefix[MQTT_TOPIC_LEN] = {0};
 
     // modbus
     uint32_t modbusSpeed = 0;

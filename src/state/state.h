@@ -20,10 +20,6 @@ public:
     void setWaterPressureSupplier(float_t waterPressureSupplier) { _waterPressureSupplier = std::make_pair(waterPressureSupplier, true); }
 
     void changeAutoModeState(bool enabled) { _autoMode = std::make_pair(enabled, true); }
-    void changeFillingBarrelValveState(bool enabled) { _fillingBarrelValve = std::make_pair(enabled, true); }
-    void changeBypassValveState(bool enabled) { _bypassValve = std::make_pair(enabled, true); }
-    void changePumpStationState(bool enabled) { _pumpStation = std::make_pair(enabled, true); }
-    void changeDrainagePumpState(bool enabled) { _drainagePump = std::make_pair(enabled, true); }
     void changeEmergencyModeState(bool enabled) { _emergencyMode = std::make_pair(enabled, true); }
 
 private:
@@ -32,9 +28,5 @@ private:
     std::pair<float_t, bool> _yardWaterConsumption;
     std::pair<float_t, bool> _waterPressureSupplier;
     std::pair<bool, bool> _autoMode;
-    std::pair<bool, bool> _fillingBarrelValve;
-    std::pair<bool, bool> _bypassValve;
-    std::pair<bool, bool> _pumpStation;
-    std::pair<bool, bool> _drainagePump;
     std::pair<bool, bool> _emergencyMode;
 };
