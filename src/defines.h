@@ -13,8 +13,6 @@
 #define INPUT_I2C_ADDRESS  0x22
 #define RELAYS_I2C_ADDRESS 0x24
 
-#define GPIO_METER 32
-
 #ifndef CONTROLLER_NAME
 #define CONTROLLER_NAME "Neptunus"
 #endif
