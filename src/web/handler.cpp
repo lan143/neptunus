@@ -5,6 +5,7 @@
 #include <Json.h>
 #include <cstring>
 #include <string.h>
+#include <math.h>
 #include "defines.h"
 #include "handler.h"
 
@@ -108,6 +109,71 @@ void Handler::init()
         config->modbusSpeed = modbusSpeed;
         config->addressQDY30A = addressQDY30A;
         config->addressWBMAI6 = addressWBMAI6;
+
+        _configMgr->store();
+
+        request->send(200, "application/json", "{}");
+    });
+
+    _server->on("/api/settings/rainwater", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        AsyncResponseStream *response = request->beginResponseStream("application/json");
+
+        std::string payload = EDUtils::buildJson([this](JsonObject entity) {
+            auto config = _configMgr->getData();
+
+            entity["rainwaterPitLevelTopic"] = config->rainwaterPitLevelTopic;
+            entity["rainwaterPitMaxHeight"] = config->rainwaterPitMaxHeight;
+            entity["rainwaterPitMaxFillLevel"] = config->rainwaterPitMaxFillLevel;
+        });
+
+        response->write(payload.c_str());
+        request->send(response);
+    });
+
+    _server->on("/api/settings/rainwater", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        if (
+            !request->hasParam("rainwaterPitLevelTopic", true)
+            || !request->hasParam("rainwaterPitMaxHeight", true)
+            || !request->hasParam("rainwaterPitMaxFillLevel", true)
+        ) {
+            request->send(422, "application/json", "{\"message\": \"not present rainwater params in request\"}");
+            return;
+        }
+
+        const AsyncWebParameter* rainwaterPitLevelTopic = request->getParam("rainwaterPitLevelTopic", true);
+        const AsyncWebParameter* rainwaterPitMaxHeight = request->getParam("rainwaterPitMaxHeight", true);
+        const AsyncWebParameter* rainwaterPitMaxFillLevel = request->getParam("rainwaterPitMaxFillLevel", true);
+
+        if (rainwaterPitLevelTopic->value().length() > MQTT_TOPIC_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect rainwater pit level topic length\"}");
+            return;
+        }
+
+        float_t maxHeight;
+        if (EDUtils::str2float(&maxHeight, rainwaterPitMaxHeight->value().c_str()) != EDUtils::STR2INT_SUCCESS
+            || isnan(maxHeight) || isinf(maxHeight)
+            || maxHeight <= 0 || maxHeight > 10) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect rainwater pit max height\"}");
+            return;
+        }
+
+        float_t maxFillLevel;
+        if (EDUtils::str2float(&maxFillLevel, rainwaterPitMaxFillLevel->value().c_str()) != EDUtils::STR2INT_SUCCESS
+            || isnan(maxFillLevel) || isinf(maxFillLevel)
+            || maxFillLevel <= 0 || maxFillLevel > 100) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect rainwater pit max fill level\"}");
+            return;
+        }
+
+        if (maxFillLevel <= RAINWATER_PIT_FILL_START_PERCENT) {
+            request->send(422, "application/json", "{\"message\": \"rainwater pit max fill level must be greater than fill start level\"}");
+            return;
+        }
+
+        Config* config = _configMgr->getData();
+        std::strcpy(config->rainwaterPitLevelTopic, rainwaterPitLevelTopic->value().c_str());
+        config->rainwaterPitMaxHeight = maxHeight;
+        config->rainwaterPitMaxFillLevel = maxFillLevel;
 
         _configMgr->store();
 

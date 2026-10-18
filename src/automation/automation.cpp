@@ -98,6 +98,20 @@ void Automation::init(EDHA::Device* device, Config config)
         EDCommon::BinarySensor::withDiscovery(_discoveryMgr, device),
     });
 
+    if (strlen(_config.rainwaterPitLevelTopic) > 0) {
+        _rainwaterPitLevelConsumer = new RainwaterPitLevelConsumer();
+        _rainwaterPitLevelConsumer->onLevel([this](float value) {
+            _rainwaterPitLevelMeters = value;
+            _rainwaterPitLevelLastUpdateSec = esp_timer_get_time() / 1000000;
+            _rainwaterPitLevelReceived = true;
+        });
+        _rainwaterPitLevelConsumer->init(_config.rainwaterPitLevelTopic);
+        _mqtt->subscribe(_rainwaterPitLevelConsumer);
+        LOGI("init", "rainwater pit level consumer enabled, topic: %s", _config.rainwaterPitLevelTopic);
+    } else {
+        LOGI("init", "rainwater pit level consumer disabled (empty topic)");
+    }
+
     inited = true;
 }
 
@@ -125,8 +139,15 @@ void Automation::update()
             float_t calculatedPressure = pressure.first;
 
             auto fillingBarrel = _fillingBarrelRelay->isEnabled();
+            auto rainwaterPit = _rainwaterPitRelay->isEnabled();
 
-            if (!_meter->isFlowOfWaterActive() && fillingBarrel.second && fillingBarrel.first) {
+            // Counters only move when no filling valve is open. Pit relay state must
+            // be valid (conservative: an invalid state freezes the counters).
+            if (
+                !_meter->isFlowOfWaterActive()
+                && fillingBarrel.second && fillingBarrel.first
+                && rainwaterPit.second && rainwaterPit.first
+            ) {
                 if (calculatedPressure > SWITCH_TO_HOME_PUMP_STATION_PRESSURE && _goodPressureCount < 24) {
                     _goodPressureCount++;
                 } else if (calculatedPressure < SWITCH_TO_HOME_PUMP_STATION_PRESSURE && _goodPressureCount > 0) {
@@ -149,6 +170,57 @@ void Automation::update()
     if ((_lastUpdateTime + 1000000) < esp_timer_get_time()) {
         _lastUpdateTime = esp_timer_get_time();
 
+        float pitPct;
+        bool pitDataOk = getRainwaterPitLevelPercent(&pitPct);
+
+        // Outdoor pump protection: stop it when the rainwater pit is too low.
+        // Runs before the barrel sensor checks so it survives sensor failures.
+        // On missing/stale level data the pump is left untouched.
+        if (pitDataOk) {
+            if (pitPct < RAINWATER_PIT_PUMP_DISABLE_PERCENT && !_outdoorPumpStoppedByLevel) {
+                // Only latch ownership (and re-enable later) if this code actually
+                // stopped the pump. A pump that is already off (manual off / cold
+                // boot) must not be re-enabled by the recovery branch.
+                auto pumpNow = _outdoorPumpStationRelay->isEnabled();
+                if (pumpNow.second && !pumpNow.first) {
+                    // Pump already off; do nothing, do not latch.
+                } else if (changeOutdoorPumpStationEnableInternal(false)) {
+                    _outdoorPumpStoppedByLevel = true;
+                    LOGI("update", "outdoor pump station disabled, rainwater pit level: %f%%", pitPct);
+                } else {
+                    LOGE("update", "failed to disable outdoor pump station");
+                }
+            } else if (_outdoorPumpStoppedByLevel && pitPct > RAINWATER_PIT_PUMP_ENABLE_PERCENT) {
+                if (changeOutdoorPumpStationEnableInternal(true)) {
+                    _outdoorPumpStoppedByLevel = false;
+                    LOGI("update", "outdoor pump station enabled, rainwater pit level: %f%%", pitPct);
+                } else {
+                    LOGE("update", "failed to enable outdoor pump station");
+                }
+            }
+        }
+
+        // Pit fill session safety: stop an active fill when level feedback is
+        // missing/stale or the target is reached. Runs before the auto-mode gate
+        // so an abandoned open valve cannot flood the yard in manual mode.
+        if (_rainwaterPitFillingSession && !pitDataOk) {
+            if (changeRainwaterPitValveOpenInternal(false)) {
+                _rainwaterPitFillingSession = false;
+                LOGI("update", "rainwater pit filling stopped: no fresh evelyn data");
+            } else {
+                // Keep the session so the stop is retried on the next tick.
+                LOGE("update", "failed to close rainwater pit valve");
+            }
+        } else if (_rainwaterPitFillingSession && pitPct >= _config.rainwaterPitMaxFillLevel) {
+            if (changeRainwaterPitValveOpenInternal(false)) {
+                _rainwaterPitFillingSession = false;
+                LOGI("update", "rainwater pit filling reached target level: %f%%", pitPct);
+            } else {
+                // Keep the session so the stop is retried on the next tick.
+                LOGE("update", "failed to close rainwater pit valve");
+            }
+        }
+
         if (_waterLevelSensor == nullptr) {
             LOGE("update", "water level sensor not initialized");
             return;
@@ -170,22 +242,41 @@ void Automation::update()
         auto enableLevel = middleLevel - middleLevel * 0.25;
         auto disableLevel = middleLevel + middleLevel * 0.25;
 
+        // Relay::setState only enqueues, so a barrel-open commanded this tick is
+        // invisible to isEnabled() until the next relay->update(). Compute the
+        // effective valve states here and overlay this pass's deterministic
+        // barrel hysteresis intent, so pit/bypass/emergency decisions see the
+        // barrel priority in the SAME tick the barrel is first commanded open.
+        auto barrelRelay = _fillingBarrelRelay->isEnabled();
+        auto pitRelay = _rainwaterPitRelay->isEnabled();
+
+        bool barrelValveOpen = barrelRelay.second && !barrelRelay.first;
+        if (level <= enableLevel) {
+            barrelValveOpen = true;
+        } else if (level >= disableLevel) {
+            barrelValveOpen = false;
+        }
+
+        bool pitValveOpen = pitRelay.second && !pitRelay.first;
+        bool fillingActive = barrelValveOpen || pitValveOpen;
+
         bool emergencyMode = false;
-        if (_badPressureCount > 12) { // fill the barrel completely if there is a suspicion of an accident
+        if (!fillingActive && _badPressureCount > 12) { // fill the barrel completely if there is a suspicion of an accident
             enableLevel = WATER_MAX_LEVEL - WATER_MAX_LEVEL * 0.2f;
             disableLevel = WATER_MAX_LEVEL - WATER_MAX_LEVEL * 0.1f;
             emergencyMode = true;
+            // Re-overlay barrel hysteresis intent with the EMERGENCY thresholds, so
+            // fillingActive reflects a barrel open commanded this tick before the
+            // pit/bypass/pump decisions below.
+            if (level <= enableLevel) {
+                barrelValveOpen = true;
+            } else if (level >= disableLevel) {
+                barrelValveOpen = false;
+            }
+            fillingActive = barrelValveOpen || pitValveOpen;
         }
 
         _emergencyModeSensor->setValue(emergencyMode);
-
-        /*bool enableHomePumpStation = true;
-        if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
-            changeBypassValveOpenInternal(true);
-            enableHomePumpStation = false;
-        } else {
-            changeBypassValveOpenInternal(false);
-        }*/
 
         if (level <= enableLevel) {
             changeFillingBarrelValveOpenInternal(true);
@@ -193,22 +284,56 @@ void Automation::update()
             changeFillingBarrelValveOpenInternal(false);
         }
 
-        /*if (level <= WATER_MIN_LEVEL) {
-            enableHomePumpStation = false;
+        // While any filling valve is open, keep the bypass valve and the home pump
+        // station in their prior state.
+        if (!fillingActive) {
+            bool enableHomePumpStation = true;
+            if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
+                changeBypassValveOpenInternal(true);
+                enableHomePumpStation = false;
+            } else {
+                changeBypassValveOpenInternal(false);
+            }
+
+            if (level <= WATER_MIN_LEVEL) {
+                enableHomePumpStation = false;
+            }
+
+            if (!changeHomePumpStationEnableInternal(enableHomePumpStation)) {
+                LOGE("update", "failed to change pump station state. enable: %s", enableHomePumpStation ? "true" : "false");
+            }
         }
 
-        if (!changeHomePumpStationEnableInternal(enableHomePumpStation)) {
-            LOGE("update", "failed to change pump station state. enable: %s", enableHomePumpStation ? "true" : "false");
-        }*/
+        // Barrel priority: the pit valve must never stay open while the barrel valve
+        // is open. The session flag is retained so filling resumes once the barrel closes.
+        if (barrelValveOpen && pitValveOpen) {
+            changeRainwaterPitValveOpenInternal(false);
+            pitValveOpen = false;
+        }
+
+        if (_rainwaterPitFillingSession) {
+            if (!barrelValveOpen && !pitValveOpen) {
+                changeRainwaterPitValveOpenInternal(true);
+                LOGI("update", "rainwater pit filling resumed");
+            }
+        } else if (pitDataOk && pitPct < RAINWATER_PIT_FILL_START_PERCENT && !barrelValveOpen) {
+            if (changeRainwaterPitValveOpenInternal(true)) {
+                _rainwaterPitFillingSession = true;
+                LOGI("update", "rainwater pit filling started, level: %f%%", pitPct);
+            }
+        }
 
         LOGD(
             "update",
-            "middle level: %f, enable level: %f, disable level: %f, current level: %f, emergency mode: %s, good pressure count: %d, bad pressure count: %d",
+            "middle level: %f, enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, good pressure count: %d, bad pressure count: %d",
             middleLevel,
             enableLevel,
             disableLevel,
             level,
             emergencyMode ? "true" : "false",
+            fillingActive ? "true" : "false",
+            pitDataOk ? pitPct : -1.0f,
+            _rainwaterPitFillingSession ? "true" : "false",
             _goodPressureCount,
             _badPressureCount
         );
@@ -244,6 +369,15 @@ bool Automation::changeHomePumpStationEnableInternal(bool enable)
     return _homePumpStationRelay->setState(enable);
 }
 
+bool Automation::changeOutdoorPumpStationEnableInternal(bool enable)
+{
+    auto current = _outdoorPumpStationRelay->isEnabled();
+    if (current.second && current.first == enable) {
+        return true;
+    }
+    return _outdoorPumpStationRelay->setState(enable);
+}
+
 bool Automation::changeDrainagePumpEnableInternal(bool enable)
 {
     auto current = _drainagePumpRelay->isEnabled();
@@ -251,5 +385,38 @@ bool Automation::changeDrainagePumpEnableInternal(bool enable)
         return true;
     }
     return _drainagePumpRelay->setState(enable);
+}
+
+bool Automation::changeRainwaterPitValveOpenInternal(bool open)
+{
+    auto desired = !open;
+    auto current = _rainwaterPitRelay->isEnabled();
+    if (current.second && current.first == desired) {
+        return true;
+    }
+    return _rainwaterPitRelay->setState(desired);
+}
+
+bool Automation::getRainwaterPitLevelPercent(float* percent)
+{
+    if (strlen(_config.rainwaterPitLevelTopic) == 0) {
+        return false;
+    }
+
+    if (!_rainwaterPitLevelReceived) {
+        return false;
+    }
+
+    uint32_t nowSec = esp_timer_get_time() / 1000000;
+    if ((nowSec - _rainwaterPitLevelLastUpdateSec) > RAINWATER_PIT_DATA_TIMEOUT_SEC) {
+        return false;
+    }
+
+    if (_config.rainwaterPitMaxHeight <= 0) {
+        return false;
+    }
+
+    *percent = _rainwaterPitLevelMeters / _config.rainwaterPitMaxHeight * 100.0f;
+    return true;
 }
 

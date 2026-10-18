@@ -13,11 +13,16 @@
 #include <counter/pcf8574.h>
 
 #include "config.h"
+#include "rainwater_level_consumer.h"
 
 #define WATER_MIN_LEVEL 0.37f
 #define WATER_MAX_LEVEL 1.2f
 #define SWITCH_TO_HOME_PUMP_STATION_PRESSURE 3.1f
 #define EMERGENCY_PRESSURE 1.0f
+
+#define RAINWATER_PIT_PUMP_DISABLE_PERCENT 8.0f
+#define RAINWATER_PIT_PUMP_ENABLE_PERCENT 10.0f
+#define RAINWATER_PIT_DATA_TIMEOUT_SEC 600
 
 struct AutomationState
 {
@@ -46,6 +51,14 @@ private:
     bool changeBypassValveOpenInternal(bool open);
     bool changeHomePumpStationEnableInternal(bool enable);
     bool changeDrainagePumpEnableInternal(bool enable);
+    bool changeRainwaterPitValveOpenInternal(bool open);
+    bool changeOutdoorPumpStationEnableInternal(bool enable);
+
+    // Returns the current rainwater pit level as a percentage of the configured
+    // max height. Returns false when the feature is disabled (empty topic), no
+    // valid level was received yet, the data is stale (RAINWATER_PIT_DATA_TIMEOUT_SEC),
+    // or the configured max height is invalid.
+    bool getRainwaterPitLevelPercent(float* percent);
 
 private:
     uint64_t _lastUpdateTime = 0;
@@ -74,5 +87,16 @@ private:
     EDCommon::Sensor::WaterLevel* _waterLevelSensor = nullptr;
     EDCommon::Sensor::WBMAI6Pressure* _pressureSensor = nullptr;
     EDCommon::Counter::PCF8574P* _meter = nullptr;
+
+    RainwaterPitLevelConsumer* _rainwaterPitLevelConsumer = nullptr;
+    // Written from the MQTT task callback, read from the main loop task.
+    volatile float _rainwaterPitLevelMeters = 0.0f;
+    volatile uint32_t _rainwaterPitLevelLastUpdateSec = 0;
+    volatile bool _rainwaterPitLevelReceived = false;
+
+    // Rainwater pit fill session state (in-memory only).
+    bool _rainwaterPitFillingSession = false;
+    bool _outdoorPumpStoppedByLevel = false;
+
     bool inited = false;
 };

@@ -84,6 +84,10 @@ void setup()
         config->modbusSpeed = 9600;
         config->addressQDY30A = 1;
         config->addressWBMAI6 = 2;
+
+        config->rainwaterPitMaxHeight = 1.6f;
+        config->rainwaterPitMaxFillLevel = 20.0f;
+        // rainwaterPitLevelTopic left empty: feature disabled until configured
     });
 
     LOGI("setup", "load config");

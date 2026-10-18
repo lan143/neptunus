@@ -12,6 +12,10 @@
 
 #define MQTT_TOPIC_LEN 64
 
+// Rainwater pit fill start threshold (percent). The configured max fill level
+// must be strictly greater than this value.
+#define RAINWATER_PIT_FILL_START_PERCENT 10.0f
+
 struct Config
 {
     uint8_t version = CURRENT_VERSION;
@@ -32,4 +36,9 @@ struct Config
     uint32_t modbusSpeed = 0;
     uint8_t addressQDY30A = 0;
     uint8_t addressWBMAI6 = 0;
+
+    // rainwater pit
+    char rainwaterPitLevelTopic[MQTT_TOPIC_LEN] = {0};
+    float rainwaterPitMaxHeight = 1.6f;
+    float rainwaterPitMaxFillLevel = 20.0f;
 };
