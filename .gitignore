@@ -4,3 +4,7 @@
 .vscode/launch.json
 .vscode/ipch
 .DS_Store
+
+# Frontend (Vite + Preact); build output intentionally lands in data/
+frontend/node_modules/
+frontend/dist/

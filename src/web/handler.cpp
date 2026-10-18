@@ -12,28 +12,12 @@
 void Handler::init()
 {
     _server->serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-    _server->serveStatic("/jquery-3.6.0.min.js", LittleFS, "/jquery-3.6.0.min.js");
-    _server->serveStatic("/bootstrap.min.js", LittleFS, "/bootstrap.min.js");
 
     _healthCheck->registerHandlers(_server);
     _meterHandler->registerHandler(_server);
 
-    _server->on("/api/wifi/list", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        /*AsyncResponseStream *response = request->beginResponseStream("application/json");
+    _networkApi->registerRoutes(*_server);
 
-        DynamicJsonDocument json(200);
-
-        auto networks = this->_wifiService->getWifiNetworks();
-
-        for (auto i = networks.begin(); i != networks.end(); i++) {
-            json.add(*i);
-        }
-
-        serializeJson(json, *response);
-
-        request->send(response);*/
-    });
-    
     _server->on("/api/settings/modbus", HTTP_GET, [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
 

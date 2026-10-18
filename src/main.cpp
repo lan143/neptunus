@@ -9,6 +9,7 @@
 #include <PCF8574.h>
 #include <Wire.h>
 #include <network/network.h>
+#include <network/network_api.h>
 #include <log/log.h>
 
 #include "defines.h"
@@ -22,6 +23,7 @@
 
 EDConfig::DataMgr<Config> configMgr(new EDConfig::StorageLittleFS<Config>("/config.bin"));
 EDNetwork::NetworkMgr networkMgr;
+EDNetwork::NetworkApi networkApi(networkMgr);
 EDMQTT::MQTT mqtt;
 
 EDWB::WirenBoard wirenboard(Serial2);
@@ -47,7 +49,7 @@ MeterHandler meterHandler(&homeMeter, &yardMeter);
 
 Automation automation(&discoveryMgr, &mqtt, &relayDriver, &wirenboard, &homeMeter);
 
-Handler handler(&configMgr, &networkMgr, &healthCheck, &meterHandler);
+Handler handler(&configMgr, &networkApi, &networkMgr, &healthCheck, &meterHandler);
 
 bool inited = false;
 
@@ -126,6 +128,11 @@ void setup()
         }
     });
     healthCheck.registerService(&mqtt);
+
+    networkApi.onSettingsChanged([&](const EDNetwork::Config& config) -> bool {
+        configMgr.getData()->network = config;
+        return configMgr.store();
+    });
 
     LOGI("setup", "api handler init");
     handler.init();
