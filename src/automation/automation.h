@@ -10,6 +10,7 @@
 #include <wirenboard.h>
 #include <PCF8574.h>
 #include <relay/relay.h>
+#include <binary_sensor/binary_sensor.h>
 #include <counter/pcf8574.h>
 
 #include "config.h"
@@ -43,8 +44,6 @@ public:
     void init(EDHA::Device* device, Config config);
     void update();
 
-    bool changeAutoModeEnable(bool enable);
-
 private:
     void buildDiscovery(EDHA::Device* device);
     bool setupPressureSensor();
@@ -59,6 +58,7 @@ private:
     uint64_t _pressureSensorLastUpdateTime = 0;
     uint32_t _goodPressureCount = 0;
     uint32_t _badPressureCount = 0;
+    bool _autoModeSeeding = false;
 
 private:
     EDConfig::DataMgr<AutomationState>* _localStateMgr = nullptr;
@@ -74,6 +74,8 @@ private:
     EDCommon::Relay::Relay* _drainagePumpRelay = nullptr;
     EDCommon::Relay::Relay* _rainwaterPitRelay = nullptr;
     EDCommon::Relay::Relay* _outdoorPumpStationRelay = nullptr;
+    EDCommon::Relay::Relay* _autoModeRelay = nullptr;
+    EDCommon::BinarySensor::BinarySensor* _emergencyModeSensor = nullptr;
 
     Config _config;
     EDCommon::Sensor::WaterLevel* _waterLevelSensor = nullptr;

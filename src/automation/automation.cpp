@@ -72,8 +72,27 @@ void Automation::init(EDHA::Device* device, Config config)
     });
     _outdoorPumpStationRelay = outdoorPumpStationRelay;
 
-    auto state = _localStateMgr->getData();
-    _stateMgr->getState().changeAutoModeState(state->autoMode);
+    bool storedAutoMode = _localStateMgr->getData()->autoMode;
+    _autoModeSeeding = true;
+    _autoModeRelay = new EDCommon::Relay::Relay();
+    _autoModeRelay->init({
+        EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Auto mode"),
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device),
+        EDCommon::Relay::withStateChangeListener([this](bool enable) {
+            if (_autoModeSeeding) return;
+            _localStateMgr->getData()->autoMode = enable;
+            if (!_localStateMgr->store()) {
+                LOGE("update", "failed to store automation state");
+            }
+        })
+    });
+    _autoModeRelay->setState(storedAutoMode);
+
+    _emergencyModeSensor = new EDCommon::BinarySensor::BinarySensor();
+    _emergencyModeSensor->init(1000, {
+        EDCommon::BinarySensor::withMQTT(_mqtt, topicPrefix, "neptunus_sensor", "Emergency mode"),
+        EDCommon::BinarySensor::withDiscovery(_discoveryMgr, device),
+    });
 
     buildDiscovery(device);
 
@@ -93,6 +112,9 @@ void Automation::update()
     _drainagePumpRelay->update();
     _rainwaterPitRelay->update();
     _outdoorPumpStationRelay->update();
+    _autoModeRelay->update();
+    _autoModeSeeding = false;
+    _emergencyModeSensor->update();
 
     if ((_pressureSensorLastUpdateTime + 10000000) < esp_timer_get_time()) {
         auto pressure = _mai6->getCalculatedValueN(1);
@@ -138,7 +160,7 @@ void Automation::update()
             return;
         }
 
-        if (!_localStateMgr->getData()->autoMode) {
+        if (!_autoModeRelay->isEnabled().first) {
             return;
         }
 
@@ -155,7 +177,7 @@ void Automation::update()
             emergencyMode = true;
         }
 
-        _stateMgr->getState().changeEmergencyModeState(emergencyMode);
+        _emergencyModeSensor->setValue(emergencyMode);
 
         /*bool enableHomePumpStation = true;
         if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
@@ -191,14 +213,6 @@ void Automation::update()
             _badPressureCount
         );
     }
-}
-
-bool Automation::changeAutoModeEnable(bool enable)
-{
-    _localStateMgr->getData()->autoMode = enable;
-    _stateMgr->getState().changeAutoModeState(enable);
-
-    return _localStateMgr->store();
 }
 
 bool Automation::setupPressureSensor()
@@ -306,31 +320,4 @@ void Automation::buildDiscovery(EDHA::Device* device)
         ->setValueTemplate("{{ value_json.waterPressureSupplier }}")
         ->setDeviceClass("pressure")
         ->setUnitOfMeasurement("bar");
-
-    _discoveryMgr->addSwitch(
-        device,
-        "Auto mode",
-        "autoMode",
-        EDUtils::formatString("auto_mode_neptunus_%s", EDUtils::getChipID())
-    )
-        ->setCommandTemplate("{\"autoMode\": {{ value }} }")
-        ->setCommandTopic(_config.mqttCommandTopic)
-        ->setStateTopic(_config.mqttStateTopic)
-        ->setValueTemplate("{{ value_json.autoMode }}")
-        ->setPayloadOn("true")
-        ->setPayloadOff("false")
-        ->setStateOn("true")
-        ->setStateOff("false");
-
-    _discoveryMgr->addBinarySensor(
-        device,
-        "Emergency mode",
-        "emergency_mode",
-        EDUtils::formatString("emergency_mode_neptunus_%s", chipID)
-    )
-        ->setStateTopic(_config.mqttStateTopic)
-        ->setValueTemplate("{{ value_json.emergencyMode }}")
-        ->setPayloadOn("true")
-        ->setPayloadOff("false")
-        ->setDeviceClass(EDHA::deviceClassBinarySensorProblem);
 }

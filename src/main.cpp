@@ -17,7 +17,6 @@
 #include "automation/automation.h"
 #include <counter/pcf8574.h>
 
-#include "command/command_consumer.h"
 #include "meter/handler.h"
 #include "meter/persistence.h"
 #include "state/state.h"
@@ -53,8 +52,6 @@ EDCommon::Counter::PCF8574P yardMeter(&inputDriver);
 MeterHandler meterHandler(&homeMeter, &yardMeter);
 
 Automation automation(&discoveryMgr, &mqtt, &relayDriver, &stateMgr, &wirenboard, &homeMeter);
-
-CommandConsumer commandConsumer(&automation);
 
 Handler handler(&configMgr, &networkMgr, &healthCheck, &meterHandler);
 
@@ -189,10 +186,6 @@ void setup()
 
     LOGI("setup", "automation init");
     automation.init(device, *configMgr.getData());
-
-    LOGI("setup", "command consumer init");
-    commandConsumer.init(configMgr.getData()->mqttCommandTopic);
-    mqtt.subscribe(&commandConsumer);
 
     inited = true;
     LOGI("setup", "complete");
