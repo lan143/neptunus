@@ -14,12 +14,16 @@ void Automation::init(EDHA::Device* device, Config config)
 
     _config = config;
 
-    _mai6 = _wirenboard->addMAI6(config.addressWBMAI6);
-    if (!setupPressureSensor()) {
-        LOGE("init", "failed to setup pressure sensor");
-    }
-
     std::string topicPrefix = _config.mqttTopicPrefix;
+
+    auto mai6 = _wirenboard->addMAI6(config.addressWBMAI6);
+    _pressureSensor = new EDCommon::Sensor::WBMAI6Pressure(mai6, 1);
+    if (!_pressureSensor->init(2, 10000, {
+        EDCommon::Sensor::withMQTT(_mqtt, topicPrefix, "neptunus_sensor", "Water pressure supplier"),
+        EDCommon::Sensor::withDiscovery(_discoveryMgr, device)
+    })) {
+        LOGE("init", "failed to init pressure sensor");
+    }
 
     auto qdy30a = _wirenboard->addQDY30A(config.addressQDY30A);
     _waterLevelSensor = new EDCommon::Sensor::WaterLevel(qdy30a);
@@ -94,8 +98,6 @@ void Automation::init(EDHA::Device* device, Config config)
         EDCommon::BinarySensor::withDiscovery(_discoveryMgr, device),
     });
 
-    buildDiscovery(device);
-
     inited = true;
 }
 
@@ -115,14 +117,13 @@ void Automation::update()
     _autoModeRelay->update();
     _autoModeSeeding = false;
     _emergencyModeSensor->update();
+    _pressureSensor->update();
 
     if ((_pressureSensorLastUpdateTime + 10000000) < esp_timer_get_time()) {
-        auto pressure = _mai6->getCalculatedValueN(1);
+        auto pressure = _pressureSensor->getValue();
         if (pressure.second) {
-            float_t calculatedPressure = (float_t)pressure.first / 100.0f;
-            calculatedPressure = std::round(calculatedPressure * 100.0f) / 100.0f;
+            float_t calculatedPressure = pressure.first;
 
-            _stateMgr->getState().setWaterPressureSupplier(calculatedPressure);
             auto fillingBarrel = _fillingBarrelRelay->isEnabled();
 
             if (!_meter->isFlowOfWaterActive() && fillingBarrel.second && fillingBarrel.first) {
@@ -140,7 +141,6 @@ void Automation::update()
             }
         } else {
             LOGE("update", "failed to get supplier water pressure");
-            _stateMgr->getState().setWaterPressureSupplier(0.0f);
         }
 
         _pressureSensorLastUpdateTime = esp_timer_get_time();
@@ -215,60 +215,6 @@ void Automation::update()
     }
 }
 
-bool Automation::setupPressureSensor()
-{
-    LOGI("setupPressureSensor", "setup");
-
-    auto sensorType = _mai6->getSensorTypeN(1);
-    if (!sensorType.second) {
-        LOGE("setupPressureSensor", "failed to get sensor type");
-        return false;
-    }
-
-    if (sensorType.first != 0x1302) { // 4-20 mA sensor
-        LOGD("setupPressureSensor", "change sensor type");
-
-        if (!_mai6->setSensorTypeN(1, 0x1302)) {
-            LOGE("setupPressureSensor", "failed to update sensor type");
-            return false;
-        }
-    }
-
-    auto minCalculateValue = _mai6->getMinCalculatedValueN(1);
-    if (!minCalculateValue.second) {
-        LOGE("setupPressureSensor", "failed to get min calculated value");
-        return false;
-    }
-
-    if (minCalculateValue.first != 0) {
-        LOGD("setupPressureSensor", "change min calculated value");
-
-        if (!_mai6->setMinCalculatedValueN(1, 0)) {
-            LOGE("setupPressureSensor", "failed to set min calculated value");
-            return false;
-        }
-    }
-
-    auto maxCalculatedValue = _mai6->getMaxCalculatedValueN(1);
-    if (!maxCalculatedValue.second) {
-        LOGE("setupPressureSensor", "failed to get max calculated value");
-        return false;
-    }
-
-    if (maxCalculatedValue.first != 1000) { // 10 Bar
-        LOGD("setupPressureSensor", "change max calculated value");
-
-        if (!_mai6->setMaxCalculatedValueN(1, 1000)) {
-            LOGE("setupPressureSensor", "failed to set max calculated value");
-            return false;
-        }
-    }
-
-    LOGI("setupPressureSensor", "setup complete");
-
-    return true;
-}
-
 bool Automation::changeFillingBarrelValveOpenInternal(bool open)
 {
     auto desired = !open;
@@ -307,17 +253,3 @@ bool Automation::changeDrainagePumpEnableInternal(bool enable)
     return _drainagePumpRelay->setState(enable);
 }
 
-void Automation::buildDiscovery(EDHA::Device* device)
-{
-    const char* chipID = EDUtils::getChipID();
-    _discoveryMgr->addSensor(
-        device,
-        "Water pressure supplier",
-        "waterPressureSupplier",
-        EDUtils::formatString("water_pressure_supplier_neptunus_%s", chipID)
-    )
-        ->setStateTopic(_config.mqttStateTopic)
-        ->setValueTemplate("{{ value_json.waterPressureSupplier }}")
-        ->setDeviceClass("pressure")
-        ->setUnitOfMeasurement("bar");
-}

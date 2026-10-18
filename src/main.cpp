@@ -6,7 +6,6 @@
 #include <discovery.h>
 #include <mqtt.h>
 #include <healthcheck.h>
-#include <state/state_mgr.h>
 #include <PCF8574.h>
 #include <Wire.h>
 #include <network/network.h>
@@ -19,8 +18,6 @@
 
 #include "meter/handler.h"
 #include "meter/persistence.h"
-#include "state/state.h"
-#include "state/producer.h"
 #include "web/handler.h"
 
 EDConfig::DataMgr<Config> configMgr(new EDConfig::StorageLittleFS<Config>("/config.bin"));
@@ -36,9 +33,6 @@ EDHealthCheck::HealthCheck healthCheck;
 EDHA::DiscoveryMgr discoveryMgr;
 EDHA::Device* device = nullptr;
 
-StateProducer stateProducer(&mqtt);
-EDUtils::StateMgr<State> stateMgr(&stateProducer);
-
 EDConfig::DataMgr<MeterState> homeRingStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/meter.bin"));
 RingStorage homeRingStorage(&homeRingStorageDataMgr);
 RingStoragePersistence homePersistence(&homeRingStorage);
@@ -51,7 +45,7 @@ EDCommon::Counter::PCF8574P yardMeter(&inputDriver);
 
 MeterHandler meterHandler(&homeMeter, &yardMeter);
 
-Automation automation(&discoveryMgr, &mqtt, &relayDriver, &stateMgr, &wirenboard, &homeMeter);
+Automation automation(&discoveryMgr, &mqtt, &relayDriver, &wirenboard, &homeMeter);
 
 Handler handler(&configMgr, &networkMgr, &healthCheck, &meterHandler);
 
@@ -149,9 +143,6 @@ void setup()
         ->setName(deviceName)
         ->setManufacturer(deviceManufacturer);
 
-    LOGI("setup", "state producer init");
-    stateProducer.init(configMgr.getData()->mqttStateTopic);
-
     LOGI("setup", "init home water meter");
     homeRingStorageDataMgr.setDefault([](MeterState* state) {
         for (int i = 0; i < RING_STORAGE_SIZE; i++) {
@@ -201,7 +192,6 @@ void loop()
     discoveryMgr.loop();
     ArduinoOTA.handle();
     healthCheck.loop();
-    stateMgr.loop();
     networkLogger.update();
     automation.update();
     homeMeter.update();
