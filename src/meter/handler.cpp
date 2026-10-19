@@ -1,4 +1,5 @@
 #include <Json.h>
+#include <cmath>
 
 #include "handler.h"
 
@@ -22,23 +23,26 @@ void MeterHandler::registerHandler(AsyncWebServer* server)
             return;
         }
 
-        float_t initialValue;
+        float_t homeValue;
+        float_t yardValue;
         const AsyncWebParameter* homeWaterInitialValueParam = request->getParam("homeWaterInitialValue", true);
         const AsyncWebParameter* yardWaterInitialValueParam = request->getParam("yardWaterInitialValue", true);
 
-        if (EDUtils::str2float(&initialValue, homeWaterInitialValueParam->value().c_str()) != EDUtils::STR2INT_SUCCESS) {
+        // uint32 counter stores value*1000/cost (yard cost=1) -> max ~4,294,967 m³
+        if (EDUtils::str2float(&homeValue, homeWaterInitialValueParam->value().c_str()) != EDUtils::STR2INT_SUCCESS
+            || !std::isfinite(homeValue) || homeValue < 0 || homeValue > 4294967) {
             request->send(422, "application/json", "{\"message\": \"Incorrect home water initial value\"}");
             return;
         }
 
-        _homeWaterConsumptionMeter->setInitialValue(initialValue);
-
-        if (EDUtils::str2float(&initialValue, yardWaterInitialValueParam->value().c_str()) != EDUtils::STR2INT_SUCCESS) {
+        if (EDUtils::str2float(&yardValue, yardWaterInitialValueParam->value().c_str()) != EDUtils::STR2INT_SUCCESS
+            || !std::isfinite(yardValue) || yardValue < 0 || yardValue > 4294967) {
             request->send(422, "application/json", "{\"message\": \"Incorrect yard water meter initial value\"}");
             return;
         }
 
-        _yardWaterConsumptionMeter->setInitialValue(initialValue);
+        _homeWaterConsumptionMeter->setInitialValue(homeValue);
+        _yardWaterConsumptionMeter->setInitialValue(yardValue);
 
         request->send(200, "application/json", "{}");
     });

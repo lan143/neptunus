@@ -52,14 +52,16 @@ void Automation::init(EDHA::Device* device, Config config)
     auto fillingBarrelRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
     fillingBarrelRelay->init(RELAY_CHANNEL_FILLING_BARREL, {
         EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Filling Barrel Valve"),
-        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device),
+        EDCommon::Relay::withOpenSemantics()
     });
     _fillingBarrelRelay = fillingBarrelRelay;
 
     auto bypassRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
     bypassRelay->init(RELAY_CHANNEL_BYPASS, {
         EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Bypass Valve"),
-        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device),
+        EDCommon::Relay::withOpenSemantics()
     });
     _bypassRelay = bypassRelay;
 
@@ -80,7 +82,8 @@ void Automation::init(EDHA::Device* device, Config config)
     auto rainwaterPitRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
     rainwaterPitRelay->init(RELAY_CHANNEL_FILLING_RAINWATER_PIT, {
         EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Filling Rainwater Pit"),
-        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device),
+        EDCommon::Relay::withOpenSemantics()
     });
     _rainwaterPitRelay = rainwaterPitRelay;
 

@@ -290,6 +290,9 @@ void Handler::init()
             || !request->hasParam("login", true)
             || !request->hasParam("password", true)
             || !request->hasParam("haDiscoveryPrefix", true)
+            || !request->hasParam("mqttIsHADiscovery", true)
+            || !request->hasParam("stateTopic", true)
+            || !request->hasParam("commandTopic", true)
             || !request->hasParam("mqttTopicPrefix", true)
         ) {
             request->send(422, "application/json", "{\"message\": \"not present mqtt params in request\"}");
@@ -314,6 +317,11 @@ void Handler::init()
 
         int mqttPort;
         if (EDUtils::str2int(&mqttPort, port->value().c_str(), 10) != EDUtils::STR2INT_SUCCESS) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect port\"}");
+            return;
+        }
+
+        if (mqttPort < 1 || mqttPort > 65535) {
             request->send(422, "application/json", "{\"message\": \"Incorrect port\"}");
             return;
         }
