@@ -1,4 +1,5 @@
 import type {
+  ControlsSnapshot,
   DeviceStatus,
   EmptyObject,
   HealthResponse,
@@ -303,6 +304,11 @@ export function getMeterSettings(): Promise<ApiResult<MeterPayload>> {
   return getJson<MeterPayload>('/api/settings/meter', EMPTY_CONFIG_MESSAGE);
 }
 
+/** GET /api/controls (device states, sensor snapshot and emergency flag). */
+export function getControls(): Promise<ApiResult<ControlsSnapshot>> {
+  return getJson<ControlsSnapshot>('/api/controls', EMPTY_BODY_MESSAGE);
+}
+
 // --- writes -----------------------------------------------------------------
 
 /**
@@ -504,6 +510,22 @@ export function postMqtt(payload: MqttPayload): Promise<ActionResult> {
   body.set('commandTopic', commandTopic);
   body.set('mqttTopicPrefix', mqttTopicPrefix);
   return sendForm('/api/settings/mqtt', body);
+}
+
+/**
+ * POST /api/controls/set — turns a device on/off (open/close, enable/disable).
+ *
+ * `value` is `on`/`off` for every kind; the firmware maps `on` to `true`
+ * (open/enable/run) and inverts valves internally.
+ */
+export function postControlSet(
+  id: string,
+  value: 'on' | 'off',
+): Promise<ActionResult> {
+  const body = new URLSearchParams();
+  body.set('id', id);
+  body.set('value', value);
+  return sendForm('/api/controls/set', body);
 }
 
 /** POST /api/reboot — the device replies `{}` then restarts. */

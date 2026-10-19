@@ -38,6 +38,8 @@ Other scripts:
   emit files at those paths — Vite's asset directory stays `/assets/`.
 - `src/api/` holds the typed client for every device endpoint, including the firmware's
   known quirks (see below). Pages consume it; there is no state library.
+- Pages under `src/pages/` map one-to-one to the tabs: Status, Meters, Controls,
+  Settings, MQTT, Network.
 - `edn-network-ui` (shared web components in the sibling `ed-network` repo) is imported
   once in `src/main.tsx` so its custom elements register globally.
 

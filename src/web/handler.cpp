@@ -15,6 +15,7 @@ void Handler::init()
 
     _healthCheck->registerHandlers(_server);
     _meterHandler->registerHandler(_server);
+    _controlsHandler->registerHandler(_server);
 
     _networkApi->registerRoutes(*_server);
 

@@ -572,6 +572,12 @@ button.btn:disabled {
   color: var(--muted);
 }
 
+.badge-danger {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 /* Bound valves: sunken section surface, quiet separated rows ------------- */
 
 .valve-section {
@@ -627,6 +633,11 @@ button.btn:disabled {
 
 .unit {
   color: var(--muted);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 
 .sep {

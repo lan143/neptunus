@@ -129,6 +129,14 @@ void Automation::update()
     _rainwaterPitRelay->update();
     _outdoorPumpStationRelay->update();
     _autoModeRelay->update();
+
+    // Refresh the HTTP-facing device snapshot on the loop task only, throttled so
+    // the (potentially blocking) I2C reads cannot starve meter pulse sampling.
+    if ((esp_timer_get_time() - _deviceCacheLastUpdateUs) >= DEVICE_CACHE_REFRESH_INTERVAL_US) {
+        _deviceCacheLastUpdateUs = esp_timer_get_time();
+        refreshDeviceCache();
+    }
+
     _autoModeSeeding = false;
     _emergencyModeSensor->update();
     _pressureSensor->update();
@@ -338,6 +346,132 @@ void Automation::update()
             _badPressureCount
         );
     }
+}
+
+EDCommon::Relay::Relay* Automation::relayForDevice(DeviceId id, bool* isValve)
+{
+    if (isValve != nullptr) {
+        *isValve = false;
+    }
+
+    switch (id) {
+        case DeviceId::FillingBarrelValve:
+            if (isValve != nullptr) {
+                *isValve = true;
+            }
+            return _fillingBarrelRelay;
+        case DeviceId::BypassValve:
+            if (isValve != nullptr) {
+                *isValve = true;
+            }
+            return _bypassRelay;
+        case DeviceId::RainwaterPitValve:
+            if (isValve != nullptr) {
+                *isValve = true;
+            }
+            return _rainwaterPitRelay;
+        case DeviceId::HomePumpStation:
+            return _homePumpStationRelay;
+        case DeviceId::DrainagePump:
+            return _drainagePumpRelay;
+        case DeviceId::OutdoorPumpStation:
+            return _outdoorPumpStationRelay;
+        case DeviceId::AutoMode:
+            return _autoModeRelay;
+    }
+
+    return nullptr;
+}
+
+void Automation::refreshDeviceCache()
+{
+    for (uint8_t i = 0; i <= static_cast<uint8_t>(DeviceId::AutoMode); i++) {
+        bool isValve = false;
+        EDCommon::Relay::Relay* relay = relayForDevice(static_cast<DeviceId>(i), &isValve);
+        if (relay == nullptr) {
+            _deviceCache[i].available = false;
+            continue;
+        }
+
+        auto enabled = relay->isEnabled();
+        _deviceCache[i].available = enabled.second;
+        // Valves expose "open" semantics while the relay desired state is inverted.
+        _deviceCache[i].value = isValve ? !enabled.first : enabled.first;
+    }
+}
+
+bool Automation::controlSetDevice(DeviceId id, bool desiredValue)
+{
+    // Direct enqueue only: Relay::setState() pushes onto the relay's command
+    // queue, which is drained by Relay::update() on the main loop task. No I2C
+    // access happens on the async web task. Dedupe against the current state is
+    // intentionally skipped, because it would require isEnabled() (a live Wire
+    // read); duplicate queued commands are idempotent and harmless.
+    bool isValve = false;
+    EDCommon::Relay::Relay* relay = relayForDevice(id, &isValve);
+    if (relay == nullptr) {
+        return false;
+    }
+
+    return relay->setState(isValve ? !desiredValue : desiredValue);
+}
+
+bool Automation::controlGetDevice(DeviceId id, bool* outValue)
+{
+    if (outValue == nullptr) {
+        return false;
+    }
+
+    uint8_t index = static_cast<uint8_t>(id);
+    if (index > static_cast<uint8_t>(DeviceId::AutoMode)) {
+        return false;
+    }
+
+    // Cache is written on the loop task; until the first refresh every entry is
+    // unavailable, so the UI reports Unknown instead of a stale/raced value.
+    *outValue = _deviceCache[index].value;
+    return _deviceCache[index].available;
+}
+
+bool Automation::getSupplierPressure(float* value)
+{
+    if (_pressureSensor == nullptr || value == nullptr) {
+        return false;
+    }
+
+    auto result = _pressureSensor->getValue();
+    if (!result.second) {
+        return false;
+    }
+
+    *value = result.first;
+    return true;
+}
+
+bool Automation::getBarrelWaterLevel(float* value)
+{
+    if (_waterLevelSensor == nullptr || value == nullptr) {
+        return false;
+    }
+
+    auto result = _waterLevelSensor->getValue();
+    if (!result.second) {
+        return false;
+    }
+
+    *value = result.first;
+    return true;
+}
+
+bool Automation::getEmergencyModeActive()
+{
+    if (_emergencyModeSensor == nullptr) {
+        return false;
+    }
+
+    // BinarySensor::isActive() returns (value, valid).
+    auto active = _emergencyModeSensor->isActive();
+    return active.second && active.first;
 }
 
 bool Automation::changeFillingBarrelValveOpenInternal(bool open)

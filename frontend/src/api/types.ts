@@ -110,5 +110,39 @@ export interface MqttPayload {
   mqttTopicPrefix: string;
 }
 
+/** Device kinds exposed by GET /api/controls. */
+export type ControlDeviceKind = 'valve' | 'pump' | 'auto';
+
+/**
+ * One controllable device in GET /api/controls.
+ *
+ * `value` semantics depend on `kind`: valve → `true` means open, pump → `true`
+ * means running, auto → `true` means enabled. When `available` is `false` the
+ * state is unknown and `value` is always `false`.
+ */
+export interface ControlDeviceState {
+  id: string;
+  name: string;
+  kind: ControlDeviceKind;
+  value: boolean;
+  available: boolean;
+}
+
+/** One read-only sensor reading in GET /api/controls. */
+export interface ControlSensorState {
+  id: string;
+  name: string;
+  unit: string;
+  value: number;
+  available: boolean;
+}
+
+/** GET /api/controls payload: device states, sensor snapshot, emergency flag. */
+export interface ControlsSnapshot {
+  devices: ControlDeviceState[];
+  sensors: ControlSensorState[];
+  emergencyMode: boolean;
+}
+
 /** Successful response data for mutating endpoints (the device replies `{}`). */
 export type EmptyObject = Record<string, never>;

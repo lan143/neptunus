@@ -13,6 +13,7 @@
 #include <network/network_api.h>
 
 #include "config.h"
+#include "controls/handler.h"
 #include "meter/handler.h"
 
 class Handler {
@@ -22,9 +23,10 @@ public:
         EDNetwork::NetworkApi* networkApi,
         EDNetwork::NetworkMgr* networkMgr,
         EDHealthCheck::HealthCheck* healthCheck,
-        MeterHandler* meterHandler
+        MeterHandler* meterHandler,
+        ControlsHandler* controlsHandler
     ) : _configMgr(configMgr), _networkApi(networkApi), _networkMgr(networkMgr),
-        _healthCheck(healthCheck), _meterHandler(meterHandler) {
+        _healthCheck(healthCheck), _meterHandler(meterHandler), _controlsHandler(controlsHandler) {
         _server = new AsyncWebServer(80);
     }
 
@@ -37,4 +39,5 @@ private:
     EDNetwork::NetworkMgr* _networkMgr = nullptr;
     EDHealthCheck::HealthCheck* _healthCheck = nullptr;
     MeterHandler* _meterHandler = nullptr;
+    ControlsHandler* _controlsHandler = nullptr;
 };

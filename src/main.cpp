@@ -19,6 +19,7 @@
 
 #include "meter/handler.h"
 #include "meter/persistence.h"
+#include "controls/handler.h"
 #include "web/handler.h"
 
 EDConfig::DataMgr<Config> configMgr(new EDConfig::StorageLittleFS<Config>("/config.bin"));
@@ -49,7 +50,9 @@ MeterHandler meterHandler(&homeMeter, &yardMeter);
 
 Automation automation(&discoveryMgr, &mqtt, &relayDriver, &wirenboard, &homeMeter);
 
-Handler handler(&configMgr, &networkApi, &networkMgr, &healthCheck, &meterHandler);
+ControlsHandler controlsHandler(&automation, &homeMeter, &yardMeter);
+
+Handler handler(&configMgr, &networkApi, &networkMgr, &healthCheck, &meterHandler, &controlsHandler);
 
 bool inited = false;
 

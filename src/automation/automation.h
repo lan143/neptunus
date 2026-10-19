@@ -46,6 +46,35 @@ public:
     void init(EDHA::Device* device, Config config);
     void update();
 
+    enum class DeviceId : uint8_t
+    {
+        FillingBarrelValve,
+        BypassValve,
+        RainwaterPitValve,
+        HomePumpStation,
+        DrainagePump,
+        OutdoorPumpStation,
+        AutoMode,
+    };
+
+    // desiredValue semantics: for valves true means OPEN, for pumps and auto
+    // mode true means ON. Returns false on unknown/invalid pointer state.
+    bool controlSetDevice(DeviceId id, bool desiredValue);
+
+    // outValue semantics: for valves true means OPEN, for pumps and auto mode
+    // true means ON. Returns false when the state could not be read.
+    bool controlGetDevice(DeviceId id, bool* outValue);
+
+    bool getSupplierPressure(float* value);
+    bool getBarrelWaterLevel(float* value);
+    bool getEmergencyModeActive();
+
+    // Returns the current rainwater pit level as a percentage of the configured
+    // max height. Returns false when the feature is disabled (empty topic), no
+    // valid level was received yet, the data is stale (RAINWATER_PIT_DATA_TIMEOUT_SEC),
+    // or the configured max height is invalid.
+    bool getRainwaterPitLevelPercent(float* percent);
+
 private:
     bool changeFillingBarrelValveOpenInternal(bool open);
     bool changeBypassValveOpenInternal(bool open);
@@ -54,11 +83,31 @@ private:
     bool changeRainwaterPitValveOpenInternal(bool open);
     bool changeOutdoorPumpStationEnableInternal(bool enable);
 
-    // Returns the current rainwater pit level as a percentage of the configured
-    // max height. Returns false when the feature is disabled (empty topic), no
-    // valid level was received yet, the data is stale (RAINWATER_PIT_DATA_TIMEOUT_SEC),
-    // or the configured max height is invalid.
-    bool getRainwaterPitLevelPercent(float* percent);
+    // Returns the relay backing a device id and, for the three valves, sets
+    // *isValve to true (valve "open" semantics are inverted from the relay
+    // desired state). Returns nullptr / false for unknown or out-of-range ids.
+    // Must only be dereferenced on the main loop task.
+    EDCommon::Relay::Relay* relayForDevice(DeviceId id, bool* isValve);
+
+    // Reads every relay once on the main loop task and refreshes _deviceCache.
+    // Never call this from the async web task: PCF8574P::isEnabled() performs a
+    // live Wire read that is not atomic with the loop task's I2C usage.
+    void refreshDeviceCache();
+
+    // Snapshot of the relay states maintained by the main loop task so the HTTP
+    // handlers never touch I2C. Volatile because it is written on the loop task
+    // and read from the async web task.
+    struct DeviceCacheEntry
+    {
+        volatile bool value;
+        volatile bool available;
+
+        DeviceCacheEntry() : value(false), available(false) {}
+    };
+
+    static constexpr uint64_t DEVICE_CACHE_REFRESH_INTERVAL_US = 100000;
+    DeviceCacheEntry _deviceCache[7];
+    uint64_t _deviceCacheLastUpdateUs = 0;
 
 private:
     uint64_t _lastUpdateTime = 0;
