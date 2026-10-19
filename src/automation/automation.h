@@ -14,6 +14,7 @@
 
 #include "config.h"
 #include "rainwater_level_consumer.h"
+#include "electricity_status_consumer.h"
 
 #define WATER_MIN_LEVEL 0.37f
 #define WATER_MAX_LEVEL 1.2f
@@ -23,6 +24,11 @@
 #define RAINWATER_PIT_PUMP_DISABLE_PERCENT 8.0f
 #define RAINWATER_PIT_PUMP_ENABLE_PERCENT 10.0f
 #define RAINWATER_PIT_DATA_TIMEOUT_SEC 600
+
+// Failsafe when the finedog grid state goes silent (publisher heartbeats ~60s).
+#define ELECTRICITY_DATA_TIMEOUT_SEC 600
+// On battery power, city pressure above this value -> pump off + bypass open.
+#define ELECTRICITY_BATTERY_BYPASS_PRESSURE_BAR 1.5f
 
 struct AutomationState
 {
@@ -142,6 +148,17 @@ private:
     volatile float _rainwaterPitLevelMeters = 0.0f;
     volatile uint32_t _rainwaterPitLevelLastUpdateSec = 0;
     volatile bool _rainwaterPitLevelReceived = false;
+
+    ElectricityStatusConsumer* _electricityStatusConsumer = nullptr;
+    // Written from the MQTT task callback, read from the main loop task.
+    volatile bool _electricityStateReceived = false;
+    volatile ElectricityState _electricityState = ElectricityState::NORMAL;
+    volatile uint32_t _electricityStateLastUpdateSec = 0;
+    // Main-loop only, drives edge-triggered override logging.
+    bool _electricityOverrideActive = false;
+    // Main-loop only; outdoor pump hardware state captured at override entry so
+    // it can be restored when the episode ends.
+    bool _outdoorPumpOnBeforeOverride = false;
 
     // Rainwater pit fill session state (in-memory only).
     bool _rainwaterPitFillingSession = false;

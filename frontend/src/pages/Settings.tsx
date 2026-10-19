@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
 import {
+  getElectricitySettings,
   getModbusSettings,
   getRainwaterSettings,
+  postElectricitySettings,
   postModbusSettings,
   postRainwaterSettings,
   LIMITS,
@@ -403,12 +405,147 @@ function RainwaterCard() {
   );
 }
 
+// --- Electricity card -------------------------------------------------------
+
+interface ElectricityForm {
+  electricityTopic: string;
+}
+
+interface ElectricityErrors {
+  electricityTopic?: string;
+}
+
+const EMPTY_ELECTRICITY: ElectricityForm = {
+  electricityTopic: '',
+};
+
+function ElectricityCard() {
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [form, setForm] = useState<ElectricityForm>(EMPTY_ELECTRICITY);
+  const [errors, setErrors] = useState<ElectricityErrors>({});
+
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoadError(null);
+    const result = await getElectricitySettings();
+    if (result.ok) {
+      setForm({
+        electricityTopic: result.data.electricityTopic,
+      });
+    } else {
+      setLoadError(result.message);
+    }
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const update = (patch: Partial<ElectricityForm>) =>
+    setForm((current) => ({ ...current, ...patch }));
+
+  const handleSubmit = useCallback(
+    async (event: Event) => {
+      event.preventDefault();
+      const nextErrors: ElectricityErrors = {};
+
+      if (form.electricityTopic.length > LIMITS.electricity.topicMax) {
+        nextErrors.electricityTopic = `At most ${LIMITS.electricity.topicMax} characters.`;
+      }
+
+      setErrors(nextErrors);
+      setNotice(null);
+      setSaveError(null);
+      if (hasErrors(nextErrors)) {
+        return;
+      }
+
+      setSaving(true);
+      try {
+        const result = await postElectricitySettings({
+          electricityTopic: form.electricityTopic,
+        });
+        if (result.ok) {
+          setNotice('Electricity settings saved to flash.');
+        } else {
+          setSaveError(result.message);
+        }
+      } catch (error) {
+        setSaveError(error instanceof Error ? error.message : String(error));
+      } finally {
+        setSaving(false);
+      }
+    },
+    [form],
+  );
+
+  if (!loaded) {
+    return (
+      <Card title="Electricity">
+        <p class="muted">Loading electricity settings&hellip;</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Electricity">
+      {loadError ? (
+        <>
+          <Banner kind="error" message={loadError} />
+          <div class="form-actions">
+            <Button onClick={() => void load()}>Retry</Button>
+          </div>
+        </>
+      ) : null}
+      <form onSubmit={handleSubmit}>
+        <Field
+          label="Grid state topic"
+          value={form.electricityTopic}
+          onInput={(value) => update({ electricityTopic: value })}
+          maxLength={LIMITS.electricity.topicMax}
+          placeholder="finedog/electricity"
+          help="Finedog grid-state topic (NORMAL/GENERATOR/BATTERY/CRITICAL); empty disables electricity-aware automation. Applies after reboot."
+          error={errors.electricityTopic}
+          autoComplete="off"
+          disabled={saving}
+        />
+        {notice ? (
+          <Banner
+            kind="success"
+            message={notice}
+            onClose={() => setNotice(null)}
+          />
+        ) : null}
+        {saveError ? (
+          <Banner
+            kind="error"
+            message={saveError}
+            onClose={() => setSaveError(null)}
+          />
+        ) : null}
+        <div class="form-actions">
+          <Button type="submit" variant="primary" disabled={saving}>
+            {saving ? 'Saving\u2026' : 'Save electricity'}
+          </Button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
 export function SettingsPage() {
   return (
     <div class="stack">
       <NeedsRebootNotice />
       <ModbusCard />
       <RainwaterCard />
+      <ElectricityCard />
     </div>
   );
 }

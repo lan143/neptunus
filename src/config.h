@@ -8,7 +8,7 @@
 
 #include "defines.h"
 
-#define CURRENT_VERSION 2
+#define CURRENT_VERSION 3
 
 #define MQTT_TOPIC_LEN 64
 
@@ -41,4 +41,39 @@ struct Config
     char rainwaterPitLevelTopic[MQTT_TOPIC_LEN] = {0};
     float rainwaterPitMaxHeight = 1.6f;
     float rainwaterPitMaxFillLevel = 20.0f;
+
+    // finedog grid-state JSON topic; empty disables the feature.
+    char electricityTopic[MQTT_TOPIC_LEN] = {0};
 };
+
+// Raw-read mirror of the pre-v3 Config layout, used only to migrate an existing
+// /config.bin (same fields and order, without electricityTopic). Must byte-match
+// the previous struct exactly.
+struct ConfigLegacyV2
+{
+    uint8_t version = 0;
+
+    EDNetwork::Config network;
+    EDMQTT::Config mqtt;
+    EDUtils::LogConfig log;
+
+    char otaPassword[WIFI_PWD_LEN] = {0};
+
+    bool mqttIsHADiscovery = true;
+    char mqttHADiscoveryPrefix[MQTT_TOPIC_LEN] = {0};
+    char mqttCommandTopic[MQTT_TOPIC_LEN] = {0};
+    char mqttStateTopic[MQTT_TOPIC_LEN] = {0};
+    char mqttTopicPrefix[MQTT_TOPIC_LEN] = {0};
+
+    // modbus
+    uint32_t modbusSpeed = 0;
+    uint8_t addressQDY30A = 0;
+    uint8_t addressWBMAI6 = 0;
+
+    // rainwater pit
+    char rainwaterPitLevelTopic[MQTT_TOPIC_LEN] = {0};
+    float rainwaterPitMaxHeight = 1.6f;
+    float rainwaterPitMaxFillLevel = 20.0f;
+};
+
+static_assert(sizeof(Config) == sizeof(ConfigLegacyV2) + MQTT_TOPIC_LEN, "Config must only grow by electricityTopic");

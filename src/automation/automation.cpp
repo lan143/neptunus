@@ -5,6 +5,21 @@
 #include "config.h"
 #include "automation.h"
 
+namespace
+{
+// Electricity grid-state override decision, computed once per 1s decision tick.
+// NONE means no override: the normal pump/bypass logic runs unmodified. Any
+// other value makes the relocated override block the ONLY writer of the outdoor
+// pump, home pump and bypass relays for that tick.
+enum class GridOverride
+{
+    NONE,
+    BATTERY_HIGH_PRESSURE,
+    BATTERY_LOW_PRESSURE,
+    SHUTDOWN,
+};
+} // namespace
+
 void Automation::init(EDHA::Device* device, Config config)
 {
     _localStateMgr->setDefault([](AutomationState* state) {
@@ -112,6 +127,23 @@ void Automation::init(EDHA::Device* device, Config config)
         LOGI("init", "rainwater pit level consumer disabled (empty topic)");
     }
 
+    if (strlen(_config.electricityTopic) > 0) {
+        _electricityStatusConsumer = new ElectricityStatusConsumer();
+        _electricityStatusConsumer->onState([this](ElectricityState state) {
+            _electricityState = state;
+            _electricityStateLastUpdateSec = esp_timer_get_time() / 1000000;
+            _electricityStateReceived = true;
+        });
+        _electricityStatusConsumer->init(_config.electricityTopic);
+        _mqtt->subscribe(_electricityStatusConsumer);
+        // Start the failsafe clock at boot so a retained message that never
+        // arrives is still treated as stale after ELECTRICITY_DATA_TIMEOUT_SEC.
+        _electricityStateLastUpdateSec = esp_timer_get_time() / 1000000;
+        LOGI("init", "electricity status consumer enabled, topic: %s", _config.electricityTopic);
+    } else {
+        LOGI("init", "electricity status consumer disabled (empty topic)");
+    }
+
     inited = true;
 }
 
@@ -178,6 +210,115 @@ void Automation::update()
     if ((_lastUpdateTime + 1000000) < esp_timer_get_time()) {
         _lastUpdateTime = esp_timer_get_time();
 
+        // Electricity grid-state override (automatic mode only). Evaluated and
+        // actuated at the very TOP of the decision tick, before the water-level
+        // sensor handling below, so a dead QDY30A (whose early returns follow)
+        // cannot freeze the pumps/bypass and defeat the stale/critical failsafe.
+        // When active this is the ONLY writer of the outdoor pump, home pump and
+        // bypass relays this tick; the normal writers below are gated on
+        // gridOverride == NONE.
+        GridOverride gridOverride = GridOverride::NONE;
+        const char* gridOverrideDescription = nullptr;
+
+        if (_electricityStatusConsumer && _autoModeRelay->isEnabled().first) {
+            uint32_t nowSec = esp_timer_get_time() / 1000000;
+            bool stale = (nowSec - _electricityStateLastUpdateSec) > ELECTRICITY_DATA_TIMEOUT_SEC;
+            bool received = _electricityStateReceived;
+            ElectricityState state = _electricityState;
+
+            if (stale) {
+                // Rule 4 (checked first: highest priority): failsafe after >10 min
+                // of publisher silence.
+                gridOverride = GridOverride::SHUTDOWN;
+                gridOverrideDescription = "stale grid state";
+            } else if (received && state == ElectricityState::BATTERY) {
+                // Rule 2: on battery power keep the pump running while city
+                // pressure is low (or unknown); switch to bypass only on high
+                // pressure. Invalid pressure keeps pump on / bypass closed.
+                float pressure = 0.0f;
+                bool pressureValid = getSupplierPressure(&pressure);
+                if (pressureValid && pressure > ELECTRICITY_BATTERY_BYPASS_PRESSURE_BAR) {
+                    gridOverride = GridOverride::BATTERY_HIGH_PRESSURE;
+                    gridOverrideDescription = "battery, high pressure";
+                } else {
+                    gridOverride = GridOverride::BATTERY_LOW_PRESSURE;
+                    gridOverrideDescription = "battery, low pressure";
+                }
+            } else if (received && state == ElectricityState::CRITICAL) {
+                // Rule 3: critical grid state, stop both pumps and open bypass.
+                gridOverride = GridOverride::SHUTDOWN;
+                gridOverrideDescription = "critical grid state";
+            }
+            // NORMAL / GENERATOR, or fresh but never received: no override.
+        }
+
+        // Pre-gate outdoor-pump recovery must not fight the override's forced
+        // OFF. Local for the whole tick body (the pre-gate block runs below).
+        bool gridOutdoorForcedOff = (gridOverride != GridOverride::NONE);
+
+        if (gridOverride != GridOverride::NONE) {
+            // Outdoor pump is always commanded OFF while an override is active;
+            // its pre-override state is snapshotted on entry and restored on
+            // exit by the edge-detection block below.
+            if (!changeOutdoorPumpStationEnableInternal(false)) {
+                LOGE("update", "electricity override failed to disable outdoor pump station");
+            }
+
+            switch (gridOverride) {
+                case GridOverride::BATTERY_HIGH_PRESSURE:
+                    if (!changeHomePumpStationEnableInternal(false)) {
+                        LOGE("update", "electricity override failed to disable home pump station");
+                    }
+                    if (!changeBypassValveOpenInternal(true)) {
+                        LOGE("update", "electricity override failed to open bypass valve");
+                    }
+                    break;
+                case GridOverride::BATTERY_LOW_PRESSURE:
+                    // Rule 2 low pressure deliberately wins over the normal
+                    // level<=WATER_MIN_LEVEL pump-off and the filling-freeze
+                    // below: spec-literal product decision, not a bug.
+                    if (!changeBypassValveOpenInternal(false)) {
+                        LOGE("update", "electricity override failed to close bypass valve");
+                    }
+                    if (!changeHomePumpStationEnableInternal(true)) {
+                        LOGE("update", "electricity override failed to enable home pump station");
+                    }
+                    break;
+                case GridOverride::SHUTDOWN:
+                    if (!changeHomePumpStationEnableInternal(false)) {
+                        LOGE("update", "electricity override failed to disable home pump station");
+                    }
+                    if (!changeBypassValveOpenInternal(true)) {
+                        LOGE("update", "electricity override failed to open bypass valve");
+                    }
+                    break;
+                case GridOverride::NONE:
+                    break;
+            }
+        }
+
+        bool overrideActive = (gridOverride != GridOverride::NONE);
+        if (overrideActive && !_electricityOverrideActive) {
+            // Entry edge: snapshot the hardware state before the OFF queued above
+            // reaches the relay (relay->update() drains at the top of loop()).
+            _outdoorPumpOnBeforeOverride = _outdoorPumpStationRelay->isEnabled().first;
+            LOGI("update", "electricity override active: %s", gridOverrideDescription);
+        } else if (!overrideActive && _electricityOverrideActive) {
+            // Exit edge: restore the outdoor pump only when it was on before the
+            // override, automatic mode still owns it, and the pit-level latch does
+            // not. Cleared unconditionally so the restore fires at most once.
+            if (_outdoorPumpOnBeforeOverride && _autoModeRelay->isEnabled().first && !_outdoorPumpStoppedByLevel) {
+                if (changeOutdoorPumpStationEnableInternal(true)) {
+                    LOGI("update", "outdoor pump station restored after electricity override");
+                } else {
+                    LOGE("update", "failed to restore outdoor pump station after electricity override");
+                }
+            }
+            _outdoorPumpOnBeforeOverride = false;
+            LOGI("update", "electricity override cleared");
+        }
+        _electricityOverrideActive = overrideActive;
+
         float pitPct;
         bool pitDataOk = getRainwaterPitLevelPercent(&pitPct);
 
@@ -198,7 +339,7 @@ void Automation::update()
                 } else {
                     LOGE("update", "failed to disable outdoor pump station");
                 }
-            } else if (_outdoorPumpStoppedByLevel && pitPct > RAINWATER_PIT_PUMP_ENABLE_PERCENT) {
+            } else if (!gridOutdoorForcedOff && _outdoorPumpStoppedByLevel && pitPct > RAINWATER_PIT_PUMP_ENABLE_PERCENT) {
                 if (changeOutdoorPumpStationEnableInternal(true)) {
                     _outdoorPumpStoppedByLevel = false;
                     LOGI("update", "outdoor pump station enabled, rainwater pit level: %f%%", pitPct);
@@ -293,8 +434,10 @@ void Automation::update()
         }
 
         // While any filling valve is open, keep the bypass valve and the home pump
-        // station in their prior state.
-        if (!fillingActive) {
+        // station in their prior state. Also gated while a grid override is active
+        // so the override remains the only writer of the home pump and bypass
+        // relays this tick (fixes same-tick opposite-command oscillation).
+        if (gridOverride == GridOverride::NONE && !fillingActive) {
             bool enableHomePumpStation = true;
             if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
                 changeBypassValveOpenInternal(true);

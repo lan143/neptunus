@@ -165,6 +165,40 @@ void Handler::init()
         request->send(200, "application/json", "{}");
     });
 
+    _server->on("/api/settings/electricity", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        AsyncResponseStream *response = request->beginResponseStream("application/json");
+
+        std::string payload = EDUtils::buildJson([this](JsonObject entity) {
+            auto config = _configMgr->getData();
+
+            entity["electricityTopic"] = config->electricityTopic;
+        });
+
+        response->write(payload.c_str());
+        request->send(response);
+    });
+
+    _server->on("/api/settings/electricity", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        if (!request->hasParam("electricityTopic", true)) {
+            request->send(422, "application/json", "{\"message\": \"not present electricity params in request\"}");
+            return;
+        }
+
+        const AsyncWebParameter* electricityTopic = request->getParam("electricityTopic", true);
+
+        if (electricityTopic->value().length() > MQTT_TOPIC_LEN-1) {
+            request->send(422, "application/json", "{\"message\": \"Incorrect electricity topic length\"}");
+            return;
+        }
+
+        Config* config = _configMgr->getData();
+        std::strcpy(config->electricityTopic, electricityTopic->value().c_str());
+
+        _configMgr->store();
+
+        request->send(200, "application/json", "{}");
+    });
+
     _server->on("/api/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
 
@@ -359,6 +393,7 @@ void Handler::init()
             entity["mqttCommandTopic"] = config->mqttCommandTopic;
             entity["mqttStateTopic"] = config->mqttStateTopic;
             entity["mqttTopicPrefix"] = config->mqttTopicPrefix;
+            entity["electricityTopic"] = config->electricityTopic;
         });
 
         response->write(payload.c_str());

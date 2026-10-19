@@ -29,6 +29,14 @@ export interface Settings {
   mqttCommandTopic: string;
   mqttStateTopic: string;
   mqttTopicPrefix: string;
+  /**
+   * Required, not optional: the firmware always emits this field in GET
+   * /api/settings (`entity["electricityTopic"]`, web/handler.cpp). The GET
+   * path is parsed unvalidated (`JSON.parse` cast), so a stale device without
+   * the field cannot break the panel; an absent value would surface as
+   * `undefined` only if a caller read it.
+   */
+  electricityTopic: string;
 }
 
 /** GET /api/status. `uptime` is seconds since boot. */
@@ -67,6 +75,16 @@ export interface RainwaterPayload {
   rainwaterPitLevelTopic: string;
   rainwaterPitMaxHeight: number;
   rainwaterPitMaxFillLevel: number;
+}
+
+/**
+ * GET /api/settings/electricity and POST /api/settings/electricity.
+ *
+ * An empty `electricityTopic` disables the feature. The topic carries the
+ * finedog grid-state JSON (NORMAL/GENERATOR/BATTERY/CRITICAL).
+ */
+export interface ElectricityPayload {
+  electricityTopic: string;
 }
 
 /**

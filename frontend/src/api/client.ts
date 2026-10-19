@@ -1,6 +1,7 @@
 import type {
   ControlsSnapshot,
   DeviceStatus,
+  ElectricityPayload,
   EmptyObject,
   HealthResponse,
   MeterPayload,
@@ -59,6 +60,10 @@ export const LIMITS = {
     fillLevelStartPercent: 10,
     /** ...and <= 100. */
     maxFillLevelMax: 100,
+  },
+  electricity: {
+    /** `electricityTopic[64]` (MQTT_TOPIC_LEN 64); empty disables the feature. */
+    topicMax: 63,
   },
   meter: {
     /** Firmware only checks that the value parses as a float; cap at a sane max. */
@@ -299,6 +304,14 @@ export function getRainwaterSettings(): Promise<ApiResult<RainwaterPayload>> {
   );
 }
 
+/** GET /api/settings/electricity */
+export function getElectricitySettings(): Promise<ApiResult<ElectricityPayload>> {
+  return getJson<ElectricityPayload>(
+    '/api/settings/electricity',
+    EMPTY_CONFIG_MESSAGE,
+  );
+}
+
 /** GET /api/settings/meter (current cumulative counter values). */
 export function getMeterSettings(): Promise<ApiResult<MeterPayload>> {
   return getJson<MeterPayload>('/api/settings/meter', EMPTY_CONFIG_MESSAGE);
@@ -388,6 +401,28 @@ export function postRainwaterSettings(
   body.set('rainwaterPitMaxHeight', String(maxHeight));
   body.set('rainwaterPitMaxFillLevel', String(maxFillLevel));
   return sendForm('/api/settings/rainwater', body);
+}
+
+/**
+ * POST /api/settings/electricity — applies after reboot.
+ *
+ * An empty topic disables the feature (allowed). The firmware rejects a topic
+ * longer than 63 characters with HTTP 422; invalid input throws client-side
+ * instead of being sent.
+ */
+export function postElectricitySettings(
+  payload: ElectricityPayload,
+): Promise<ActionResult> {
+  const topic = requireString(
+    payload.electricityTopic,
+    'Grid state topic',
+    LIMITS.electricity.topicMax,
+    true,
+  );
+
+  const body = new URLSearchParams();
+  body.set('electricityTopic', topic);
+  return sendForm('/api/settings/electricity', body);
 }
 
 /**

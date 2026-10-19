@@ -56,6 +56,38 @@ Handler handler(&configMgr, &networkApi, &networkMgr, &healthCheck, &meterHandle
 
 bool inited = false;
 
+// Mirrors EDConfig::DataMgr::calculateChecksum (CRC16, poly 0xa001, init 0xffff,
+// byte-wise) so the legacy blob can be validated before the normal load.
+static uint16_t calculateConfigChecksum(const ConfigLegacyV2* data)
+{
+    const uint8_t* buf = reinterpret_cast<const uint8_t*>(data);
+    uint16_t crc = 0xffff;
+    const uint16_t poly = 0xa001;
+
+    for (uint16_t i = 0; i < sizeof(ConfigLegacyV2); i++) {
+        crc ^= buf[i];
+        for (uint8_t j = 0; j < 8; j++) {
+            crc >>= 1;
+            if (crc & 0x01) {
+                crc ^= poly;
+            }
+        }
+    }
+
+    return crc;
+}
+
+// Copies a fixed-size legacy char array into dst, always NUL-terminating and
+// never reading more than dstSize - 1 source bytes. A CRC-valid blob can still
+// contain a field with no terminator, so strcpy() here could read past the
+// struct; strnlen bounds the read to the destination capacity.
+static void copyTerminatedString(char* dst, const char* src, size_t dstSize)
+{
+    size_t n = strnlen(src, dstSize - 1);
+    memcpy(dst, src, n);
+    dst[n] = '\0';
+}
+
 void setup()
 {
     randomSeed(micros());
@@ -93,10 +125,67 @@ void setup()
         config->rainwaterPitMaxHeight = 1.6f;
         config->rainwaterPitMaxFillLevel = 20.0f;
         // rainwaterPitLevelTopic left empty: feature disabled until configured
+
+        snprintf(config->electricityTopic, MQTT_TOPIC_LEN, "finedog/electricity");
     });
+
+    // One-time migration of the persisted config blob from the legacy v2 layout.
+    // The struct grew by electricityTopic, so DataMgr::load() would reject the old
+    // blob on size/checksum mismatch and silently reset every setting to defaults.
+    // Read the old blob here and carry the common fields forward after the normal
+    // load; on any mismatch fall through to the unchanged default flow.
+    ConfigLegacyV2 legacy;
+    bool haveLegacy = false;
+    {
+        File legacyFile = LittleFS.open("/config.bin", FILE_READ);
+        if (legacyFile) {
+            if (legacyFile.size() == sizeof(ConfigLegacyV2) + sizeof(uint16_t)) {
+                uint16_t storedChecksum = 0;
+                bool readOk =
+                    legacyFile.read(reinterpret_cast<uint8_t*>(&legacy), sizeof(ConfigLegacyV2)) == sizeof(ConfigLegacyV2)
+                    && legacyFile.read(reinterpret_cast<uint8_t*>(&storedChecksum), sizeof(uint16_t)) == sizeof(uint16_t);
+
+                if (readOk && storedChecksum == calculateConfigChecksum(&legacy) && legacy.version == 2) {
+                    haveLegacy = true;
+                }
+            }
+            legacyFile.close();
+        }
+    }
 
     LOGI("setup", "load config");
     configMgr.load();
+
+    if (haveLegacy) {
+        // Carry legacy user settings into the freshly loaded v3 config. version
+        // stays CURRENT_VERSION and electricityTopic keeps the default above.
+        Config* config = configMgr.getData();
+        config->network = legacy.network;
+        config->mqtt = legacy.mqtt;
+        config->log = legacy.log;
+
+        copyTerminatedString(config->otaPassword, legacy.otaPassword, sizeof(config->otaPassword));
+
+        config->mqttIsHADiscovery = legacy.mqttIsHADiscovery;
+        copyTerminatedString(config->mqttHADiscoveryPrefix, legacy.mqttHADiscoveryPrefix, sizeof(config->mqttHADiscoveryPrefix));
+        copyTerminatedString(config->mqttCommandTopic, legacy.mqttCommandTopic, sizeof(config->mqttCommandTopic));
+        copyTerminatedString(config->mqttStateTopic, legacy.mqttStateTopic, sizeof(config->mqttStateTopic));
+        copyTerminatedString(config->mqttTopicPrefix, legacy.mqttTopicPrefix, sizeof(config->mqttTopicPrefix));
+
+        config->modbusSpeed = legacy.modbusSpeed;
+        config->addressQDY30A = legacy.addressQDY30A;
+        config->addressWBMAI6 = legacy.addressWBMAI6;
+
+        copyTerminatedString(config->rainwaterPitLevelTopic, legacy.rainwaterPitLevelTopic, sizeof(config->rainwaterPitLevelTopic));
+        config->rainwaterPitMaxHeight = legacy.rainwaterPitMaxHeight;
+        config->rainwaterPitMaxFillLevel = legacy.rainwaterPitMaxFillLevel;
+
+        if (configMgr.store()) {
+            LOGI("setup", "migrated config from legacy v2 layout");
+        } else {
+            LOGE("setup", "failed to store migrated config");
+        }
+    }
 
     networkLogger.init(configMgr.getData()->log, CONTROLLER_NAME, EDUtils::formatString("Neptunus_%s", EDUtils::getMacAddress().c_str()));
 
