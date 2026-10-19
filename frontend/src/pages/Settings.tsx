@@ -24,7 +24,11 @@ function parseNumber(raw: string): number | null {
 }
 
 function hasErrors(errors: object): boolean {
-  return Object.keys(errors).length > 0;
+  return Object.values(errors).some((message) => Boolean(message));
+}
+
+function hasTooManyDecimals(raw: string): boolean {
+  return /^-?\d*(\.\d{4,})$/.test(raw.trim());
 }
 
 // --- Modbus card ------------------------------------------------------------
@@ -162,7 +166,8 @@ function ModbusCard() {
           </div>
         </>
       ) : null}
-      <form onSubmit={handleSubmit}>
+      {/* novalidate: JS validators own error rendering; native constraint validation would silently block submit. */}
+      <form onSubmit={handleSubmit} novalidate>
         <Select
           label="Bus speed"
           value={form.modbusSpeed}
@@ -286,6 +291,8 @@ function RainwaterCard() {
         maxHeight > LIMITS.rainwater.maxHeightMax
       ) {
         nextErrors.rainwaterPitMaxHeight = `Height must be greater than 0 and at most ${LIMITS.rainwater.maxHeightMax} m.`;
+      } else if (hasTooManyDecimals(form.rainwaterPitMaxHeight)) {
+        nextErrors.rainwaterPitMaxHeight = 'At most 3 decimal places.';
       }
 
       const maxFillLevel = parseNumber(form.rainwaterPitMaxFillLevel);
@@ -295,6 +302,8 @@ function RainwaterCard() {
         maxFillLevel > LIMITS.rainwater.maxFillLevelMax
       ) {
         nextErrors.rainwaterPitMaxFillLevel = `Fill level must be greater than ${LIMITS.rainwater.fillLevelStartPercent} and at most ${LIMITS.rainwater.maxFillLevelMax}.`;
+      } else if (hasTooManyDecimals(form.rainwaterPitMaxFillLevel)) {
+        nextErrors.rainwaterPitMaxFillLevel = 'At most 3 decimal places.';
       }
 
       setErrors(nextErrors);
@@ -343,7 +352,7 @@ function RainwaterCard() {
           </div>
         </>
       ) : null}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} novalidate>
         <Field
           label="Pit level topic"
           value={form.rainwaterPitLevelTopic}
@@ -362,7 +371,7 @@ function RainwaterCard() {
           type="number"
           min={LIMITS.rainwater.maxHeightMinExclusive}
           max={LIMITS.rainwater.maxHeightMax}
-          step={0.1}
+          step={0.001}
           inputMode="decimal"
           help={`Height of the pit in metres (greater than 0, at most ${LIMITS.rainwater.maxHeightMax}).`}
           error={errors.rainwaterPitMaxHeight}
@@ -375,8 +384,8 @@ function RainwaterCard() {
           type="number"
           min={LIMITS.rainwater.fillLevelStartPercent}
           max={LIMITS.rainwater.maxFillLevelMax}
-          step={1}
-          inputMode="numeric"
+          step={0.001}
+          inputMode="decimal"
           help={`Percentage that stops filling; must be greater than ${LIMITS.rainwater.fillLevelStartPercent}% and at most ${LIMITS.rainwater.maxFillLevelMax}%.`}
           error={errors.rainwaterPitMaxFillLevel}
           disabled={saving}

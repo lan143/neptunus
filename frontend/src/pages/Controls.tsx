@@ -151,7 +151,10 @@ export function ControlsPage() {
         setActionError(error instanceof Error ? error.message : String(error));
       } finally {
         setPendingId(null);
-        // Reload regardless: the command may have partially applied.
+        // Reload regardless: the command may have partially applied. Wait for
+        // the firmware loop task to drain the command queue and refresh its
+        // HTTP device cache (~100 ms cadence) before reading the state back.
+        await new Promise((resolve) => window.setTimeout(resolve, 300));
         await load();
       }
     },

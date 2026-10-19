@@ -29,7 +29,11 @@ function parseNumber(raw: string): number | null {
 }
 
 function hasErrors(errors: object): boolean {
-  return Object.keys(errors).length > 0;
+  return Object.values(errors).some((message) => Boolean(message));
+}
+
+function hasTooManyDecimals(raw: string): boolean {
+  return /^-?\d*(\.\d{4,})$/.test(raw.trim());
 }
 
 function validateMeter(form: MeterForm): MeterErrors {
@@ -38,11 +42,15 @@ function validateMeter(form: MeterForm): MeterErrors {
   const home = parseNumber(form.homeWaterInitialValue);
   if (home === null || home < 0) {
     errors.homeWaterInitialValue = 'Enter a value of 0 or more.';
+  } else if (hasTooManyDecimals(form.homeWaterInitialValue)) {
+    errors.homeWaterInitialValue = 'At most 3 decimal places.';
   }
 
   const yard = parseNumber(form.yardWaterInitialValue);
   if (yard === null || yard < 0) {
     errors.yardWaterInitialValue = 'Enter a value of 0 or more.';
+  } else if (hasTooManyDecimals(form.yardWaterInitialValue)) {
+    errors.yardWaterInitialValue = 'At most 3 decimal places.';
   }
 
   return errors;
@@ -144,7 +152,9 @@ export function MetersPage() {
 
     return (
       <Card title={title}>
+        {/* novalidate: JS validators own error rendering; native constraint validation would silently block submit. */}
         <form
+          novalidate
           onSubmit={(event) => {
             event.preventDefault();
             void save(target);
@@ -158,9 +168,10 @@ export function MetersPage() {
             }
             type="number"
             min={0}
+            step={0.001}
             inputMode="decimal"
             error={fieldError}
-            help="Cumulative counter value in litres."
+            help="Cumulative counter reading in m³ (up to 3 decimals)."
             disabled={busy}
           />
           {notice ? (

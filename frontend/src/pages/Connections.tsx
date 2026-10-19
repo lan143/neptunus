@@ -96,7 +96,7 @@ function validateMqtt(form: MqttForm): MqttErrors {
 }
 
 function hasErrors(errors: object): boolean {
-  return Object.keys(errors).length > 0;
+  return Object.values(errors).some((message) => Boolean(message));
 }
 
 export function ConnectionsPage() {
@@ -198,7 +198,8 @@ export function ConnectionsPage() {
       ) : null}
 
       <Card title="MQTT">
-        <form onSubmit={handleMqttSubmit}>
+        {/* novalidate: JS validators own error rendering; native constraint validation would silently block submit. */}
+        <form onSubmit={handleMqttSubmit} novalidate>
           <Field
             label="Host"
             value={mqtt.host}

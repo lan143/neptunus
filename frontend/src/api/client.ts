@@ -66,9 +66,9 @@ export const LIMITS = {
     topicMax: 63,
   },
   meter: {
-    /** Firmware only checks that the value parses as a float; cap at a sane max. */
+    /** Firmware uint32 counter stores value*1000/cost (cost=1 m³-per-pulse) -> cap at ~4,294,967 m³. */
     valueMin: 0,
-    valueMax: 1_000_000_000,
+    valueMax: 4_294_967,
   },
 } as const;
 
