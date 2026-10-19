@@ -147,6 +147,14 @@ void Automation::init(EDHA::Device* device, Config config)
         LOGI("init", "electricity status consumer disabled (empty topic)");
     }
 
+    // Cold power-on leaves the PCF8574 register all-HIGH: every valve relay is
+    // de-energized = physically OPEN while pumps are OFF. Force the quiescent
+    // state (all valves CLOSED) until the decision tick re-establishes intent;
+    // the commands drain on the first update().
+    changeFillingBarrelValveOpenInternal(false);
+    changeBypassValveOpenInternal(false);
+    changeRainwaterPitValveOpenInternal(false);
+
     inited = true;
 }
 
@@ -352,23 +360,27 @@ void Automation::update()
             }
         }
 
-        // Pit fill session safety: stop an active fill when level feedback is
-        // missing/stale or the target is reached. Runs before the auto-mode gate
-        // so an abandoned open valve cannot flood the yard in manual mode.
-        if (_rainwaterPitFillingSession && !pitDataOk) {
+        // Pit fill safety: an OPEN pit valve is closed on stale level feedback or on
+        // reaching the configured target regardless of how it got open (adopted
+        // session, orphan from a cold boot, manual UI/HA toggle). Runs before the
+        // auto-mode gate so an abandoned open valve cannot flood the yard in manual
+        // mode.
+        auto pitValveState = _rainwaterPitRelay->isEnabled();
+        bool pitValveActuallyOpen = pitValveState.second && !pitValveState.first;
+        if (pitValveActuallyOpen && !pitDataOk) {
             if (changeRainwaterPitValveOpenInternal(false)) {
                 _rainwaterPitFillingSession = false;
                 LOGI("update", "rainwater pit filling stopped: no fresh evelyn data");
             } else {
-                // Keep the session so the stop is retried on the next tick.
+                // State-based guard re-fires on the next tick, but log the enqueue failure.
                 LOGE("update", "failed to close rainwater pit valve");
             }
-        } else if (_rainwaterPitFillingSession && pitPct >= _config.rainwaterPitMaxFillLevel) {
+        } else if (pitValveActuallyOpen && pitPct >= _config.rainwaterPitMaxFillLevel) {
             if (changeRainwaterPitValveOpenInternal(false)) {
                 _rainwaterPitFillingSession = false;
                 LOGI("update", "rainwater pit filling reached target level: %f%%", pitPct);
             } else {
-                // Keep the session so the stop is retried on the next tick.
+                // State-based guard re-fires on the next tick, but log the enqueue failure.
                 LOGE("update", "failed to close rainwater pit valve");
             }
         }
