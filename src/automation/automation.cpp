@@ -367,8 +367,12 @@ void Automation::update()
         // mode.
         auto pitValveState = _rainwaterPitRelay->isEnabled();
         bool pitValveActuallyOpen = pitValveState.second && !pitValveState.first;
+        // In-tick authoritative open state: relay changes only enqueue, so mirror
+        // every successful transition below instead of re-reading isEnabled().
+        bool pitValveOpen = pitValveActuallyOpen;
         if (pitValveActuallyOpen && !pitDataOk) {
             if (changeRainwaterPitValveOpenInternal(false)) {
+                pitValveOpen = false;
                 _rainwaterPitFillingSession = false;
                 LOGI("update", "rainwater pit filling stopped: no fresh evelyn data");
             } else {
@@ -377,6 +381,7 @@ void Automation::update()
             }
         } else if (pitValveActuallyOpen && pitPct >= _config.rainwaterPitMaxFillLevel) {
             if (changeRainwaterPitValveOpenInternal(false)) {
+                pitValveOpen = false;
                 _rainwaterPitFillingSession = false;
                 LOGI("update", "rainwater pit filling reached target level: %f%%", pitPct);
             } else {
@@ -402,9 +407,9 @@ void Automation::update()
 
         auto level = levelResult.first;
 
-        auto middleLevel = (WATER_MAX_LEVEL - WATER_MIN_LEVEL) / 2 + WATER_MIN_LEVEL;
-        auto enableLevel = middleLevel - middleLevel * 0.25;
-        auto disableLevel = middleLevel + middleLevel * 0.25;
+        const auto span = WATER_MAX_LEVEL - WATER_MIN_LEVEL;
+        auto enableLevel = WATER_MIN_LEVEL + span * (BARREL_FILL_ON_PERCENT / 100.0f);
+        auto disableLevel = WATER_MIN_LEVEL + span * (BARREL_FILL_OFF_PERCENT / 100.0f);
 
         // Relay::setState only enqueues, so a barrel-open commanded this tick is
         // invisible to isEnabled() until the next relay->update(). Compute the
@@ -412,7 +417,6 @@ void Automation::update()
         // barrel hysteresis intent, so pit/bypass/emergency decisions see the
         // barrel priority in the SAME tick the barrel is first commanded open.
         auto barrelRelay = _fillingBarrelRelay->isEnabled();
-        auto pitRelay = _rainwaterPitRelay->isEnabled();
 
         bool barrelValveOpen = barrelRelay.second && !barrelRelay.first;
         if (level <= enableLevel) {
@@ -421,7 +425,6 @@ void Automation::update()
             barrelValveOpen = false;
         }
 
-        bool pitValveOpen = pitRelay.second && !pitRelay.first;
         bool fillingActive = barrelValveOpen || pitValveOpen;
 
         bool emergencyMode = false;
@@ -448,51 +451,72 @@ void Automation::update()
             changeFillingBarrelValveOpenInternal(false);
         }
 
-        // While any filling valve is open, keep the bypass valve and the home pump
-        // station in their prior state. Also gated while a grid override is active
-        // so the override remains the only writer of the home pump and bypass
-        // relays this tick (fixes same-tick opposite-command oscillation).
-        if (gridOverride == GridOverride::NONE && !fillingActive) {
-            bool enableHomePumpStation = true;
-            if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
-                changeBypassValveOpenInternal(true);
-                enableHomePumpStation = false;
-            } else {
-                changeBypassValveOpenInternal(false);
-            }
-
-            if (level <= WATER_MIN_LEVEL) {
-                enableHomePumpStation = false;
-            }
-
-            if (!changeHomePumpStationEnableInternal(enableHomePumpStation)) {
-                LOGE("update", "failed to change pump station state. enable: %s", enableHomePumpStation ? "true" : "false");
-            }
-        }
-
         // Barrel priority: the pit valve must never stay open while the barrel valve
         // is open. The session flag is retained so filling resumes once the barrel closes.
         if (barrelValveOpen && pitValveOpen) {
-            changeRainwaterPitValveOpenInternal(false);
-            pitValveOpen = false;
+            if (changeRainwaterPitValveOpenInternal(false)) {
+                pitValveOpen = false;
+            } else {
+                // State-based guard re-fires on the next tick, but log the enqueue failure.
+                LOGE("update", "failed to close rainwater pit valve");
+            }
         }
 
         if (_rainwaterPitFillingSession) {
             if (!barrelValveOpen && !pitValveOpen) {
-                changeRainwaterPitValveOpenInternal(true);
-                LOGI("update", "rainwater pit filling resumed");
+                if (changeRainwaterPitValveOpenInternal(true)) {
+                    pitValveOpen = true;
+                    LOGI("update", "rainwater pit filling resumed");
+                }
             }
         } else if (pitDataOk && pitPct < RAINWATER_PIT_FILL_START_PERCENT && !barrelValveOpen) {
             if (changeRainwaterPitValveOpenInternal(true)) {
+                pitValveOpen = true;
                 _rainwaterPitFillingSession = true;
                 LOGI("update", "rainwater pit filling started, level: %f%%", pitPct);
             }
         }
 
+        // Recompute after the in-tick pit transitions so the bypass/pump decision
+        // below sees the valve state actually commanded by this tick.
+        fillingActive = barrelValveOpen || pitValveOpen;
+
+        // While any filling valve is open, keep the bypass valve and the home pump
+        // station in their prior state. Also gated while a grid override is active
+        // so the override remains the only writer of the home pump and bypass
+        // relays this tick (fixes same-tick opposite-command oscillation).
+        if (gridOverride == GridOverride::NONE) {
+            if (pitValveOpen) {
+                // Pit filling needs home pressure for its whole duration: close the
+                // bypass and run the home pump station.
+                if (!changeBypassValveOpenInternal(false)) {
+                    LOGE("update", "failed to close bypass valve for rainwater pit filling");
+                }
+                if (!changeHomePumpStationEnableInternal(true)) {
+                    LOGE("update", "failed to enable pump station for rainwater pit filling");
+                }
+            } else if (!fillingActive) {
+                bool enableHomePumpStation = true;
+                if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
+                    changeBypassValveOpenInternal(true);
+                    enableHomePumpStation = false;
+                } else {
+                    changeBypassValveOpenInternal(false);
+                }
+
+                if (level <= WATER_MIN_LEVEL) {
+                    enableHomePumpStation = false;
+                }
+
+                if (!changeHomePumpStationEnableInternal(enableHomePumpStation)) {
+                    LOGE("update", "failed to change pump station state. enable: %s", enableHomePumpStation ? "true" : "false");
+                }
+            }
+        }
+
         LOGD(
             "update",
-            "middle level: %f, enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, good pressure count: %d, bad pressure count: %d",
-            middleLevel,
+            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, good pressure count: %d, bad pressure count: %d",
             enableLevel,
             disableLevel,
             level,
