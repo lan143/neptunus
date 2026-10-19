@@ -390,6 +390,11 @@ void Automation::update()
             }
         }
 
+        // Outdoor pump idle-flow shutoff; placed before the barrel-level-sensor
+        // early returns so it survives that sensor's failure, and after the grid
+        // override block which owns the pump while active.
+        updateOutdoorPumpIdleProtection(overrideActive);
+
         if (_waterLevelSensor == nullptr) {
             LOGE("update", "water level sensor not initialized");
             return;
@@ -692,6 +697,87 @@ bool Automation::changeOutdoorPumpStationEnableInternal(bool enable)
         return true;
     }
     return _outdoorPumpStationRelay->setState(enable);
+}
+
+void Automation::updateOutdoorPumpIdleProtection(bool overrideActive)
+{
+    if (_yardMeter == nullptr) {
+        return;
+    }
+
+    uint32_t nowSec = esp_timer_get_time() / 1000000;
+    uint32_t liters = (uint32_t)(_yardMeter->getCurrentValue() * 1000.0f + 0.5f);
+
+    // Sample every tick regardless of mode so the trailing window is already
+    // valid when the pump starts. The slot at head is the oldest sample,
+    // ~OUTDOOR_PUMP_IDLE_WINDOW_SEC ticks ago (conservative: one sample longer
+    // than the window), and is about to be overwritten.
+    bool historyInvalid = false;
+    uint32_t flow = 0;
+    if (!_yardFlowSamplesSeeded) {
+        for (uint16_t i = 0; i < YARD_FLOW_SAMPLES; i++) {
+            _yardFlowSamples[i] = liters;
+        }
+        _yardFlowSampleHead = 0;
+        _yardFlowSamplesSeeded = true;
+        _lastYardLiters = liters;
+    } else {
+        uint32_t ago = _yardFlowSamples[_yardFlowSampleHead];
+        if (liters < ago || liters < _lastYardLiters) {
+            // The web UI can lower the persisted total (setInitialValue); the
+            // tick-to-tick term catches it even while the 600-s-old slot still
+            // looks monotonic. Refill the flat window and disarm here: the
+            // window holds no flow history, so the flow window (via refill) and
+            // the pump-ON eligibility timer (via disarm + re-arm with a fresh
+            // _outdoorPumpOnSinceSec in the tracking pass below, same tick)
+            // must restart together. Otherwise the next tick would compare
+            // ~1 s of samples against a stale elapsed >= 600 s gate and
+            // falsely shutoff despite real flow.
+            for (uint16_t i = 0; i < YARD_FLOW_SAMPLES; i++) {
+                _yardFlowSamples[i] = liters;
+            }
+            _yardFlowSampleHead = 0;
+            historyInvalid = true;
+            _outdoorPumpIdleArmed = false;
+        } else {
+            flow = liters - ago;
+        }
+        _lastYardLiters = liters;
+        _yardFlowSamples[_yardFlowSampleHead] = liters;
+        _yardFlowSampleHead = (_yardFlowSampleHead + 1) % YARD_FLOW_SAMPLES;
+    }
+
+    // Track continuous ON time regardless of mode/override; the actuation gate
+    // below decides whether this automation is allowed to act on it.
+    auto pump = _outdoorPumpStationRelay->isEnabled();
+    if (!pump.second || !pump.first) {
+        _outdoorPumpIdleArmed = false;
+    } else if (!_outdoorPumpIdleArmed) {
+        _outdoorPumpIdleArmed = true;
+        _outdoorPumpOnSinceSec = nowSec;
+    }
+
+    // No persistent latch is needed for the electricity-override exit restore:
+    // that restore only fires when the pump was ON at override entry, and after
+    // an idle shutoff the pump reads OFF, so a later entry snapshots false. If a
+    // restore does re-enable the pump, the OFF->ON edge above re-arms the timer.
+    if (overrideActive || !_autoModeRelay->isEnabled().first || !_outdoorPumpIdleArmed || historyInvalid) {
+        return;
+    }
+    if ((nowSec - _outdoorPumpOnSinceSec) < OUTDOOR_PUMP_IDLE_WINDOW_SEC) {
+        return;
+    }
+    if (flow >= OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS) {
+        return;
+    }
+
+    if (changeOutdoorPumpStationEnableInternal(false)) {
+        _outdoorPumpIdleArmed = false;
+        LOGI("update", "outdoor pump station disabled: less than %d L over last %d sec", OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS, OUTDOOR_PUMP_IDLE_WINDOW_SEC);
+    } else {
+        // State-based guard re-fires on the next tick, but log the enqueue failure.
+        LOGE("update", "failed to disable idle outdoor pump station");
+    }
 }
 
 bool Automation::changeDrainagePumpEnableInternal(bool enable)

@@ -32,6 +32,12 @@
 // On battery power, city pressure above this value -> pump off + bypass open.
 #define ELECTRICITY_BATTERY_BYPASS_PRESSURE_BAR 1.5f
 
+// AUTO-only idle protection for the outdoor pump: pump continuously ON for
+// >= OUTDOOR_PUMP_IDLE_WINDOW_SEC with < OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS on
+// the yard meter over the trailing window -> force OFF.
+#define OUTDOOR_PUMP_IDLE_WINDOW_SEC 600
+#define OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS 2
+
 struct AutomationState
 {
     bool autoMode = false;
@@ -45,8 +51,9 @@ public:
         EDMQTT::MQTT* mqtt,
         PCF8574* relayDriver,
         EDWB::WirenBoard* wirenboard,
-        EDCommon::Counter::PCF8574P* meter
-    ) : _discoveryMgr(discoveryMgr), _mqtt(mqtt), _relayDriver(relayDriver), _wirenboard(wirenboard), _meter(meter)
+        EDCommon::Counter::PCF8574P* meter,
+        EDCommon::Counter::PCF8574P* yardMeter
+    ) : _discoveryMgr(discoveryMgr), _mqtt(mqtt), _relayDriver(relayDriver), _wirenboard(wirenboard), _meter(meter), _yardMeter(yardMeter)
     {
         _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation_v2.bin"));
     }
@@ -90,6 +97,10 @@ private:
     bool changeDrainagePumpEnableInternal(bool enable);
     bool changeRainwaterPitValveOpenInternal(bool open);
     bool changeOutdoorPumpStationEnableInternal(bool enable);
+
+    // AUTO-only: force the outdoor pump OFF when it has run continuously for a
+    // full window with less than the minimum yard flow over that window.
+    void updateOutdoorPumpIdleProtection(bool overrideActive);
 
     // Returns the relay backing a device id and, for the three valves, sets
     // *isValve to true (valve "open" semantics are inverted from the relay
@@ -144,6 +155,7 @@ private:
     EDCommon::Sensor::WaterLevel* _waterLevelSensor = nullptr;
     EDCommon::Sensor::WBMAI6Pressure* _pressureSensor = nullptr;
     EDCommon::Counter::PCF8574P* _meter = nullptr;
+    EDCommon::Counter::PCF8574P* _yardMeter = nullptr;
 
     RainwaterPitLevelConsumer* _rainwaterPitLevelConsumer = nullptr;
     // Written from the MQTT task callback, read from the main loop task.
@@ -165,6 +177,18 @@ private:
     // Rainwater pit fill session state (in-memory only).
     bool _rainwaterPitFillingSession = false;
     bool _outdoorPumpStoppedByLevel = false;
+
+    // Outdoor pump idle-flow protection state (main-loop only, static storage).
+    // The slot about to be overwritten is the yard-meter sample from
+    // OUTDOOR_PUMP_IDLE_WINDOW_SEC seconds ago.
+    static constexpr uint16_t YARD_FLOW_SAMPLES = OUTDOOR_PUMP_IDLE_WINDOW_SEC + 1;
+    uint32_t _yardFlowSamples[YARD_FLOW_SAMPLES];
+    uint16_t _yardFlowSampleHead = 0;
+    bool _yardFlowSamplesSeeded = false;
+    // Previous tick's rounded yard total, for tick-to-tick decrease detection.
+    uint32_t _lastYardLiters = 0;
+    bool _outdoorPumpIdleArmed = false;
+    uint32_t _outdoorPumpOnSinceSec = 0;
 
     bool inited = false;
 };

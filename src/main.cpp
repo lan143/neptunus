@@ -48,7 +48,7 @@ EDCommon::Counter::PCF8574P yardMeter(&inputDriver);
 
 MeterHandler meterHandler(&homeMeter, &yardMeter);
 
-Automation automation(&discoveryMgr, &mqtt, &relayDriver, &wirenboard, &homeMeter);
+Automation automation(&discoveryMgr, &mqtt, &relayDriver, &wirenboard, &homeMeter, &yardMeter);
 
 ControlsHandler controlsHandler(&automation, &homeMeter, &yardMeter);
 
