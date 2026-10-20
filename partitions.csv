@@ -2,7 +2,7 @@
 # WHY: the firmware exceeds the default 1.25MB (1,310,720 B) app slot, so building
 # with the SDK default table fails. This layout keeps dual OTA (two ~1.81MB app
 # slots) and shrinks the LittleFS partition to 320KB, which comfortably fits the
-# built web assets (~95KB) plus persisted data (config.bin, meter.bin, yards, etc.).
+# built web assets (~160KB after bundling edc-config-ui) plus persisted data (config.bin, meter.bin, yards, etc.).
 #
 # WARNING (flash layout): the first USB `pio run -e kc868a6 -t upload` rewrites the
 # partition table and invalidates existing LittleFS contents (config.bin, meter.bin,

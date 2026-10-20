@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { TabBar, type TabItem } from './components/TabBar';
+import { BackupPanel } from './pages/Backup';
 import { ConnectionsPage } from './pages/Connections';
 import { ControlsPage } from './pages/Controls';
 import { MetersPage } from './pages/Meters';
@@ -13,7 +14,8 @@ type TabId =
   | 'controls'
   | 'settings'
   | 'connections'
-  | 'network';
+  | 'network'
+  | 'backup';
 
 const TABS: ReadonlyArray<TabItem<TabId>> = [
   { id: 'status', label: 'Status' },
@@ -22,6 +24,7 @@ const TABS: ReadonlyArray<TabItem<TabId>> = [
   { id: 'settings', label: 'Settings' },
   { id: 'connections', label: 'MQTT' },
   { id: 'network', label: 'Network' },
+  { id: 'backup', label: 'Backup' },
 ];
 
 function renderPanel(tab: TabId) {
@@ -38,6 +41,8 @@ function renderPanel(tab: TabId) {
       return <ConnectionsPage />;
     case 'network':
       return <NetworkPage />;
+    case 'backup':
+      return <BackupPanel />;
   }
 }
 

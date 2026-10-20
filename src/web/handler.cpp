@@ -8,6 +8,8 @@
 #include <math.h>
 #include "defines.h"
 #include "handler.h"
+#include <backup/config_backup_handler.hpp>
+#include <backup/config_file_handler.hpp>
 
 void Handler::init()
 {
@@ -18,6 +20,35 @@ void Handler::init()
     _controlsHandler->registerHandler(_server);
 
     _networkApi->registerRoutes(*_server);
+
+    // Register the archive endpoints before the single-file endpoints:
+    // ESPAsyncWebServer can otherwise match the shorter /api/config path first.
+    // Restore replaces /config.bin and reboots so setup() reloads it.
+    static const EDConfig::BackupFileSpec backupFiles[] = {
+        {"config.bin", "/config.bin", sizeof(Config), CURRENT_VERSION, true}
+    };
+    static void (*const rebootAfterConfigCommit)() = [] {
+        delay(200);
+        ESP.restart();
+    };
+
+    static EDConfig::ConfigBackupHandler backupHandler({
+        backupFiles,
+        sizeof(backupFiles) / sizeof(backupFiles[0]),
+        "neptunus-config.zip",
+        0,
+        rebootAfterConfigCommit
+    });
+    backupHandler.registerHandlers(_server);
+
+    static EDConfig::ConfigFileHandler configFileHandler({
+        "/config.bin",
+        sizeof(Config),
+        CURRENT_VERSION,
+        true,
+        rebootAfterConfigCommit
+    });
+    configFileHandler.registerHandlers(_server);
 
     _server->on("/api/settings/modbus", HTTP_GET, [this](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("application/json");
