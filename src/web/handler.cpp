@@ -8,6 +8,7 @@
 #include <math.h>
 #include "defines.h"
 #include "handler.h"
+#include "meter/state.h"
 #include <backup/config_backup_handler.hpp>
 #include <backup/config_file_handler.hpp>
 
@@ -24,8 +25,11 @@ void Handler::init()
     // Register the archive endpoints before the single-file endpoints:
     // ESPAsyncWebServer can otherwise match the shorter /api/config path first.
     // Restore replaces /config.bin and reboots so setup() reloads it.
+    // Meter files are unversioned ring-storage snapshots restored verbatim.
     static const EDConfig::BackupFileSpec backupFiles[] = {
-        {"config.bin", "/config.bin", sizeof(Config), CURRENT_VERSION, true}
+        {"config.bin", "/config.bin", sizeof(Config), CURRENT_VERSION, true},
+        {"meter.bin", "/meter.bin", sizeof(MeterState), 0, false},
+        {"yard_meter.bin", "/yard_meter.bin", sizeof(MeterState), 0, false}
     };
     static void (*const rebootAfterConfigCommit)() = [] {
         delay(200);
