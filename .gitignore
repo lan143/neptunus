@@ -8,3 +8,5 @@
 # Frontend (Vite + Preact); build output intentionally lands in data/
 frontend/node_modules/
 frontend/dist/
+# Local dev target; .env.example stays tracked.
+frontend/.env
