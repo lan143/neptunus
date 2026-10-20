@@ -5,6 +5,7 @@ import type { ControlDeviceState, ControlsSnapshot } from '../api/types';
 import { Banner } from '../components/Banner';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { WaterSchematic } from '../components/WaterSchematic';
 
 const CONTROLS_REFRESH_MS = 5_000;
 
@@ -217,6 +218,15 @@ export function ControlsPage() {
           onClose={() => setActionError(null)}
         />
       ) : null}
+
+      <Card title="Water schematic">
+        <WaterSchematic
+          snapshot={snapshot}
+          disabled={controlsDisabled}
+          pendingId={pendingId}
+          onToggle={toggle}
+        />
+      </Card>
 
       <Card title="Sensors">
         <dl class="kv">

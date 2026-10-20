@@ -721,3 +721,37 @@ button.btn:disabled {
     transform: none;
   }
 }
+
+/* Water schematic (Controls) ---------------------------------------------- */
+
+.schematic-scroll {
+  overflow-x: auto;
+}
+
+.schematic-scroll svg {
+  display: block;
+  width: 100%;
+  min-width: 980px;
+  height: auto;
+}
+
+#valve-home-fill,
+#valve-bypass,
+#valve-street-fill,
+#pump-home,
+#pump-street {
+  cursor: pointer;
+}
+
+.schematic-scroll [data-pending="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.schematic-scroll[data-disabled="true"] #valve-home-fill,
+.schematic-scroll[data-disabled="true"] #valve-bypass,
+.schematic-scroll[data-disabled="true"] #valve-street-fill,
+.schematic-scroll[data-disabled="true"] #pump-home,
+.schematic-scroll[data-disabled="true"] #pump-street {
+  cursor: default;
+}

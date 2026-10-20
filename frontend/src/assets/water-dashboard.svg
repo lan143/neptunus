@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1260 720" width="1260" height="720" font-family="'Segoe UI', Roboto, Arial, sans-serif" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTpmYWY2YmMzNi1lMmNjLTQzNjQtOGU5Yi1kNTUwZDJlNTMwYzEAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaJj6xFsPsFfyVxN7ZKzXzUcAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDplYjNiNmY5MS03YzMzLTRkYzgtYmRjZS01M2FhYjQ0MjhiZTRscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNo2Ns3UliEmyhZulm4A3BDdgAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFgguIMOrntUWLFCvCafofKKCm6KcTZ/O5As7uQTNx++1YOkZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaDX17LRAUxR9n465+PsGwzsAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCCfBqF0+GbMxJHrffmrv8NdHuSuwans6g+NVV8299M1e2RuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBjzZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmZhZjZiYzM2LWUyY2MtNDM2NC04ZTliLWQ1NTBkMmU1MzBjMS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmE4ZmY3Y2ZkLWY4M2QtNGEwMC1iMGI4LWVmZGJiMDJmMWU2NHJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCC4gw6ue1RYsUK8Jp+h8ooKbopxNn87kCzu5BM3H77Vg6JjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggeSHGQbNt3uTHB51kcvq9xlCX3bEEM3VA3n1E3IE29OKiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggjTVXEkiyrbnwKxu7nDo4Bi8c+4SO058N86lV2Vb2H6Z0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQMppKeSnkAYxe4D5UJ7poqgFMxVoMVjxsHqGVocHjSv5FjYnRJVUh/sAjgKgVZf9SRFkC0fawtjD3KBSbaxAGPk=</c2pa:manifest></metadata>
+  <title>Водоснабжение — схема автоматизации</title>
+
+  <style>
+    .bg { fill: #0b1220; }
+    .title { fill: #e2e8f0; font-size: 20px; font-weight: 700; }
+    .caption { fill: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: .5px; }
+    .tank-title { fill: #cbd5e1; font-size: 12px; font-weight: 700; }
+
+    /* Трубы */
+    .pipe { fill: none; stroke: #334155; stroke-width: 6; stroke-linejoin: round; }
+    .pipe[data-flow="on"] { stroke: #38bdf8; stroke-dasharray: 14 8; animation: flow .8s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -22; } }
+
+    /* Клапаны (ISO-символ: два треугольника + соленоидный привод) */
+    .valve .valve-body { fill: #64748b; stroke: #e2e8f0; stroke-width: 1.5; stroke-linejoin: round; }
+    .valve[data-state="open"]   .valve-body { fill: #22c55e; }
+    .valve[data-state="closed"] .valve-body { fill: #ef4444; }
+    .valve .stem { stroke: #94a3b8; stroke-width: 2; }
+    .valve .actuator { fill: #1e293b; stroke: #94a3b8; stroke-width: 1.5; }
+
+    /* Насосы (круг + треугольник к нагнетанию) */
+    .pump .pump-body { fill: #1e293b; stroke: #e2e8f0; stroke-width: 2; }
+    .pump .pump-arrow { fill: none; stroke: #e2e8f0; stroke-width: 2; stroke-linejoin: round; }
+    .pump[data-state="on"]    .pump-body { fill: #16a34a; }
+    .pump[data-state="fault"] .pump-body { fill: #dc2626; }
+
+    /* КИП: контрольно-измерительные «пузыри» */
+    .instr { fill: #0b1220; stroke: #e2e8f0; stroke-width: 2; }
+    .instr-text { fill: #e2e8f0; font-size: 11px; font-weight: 700; text-anchor: middle; }
+    .lead { stroke: #94a3b8; stroke-width: 2; }
+
+    /* Ёмкости */
+    .tank-body { fill: #0f1a2e; stroke: #94a3b8; stroke-width: 3; }
+    .water { fill: #1d78c1; fill-opacity: .85; }
+    .tank[data-state="alarm"] .water { fill: #c2410c; }
+    .tick { stroke: #94a3b8; stroke-width: 1; }
+    .tick-text { fill: #94a3b8; font-size: 9px; }
+
+    /* Текстовые боксы состояния/значений */
+    .box rect { fill: #111c33; stroke: #334155; stroke-width: 1.5; }
+    .box-label { fill: #94a3b8; font-size: 10px; text-anchor: middle; }
+    .box-value { fill: #94a3b8; font-size: 13px; font-weight: 700; text-anchor: middle;
+                 font-family: ui-monospace, Consolas, 'Courier New', monospace; }
+    [data-state="open"]  .box-value, [data-state="on"] .box-value, [data-state="ok"] .box-value { fill: #4ade80; }
+    [data-state="closed"] .box-value, [data-state="fault"] .box-value, [data-state="alarm"] .box-value { fill: #f87171; }
+    [data-state="off"] .box-value { fill: #cbd5e1; }
+    .box-value.num { fill: #7dd3fc; }
+    [data-state="alarm"] .box-value.num { fill: #f87171; }
+
+    .legend-text { fill: #94a3b8; font-size: 11px; }
+  </style>
+
+  <rect class="bg" width="1260" height="720"/>
+  <text class="title" x="20" y="30">Водоснабжение · схема автоматизации</text>
+
+  <!-- ===================== ТРУБЫ ===================== -->
+  <path id="pipe-city"           class="pipe" data-flow="off" d="M20 360 L130 360"/>
+  <path id="pipe-trunk"          class="pipe" data-flow="off" d="M130 360 L130 140"/>
+  <path id="pipe-trunk-down"     class="pipe" data-flow="off" d="M130 360 L130 540"/>
+  <path id="pipe-home-fill"      class="pipe" data-flow="off" d="M130 140 L330 140"/>
+  <path id="pipe-bypass"         class="pipe" data-flow="off" d="M130 360 L800 360 L800 215"/>
+  <path id="pipe-street-fill"    class="pipe" data-flow="off" d="M130 540 L330 540"/>
+  <path id="pipe-home-suction"   class="pipe" data-flow="off" d="M510 215 L558 215"/>
+  <path id="pipe-home-out"       class="pipe" data-flow="off" d="M602 215 L1130 215"/>
+  <path id="pipe-street-suction" class="pipe" data-flow="off" d="M510 615 L558 615"/>
+  <path id="pipe-street-out"     class="pipe" data-flow="off" d="M602 615 L1130 615"/>
+  <circle cx="800" cy="215" r="5" fill="#94a3b8"/>
+  <circle cx="130" cy="360" r="5" fill="#94a3b8"/>
+
+  <!-- Подписи линий -->
+  <text class="caption" x="20" y="386">ГОРОДСКАЯ</text>
+  <text class="caption" x="20" y="401">СЕТЬ</text>
+  <text class="caption" x="580" y="348" text-anchor="middle">БАЙПАС</text>
+  <text class="caption" x="900" y="204">ДОМАШНЯЯ МАГИСТРАЛЬ</text>
+  <text class="caption" x="900" y="604">УЛИЧНЫЙ ВОДОПРОВОД</text>
+  <polygon points="1130,205 1150,215 1130,225" fill="#94a3b8"/>
+  <text class="caption" x="1158" y="220">В ДОМ</text>
+  <polygon points="1130,605 1150,615 1130,625" fill="#94a3b8"/>
+  <text class="caption" x="1158" y="620">НА УЛИЦУ</text>
+
+  <!-- ===================== ДАТЧИК ДАВЛЕНИЯ PT1 ===================== -->
+  <g id="sensor-city-pressure" class="sensor" data-state="unknown">
+    <line class="lead" x1="70" y1="360" x2="70" y2="328"/>
+    <circle class="instr" cx="70" cy="310" r="18"/>
+    <text class="instr-text" x="70" y="314">PT</text>
+    <g class="box" transform="translate(20,235)">
+      <rect width="100" height="44" rx="5"/>
+      <text class="box-label" x="50" y="15">PT1 Давление</text>
+      <text id="sensor-city-pressure-value" class="box-value num" x="50" y="35">— бар</text>
+    </g>
+  </g>
+
+  <!-- ===================== ЁМКОСТЬ 1: ДОМАШНИЙ РЕЗЕРВ ===================== -->
+  <g id="tank-home" class="tank" data-state="unknown">
+    <text class="tank-title" x="330" y="50">ЁМКОСТЬ 1 · ДОМАШНИЙ РЕЗЕРВ</text>
+    <clipPath id="clip-tank-home"><rect x="332" y="62" width="176" height="186" rx="5"/></clipPath>
+    <rect class="tank-body" x="330" y="60" width="180" height="190" rx="6"/>
+    <rect id="tank-home-water" class="water" x="332" y="248" width="176" height="0" clip-path="url(#clip-tank-home)"/>
+    <line class="tick" x1="332" y1="201.5" x2="344" y2="201.5"/><text class="tick-text" x="348" y="204.5">25%</text>
+    <line class="tick" x1="332" y1="155"   x2="344" y2="155"/>  <text class="tick-text" x="348" y="158">50%</text>
+    <line class="tick" x1="332" y1="108.5" x2="344" y2="108.5"/><text class="tick-text" x="348" y="111.5">75%</text>
+    <line class="lead" x1="510" y1="100" x2="534" y2="100"/>
+    <circle class="instr" cx="552" cy="100" r="18"/>
+    <text class="instr-text" x="552" y="104">LT</text>
+    <g class="box" transform="translate(345,262)">
+      <rect width="150" height="40" rx="5"/>
+      <text class="box-label" x="75" y="14">LT1 Уровень воды</text>
+      <text id="tank-home-level" class="box-value num" x="75" y="32">— %</text>
+    </g>
+  </g>
+
+  <!-- ===================== ЁМКОСТЬ 2: УЛИЦА ===================== -->
+  <g id="tank-street" class="tank" data-state="unknown" transform="translate(0,400)">
+    <text class="tank-title" x="330" y="50">ЁМКОСТЬ 2 · УЛИЧНЫЙ ВОДОПРОВОД</text>
+    <clipPath id="clip-tank-street"><rect x="332" y="62" width="176" height="186" rx="5"/></clipPath>
+    <rect class="tank-body" x="330" y="60" width="180" height="190" rx="6"/>
+    <rect id="tank-street-water" class="water" x="332" y="248" width="176" height="0" clip-path="url(#clip-tank-street)"/>
+    <line class="tick" x1="332" y1="201.5" x2="344" y2="201.5"/><text class="tick-text" x="348" y="204.5">25%</text>
+    <line class="tick" x1="332" y1="155"   x2="344" y2="155"/>  <text class="tick-text" x="348" y="158">50%</text>
+    <line class="tick" x1="332" y1="108.5" x2="344" y2="108.5"/><text class="tick-text" x="348" y="111.5">75%</text>
+    <line class="lead" x1="510" y1="100" x2="534" y2="100"/>
+    <circle class="instr" cx="552" cy="100" r="18"/>
+    <text class="instr-text" x="552" y="104">LT</text>
+    <g class="box" transform="translate(345,262)">
+      <rect width="150" height="40" rx="5"/>
+      <text class="box-label" x="75" y="14">LT2 Уровень воды</text>
+      <text id="tank-street-level" class="box-value num" x="75" y="32">— %</text>
+    </g>
+  </g>
+
+  <!-- ===================== КЛАПАН V1: город → домашний резерв ===================== -->
+  <g id="valve-home-fill" class="valve" data-state="unknown">
+    <g transform="translate(230,140)">
+      <line class="stem" x1="0" y1="0" x2="0" y2="-22"/>
+      <rect class="actuator" x="-10" y="-32" width="20" height="10" rx="2"/>
+      <path class="valve-body" d="M-15,-11 L15,11 L15,-11 L-15,11 Z"/>
+    </g>
+    <g class="box" transform="translate(172,60)">
+      <rect width="116" height="40" rx="5"/>
+      <text class="box-label" x="58" y="14">V1 Набор резерва</text>
+      <text id="valve-home-fill-state" class="box-value" x="58" y="32">НЕТ ДАННЫХ</text>
+    </g>
+  </g>
+
+  <!-- ===================== КЛАПАН V2: байпас ===================== -->
+  <g id="valve-bypass" class="valve" data-state="unknown">
+    <g transform="translate(440,360)">
+      <line class="stem" x1="0" y1="0" x2="0" y2="22"/>
+      <rect class="actuator" x="-10" y="22" width="20" height="10" rx="2"/>
+      <path class="valve-body" d="M-15,-11 L15,11 L15,-11 L-15,11 Z"/>
+    </g>
+    <g class="box" transform="translate(382,398)">
+      <rect width="116" height="40" rx="5"/>
+      <text class="box-label" x="58" y="14">V2 Байпас</text>
+      <text id="valve-bypass-state" class="box-value" x="58" y="32">НЕТ ДАННЫХ</text>
+    </g>
+  </g>
+
+  <!-- ===================== КЛАПАН V3: город → уличная ёмкость ===================== -->
+  <g id="valve-street-fill" class="valve" data-state="unknown">
+    <g transform="translate(230,540)">
+      <line class="stem" x1="0" y1="0" x2="0" y2="-22"/>
+      <rect class="actuator" x="-10" y="-32" width="20" height="10" rx="2"/>
+      <path class="valve-body" d="M-15,-11 L15,11 L15,-11 L-15,11 Z"/>
+    </g>
+    <g class="box" transform="translate(172,460)">
+      <rect width="116" height="40" rx="5"/>
+      <text class="box-label" x="58" y="14">V3 Набор улицы</text>
+      <text id="valve-street-fill-state" class="box-value" x="58" y="32">НЕТ ДАННЫХ</text>
+    </g>
+  </g>
+
+  <!-- ===================== НАСОС P1 (дом) ===================== -->
+  <g id="pump-home" class="pump" data-state="unknown">
+    <g transform="translate(580,215)">
+      <circle class="pump-body" r="22"/>
+      <polygon class="pump-arrow" points="0,-22 22,0 0,22"/>
+    </g>
+    <g class="box" transform="translate(532,258)">
+      <rect width="96" height="40" rx="5"/>
+      <text class="box-label" x="48" y="14">P1 Насос (дом)</text>
+      <text id="pump-home-state" class="box-value" x="48" y="32">НЕТ ДАННЫХ</text>
+    </g>
+  </g>
+
+  <!-- ===================== НАСОС P2 (улица) ===================== -->
+  <g id="pump-street" class="pump" data-state="unknown">
+    <g transform="translate(580,615)">
+      <circle class="pump-body" r="22"/>
+      <polygon class="pump-arrow" points="0,-22 22,0 0,22"/>
+    </g>
+    <g class="box" transform="translate(532,545)">
+      <rect width="96" height="40" rx="5"/>
+      <text class="box-label" x="48" y="14">P2 Насос (улица)</text>
+      <text id="pump-street-state" class="box-value" x="48" y="32">НЕТ ДАННЫХ</text>
+    </g>
+  </g>
+
+  <!-- ===================== СЧЁТЧИК FQ1 (дом) ===================== -->
+  <g id="meter-home" class="meter" data-state="unknown">
+    <circle class="instr" cx="700" cy="215" r="20"/>
+    <text class="instr-text" x="700" y="219">FQ</text>
+    <g class="box" transform="translate(640,258)">
+      <rect width="120" height="56" rx="5"/>
+      <text class="box-label" x="60" y="14">FQ1 Счётчик (дом)</text>
+      <text id="meter-home-flow"  class="box-value num" x="60" y="33">— л/мин</text>
+      <text id="meter-home-total" class="box-value num" x="60" y="50">— м³</text>
+    </g>
+  </g>
+
+  <!-- ===================== СЧЁТЧИК FQ2 (улица) ===================== -->
+  <g id="meter-street" class="meter" data-state="unknown">
+    <circle class="instr" cx="700" cy="615" r="20"/>
+    <text class="instr-text" x="700" y="619">FQ</text>
+    <g class="box" transform="translate(640,535)">
+      <rect width="120" height="56" rx="5"/>
+      <text class="box-label" x="60" y="14">FQ2 Счётчик (улица)</text>
+      <text id="meter-street-flow"  class="box-value num" x="60" y="33">— л/мин</text>
+      <text id="meter-street-total" class="box-value num" x="60" y="50">— м³</text>
+    </g>
+  </g>
+
+  <!-- ===================== ЛЕГЕНДА ===================== -->
+  <g transform="translate(760,672)">
+    <rect x="0" y="-9" width="12" height="12" fill="#22c55e"/><text class="legend-text" x="18" y="2">открыт / вкл</text>
+    <rect x="115" y="-9" width="12" height="12" fill="#ef4444"/><text class="legend-text" x="133" y="2">закрыт / авария</text>
+    <rect x="248" y="-9" width="12" height="12" fill="#64748b"/><text class="legend-text" x="266" y="2">нет данных</text>
+    <line x1="350" y1="-3" x2="380" y2="-3" stroke="#38bdf8" stroke-width="4" stroke-dasharray="8 5"/><text class="legend-text" x="388" y="2">поток</text>
+  </g>
+
+  <!-- ===================== JS API ===================== -->
+  <script type="text/javascript"><![CDATA[
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+
+    var LABEL = {
+      open: 'ОТКРЫТ', closed: 'ЗАКРЫТ',
+      on: 'ВКЛЮЧЕН', off: 'ВЫКЛЮЧЕН', fault: 'АВАРИЯ',
+      unknown: 'НЕТ ДАННЫХ'
+    };
+    var WATER_TOP = 62, WATER_H = 186;   // область воды внутри ёмкости
+
+    var api = {
+      // Клапан/насос: state = open|closed|on|off|fault|unknown, text — своя надпись (необязательно)
+      setState: function (id, state, text) {
+        var g = $(id); if (!g) return;
+        g.setAttribute('data-state', state);
+        var t = $(id + '-state');
+        if (t) t.textContent = (text !== undefined) ? text : (LABEL[state] || state);
+      },
+      // Любой текстовый бокс по id
+      setText: function (id, text) {
+        var t = $(id); if (t) t.textContent = text;
+      },
+      // Ёмкость: tankId = 'tank-home' | 'tank-street', pct = 0..100
+      setLevel: function (tankId, pct, text) {
+        pct = Math.max(0, Math.min(100, +pct));
+        var w = $(tankId + '-water');
+        if (w) {
+          var h = WATER_H * pct / 100;
+          w.setAttribute('y', WATER_TOP + WATER_H - h);
+          w.setAttribute('height', h);
+        }
+        api.setText(tankId + '-level', (text !== undefined) ? text : Math.round(pct) + ' %');
+        var g = $(tankId); if (g) g.setAttribute('data-state', pct < 15 ? 'alarm' : 'ok');
+      },
+      // Давление городской сети, бар
+      setPressure: function (bar, alarm) {
+        api.setText('sensor-city-pressure-value', (+bar).toFixed(1) + ' бар');
+        var g = $('sensor-city-pressure');
+        if (g) g.setAttribute('data-state', alarm ? 'alarm' : 'ok');
+      },
+      // Счётчик: meterId = 'meter-home' | 'meter-street'
+      setMeter: function (meterId, flowLpm, totalM3) {
+        if (flowLpm !== null && flowLpm !== undefined) api.setText(meterId + '-flow', (+flowLpm).toFixed(1) + ' л/мин');
+        if (totalM3 !== null && totalM3 !== undefined) api.setText(meterId + '-total', (+totalM3).toFixed(2) + ' м³');
+        var g = $(meterId); if (g) g.setAttribute('data-state', flowLpm > 0 ? 'on' : 'off');
+      },
+      // Анимация потока в трубе: pipeId = 'pipe-...', on = true|false
+      setFlow: function (pipeId, on) {
+        var p = $(pipeId); if (p) p.setAttribute('data-flow', on ? 'on' : 'off');
+      },
+      // Демонстрация — вызвать из консоли: dashboard.demo()
+      demo: function () {
+        api.setPressure(3.4);
+        api.setState('valve-home-fill', 'closed');
+        api.setState('valve-bypass', 'closed');
+        api.setState('valve-street-fill', 'open');
+        api.setState('pump-home', 'on');
+        api.setState('pump-street', 'off');
+        api.setLevel('tank-home', 72);
+        api.setLevel('tank-street', 38);
+        api.setMeter('meter-home', 12.5, 1234.56);
+        api.setMeter('meter-street', 0, 87.3);
+        ['pipe-city', 'pipe-trunk-down', 'pipe-street-fill', 'pipe-home-suction', 'pipe-home-out']
+          .forEach(function (id) { api.setFlow(id, true); });
+      }
+    };
+
+    window.dashboard = api;
+  })();
+  ]]></script>
+</svg>

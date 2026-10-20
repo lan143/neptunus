@@ -40,6 +40,11 @@ Other scripts:
   known quirks (see below). Pages consume it; there is no state library.
 - Pages under `src/pages/` map one-to-one to the tabs: Status, Meters, Controls,
   Settings, MQTT, Network.
+- The Controls tab renders an inline process schematic
+  (`src/components/WaterSchematic.tsx` + `src/assets/water-dashboard.svg` imported
+  with `?raw`, with the XML prolog, script and metadata stripped). It is driven
+  imperatively from the `/api/controls` snapshot, and taps on V1/V2/V3/P1/P2 toggle
+  the matching devices. Drainage pump and Auto mode intentionally stay button-only.
 - `edn-network-ui` (shared web components in the sibling `ed-network` repo) is imported
   once in `src/main.tsx` so its custom elements register globally.
 
