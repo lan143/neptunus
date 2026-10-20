@@ -167,7 +167,8 @@ function setMeter(
 
 function setFlow(root: ParentNode, pipeId: string, on: boolean): void {
   const pipe = findElement(root, pipeId);
-  if (pipe) {
+  // Locked pipes (city inlet) keep the state declared in the markup.
+  if (pipe && pipe.getAttribute('data-locked') !== 'true') {
     pipe.setAttribute('data-flow', on ? 'on' : 'off');
   }
 }
@@ -298,14 +299,15 @@ export function WaterSchematic({
     const p1On = isDeviceOn(snapshot, 'homePumpStation');
     const p2On = isDeviceOn(snapshot, 'outdoorPumpStation');
 
-    setFlow(root, 'pipe-city', v1Open || v3Open);
+    // pipe-city stays permanently on via its data-locked markup attribute.
     setFlow(root, 'pipe-trunk', v1Open);
     setFlow(root, 'pipe-home-fill', v1Open);
     setFlow(root, 'pipe-trunk-down', v3Open);
     setFlow(root, 'pipe-street-fill', v3Open);
     setFlow(root, 'pipe-bypass', v2Open);
     setFlow(root, 'pipe-home-suction', p1On);
-    setFlow(root, 'pipe-home-out', p1On || v2Open);
+    setFlow(root, 'pipe-home-pump-out', p1On);
+    setFlow(root, 'pipe-home-main', p1On || v2Open);
     setFlow(root, 'pipe-street-suction', p2On);
     setFlow(root, 'pipe-street-out', p2On);
   }, [snapshot, pendingId, disabled]);

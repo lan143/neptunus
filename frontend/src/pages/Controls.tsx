@@ -1,4 +1,3 @@
-import { Fragment } from 'preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { getControls, postControlSet } from '../api/client';
 import type { ControlDeviceState, ControlsSnapshot } from '../api/types';
@@ -22,39 +21,6 @@ const AUTO_ACTIONS: DeviceActions = {
   onBadge: 'Enabled',
   offBadge: 'Disabled',
 };
-
-const VALVE_ACTIONS: DeviceActions = {
-  on: 'Open',
-  off: 'Close',
-  onBadge: 'Open',
-  offBadge: 'Closed',
-};
-
-const PUMP_ACTIONS: DeviceActions = {
-  on: 'Turn on',
-  off: 'Turn off',
-  onBadge: 'On',
-  offBadge: 'Off',
-};
-
-/**
- * Format a sensor reading with at most `maxDecimals` decimals, trimming
- * trailing zeros so whole values stay compact (e.g. 2.5, 123.456).
- */
-function formatNumber(value: number, maxDecimals: number): string {
-  if (!Number.isFinite(value)) {
-    return String(value);
-  }
-  const rounded = value.toFixed(maxDecimals);
-  if (!rounded.includes('.')) {
-    return rounded;
-  }
-  return rounded.replace(/0+$/, '').replace(/\.$/, '');
-}
-
-function formatSensorValue(value: number, unit: string): string {
-  return formatNumber(value, unit === 'm3' ? 3 : 2);
-}
 
 interface DeviceRowProps {
   device: ControlDeviceState;
@@ -94,7 +60,7 @@ function DeviceRow({ device, actions, disabled, onToggle }: DeviceRowProps) {
 }
 
 /**
- * Controls tab: live sensor readings plus direct valve/pump/auto-mode toggles.
+ * Controls tab: auto-mode toggle plus the live water schematic.
  *
  * Polls GET /api/controls every 5 s and posts commands to /api/controls/set.
  * The device is LAN-only with no auth, so commands are sent immediately (parity
@@ -185,8 +151,6 @@ export function ControlsPage() {
 
   const autoDevice =
     snapshot.devices.find((device) => device.kind === 'auto') ?? null;
-  const valves = snapshot.devices.filter((device) => device.kind === 'valve');
-  const pumps = snapshot.devices.filter((device) => device.kind === 'pump');
 
   // A snapshot that failed to load cannot be trusted as a command base state.
   const controlsDisabled = loadError !== null;
@@ -219,45 +183,6 @@ export function ControlsPage() {
         />
       ) : null}
 
-      <Card title="Water schematic">
-        <WaterSchematic
-          snapshot={snapshot}
-          disabled={controlsDisabled}
-          pendingId={pendingId}
-          onToggle={toggle}
-        />
-      </Card>
-
-      <Card title="Sensors">
-        <dl class="kv">
-          {snapshot.sensors.map((sensor) => (
-            <Fragment key={sensor.id}>
-              <dt>{sensor.name}</dt>
-              <dd>
-                {sensor.available ? (
-                  <>
-                    {formatSensorValue(sensor.value, sensor.unit)}{' '}
-                    <span class="unit">{sensor.unit}</span>
-                  </>
-                ) : (
-                  <span class="hint">Unavailable</span>
-                )}
-              </dd>
-            </Fragment>
-          ))}
-          <dt>Emergency mode</dt>
-          <dd>
-            <span
-              class={
-                snapshot.emergencyMode ? 'badge badge-danger' : 'badge badge-off'
-              }
-            >
-              {snapshot.emergencyMode ? 'Active' : 'Off'}
-            </span>
-          </dd>
-        </dl>
-      </Card>
-
       <Card title="Auto mode">
         {autoDevice ? (
           <ul class="valve-list">
@@ -273,40 +198,13 @@ export function ControlsPage() {
         )}
       </Card>
 
-      <Card title="Valves">
-        {valves.length === 0 ? (
-          <p class="muted">No valves reported by the device.</p>
-        ) : (
-          <ul class="valve-list">
-            {valves.map((device) => (
-              <DeviceRow
-                key={device.id}
-                device={device}
-                actions={VALVE_ACTIONS}
-                disabled={isDisabled(device)}
-                onToggle={toggle}
-              />
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      <Card title="Pumps">
-        {pumps.length === 0 ? (
-          <p class="muted">No pumps reported by the device.</p>
-        ) : (
-          <ul class="valve-list">
-            {pumps.map((device) => (
-              <DeviceRow
-                key={device.id}
-                device={device}
-                actions={PUMP_ACTIONS}
-                disabled={isDisabled(device)}
-                onToggle={toggle}
-              />
-            ))}
-          </ul>
-        )}
+      <Card title="Water schematic">
+        <WaterSchematic
+          snapshot={snapshot}
+          disabled={controlsDisabled}
+          pendingId={pendingId}
+          onToggle={toggle}
+        />
       </Card>
     </div>
   );
