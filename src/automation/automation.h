@@ -41,6 +41,7 @@
 struct AutomationState
 {
     bool autoMode = false;
+    bool drainagePumpEnabled = false;
 };
 
 class Automation
@@ -55,7 +56,7 @@ public:
         EDCommon::Counter::PCF8574P* yardMeter
     ) : _discoveryMgr(discoveryMgr), _mqtt(mqtt), _relayDriver(relayDriver), _wirenboard(wirenboard), _meter(meter), _yardMeter(yardMeter)
     {
-        _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation_v2.bin"));
+        _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation_v3.bin"));
     }
 
     void init(EDHA::Device* device, Config config);
@@ -134,6 +135,7 @@ private:
     uint32_t _goodPressureCount = 0;
     uint32_t _badPressureCount = 0;
     bool _autoModeSeeding = false;
+    bool _drainagePumpSeeding = false;
 
 private:
     EDConfig::DataMgr<AutomationState>* _localStateMgr = nullptr;

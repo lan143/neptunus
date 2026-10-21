@@ -24,6 +24,7 @@ void Automation::init(EDHA::Device* device, Config config)
 {
     _localStateMgr->setDefault([](AutomationState* state) {
         state->autoMode = true;
+        state->drainagePumpEnabled = true;
     });
     _localStateMgr->load();
 
@@ -72,12 +73,22 @@ void Automation::init(EDHA::Device* device, Config config)
     });
     _homePumpStationRelay = homePumpStationRelay;
 
+    bool storedDrainagePumpEnabled = _localStateMgr->getData()->drainagePumpEnabled;
+    _drainagePumpSeeding = true;
     auto drainagePumpRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
     drainagePumpRelay->init(RELAY_CHANNEL_DRAINAGE_PUMP, {
         EDCommon::Relay::withMQTT(_mqtt, topicPrefix, "neptunus_relay", "Drainage Pump"),
-        EDCommon::Relay::withDiscovery(_discoveryMgr, device)
+        EDCommon::Relay::withDiscovery(_discoveryMgr, device),
+        EDCommon::Relay::withStateChangeListener([this](bool enable) {
+            if (_drainagePumpSeeding) return;
+            _localStateMgr->getData()->drainagePumpEnabled = enable;
+            if (!_localStateMgr->store()) {
+                LOGE("update", "failed to store automation state");
+            }
+        })
     });
     _drainagePumpRelay = drainagePumpRelay;
+    _drainagePumpRelay->setState(storedDrainagePumpEnabled);
 
     auto rainwaterPitRelay = new EDCommon::Relay::PCF8574P(_relayDriver);
     rainwaterPitRelay->init(RELAY_CHANNEL_FILLING_RAINWATER_PIT, {
@@ -181,6 +192,7 @@ void Automation::update()
     }
 
     _autoModeSeeding = false;
+    _drainagePumpSeeding = false;
     _emergencyModeSensor->update();
     _pressureSensor->update();
 
