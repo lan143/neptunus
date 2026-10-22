@@ -55,8 +55,10 @@ static void testHoldEnforcement()
     assert(s.sinceSec == 300);
 }
 
-static void testFastDropByDelta()
+static void testSharpDropWithoutAbsoluteBreach()
 {
+    // A large raw drop that stays at or above the absolute bar is not a fast
+    // drop, no matter how far it falls from the previous average.
     BypassModeState s;
     s.active = true;
     s.sinceSec = 0;
@@ -64,40 +66,80 @@ static void testFastDropByDelta()
     s.avgValid = true;
 
     BypassModeEvent event = updateBypassModeState(s, 2.9f, 30);
-    assert(event == BypassModeEvent::EXITED_FAST_DROP);
-    assert(!s.active);
-    assert(s.avg == 2.9f);
-    assert(s.sinceSec == 30);
+    assert(event == BypassModeEvent::NONE);
+    assert(s.active);
 
-    // 3.5 bar raw samples: no re-entry until both the 300-s hold elapses and
-    // the EMA is above the enter threshold.
-    for (uint32_t nowSec = 40; nowSec <= 320; nowSec += 10) {
-        event = updateBypassModeState(s, 3.5f, nowSec);
-        assert(event == BypassModeEvent::NONE);
-        assert(!s.active);
+    event = updateBypassModeState(s, 3.4f, 40);
+    assert(event == BypassModeEvent::NONE);
+    assert(s.active);
+
+    for (uint32_t nowSec = 50; nowSec <= 400; nowSec += 10) {
+        event = updateBypassModeState(s, 3.4f, nowSec);
+        assert(event != BypassModeEvent::EXITED_FAST_DROP);
+        assert(s.active);
     }
 
-    event = updateBypassModeState(s, 3.5f, 330);
-    assert(event == BypassModeEvent::ENTERED_BYPASS);
-    assert(s.active);
-    assert(s.sinceSec == 330);
+    // 3.4 -> 2.9 -> 3.4 stays active.
+    BypassModeState dip;
+    dip.active = true;
+    dip.sinceSec = 0;
+    dip.avg = 3.4f;
+    dip.avgValid = true;
+
+    event = updateBypassModeState(dip, 3.4f, 10);
+    assert(event == BypassModeEvent::NONE);
+    event = updateBypassModeState(dip, 2.9f, 20);
+    assert(event == BypassModeEvent::NONE);
+    event = updateBypassModeState(dip, 3.4f, 30);
+    assert(event == BypassModeEvent::NONE);
+    assert(dip.active);
 }
 
-static void testFastDropByAbsoluteBound()
+static void testOneAbsoluteSampleDoesNotSwitch()
 {
     BypassModeState s;
     s.active = true;
     s.sinceSec = 0;
-    // prevAvg - 0.4 = 2.6, so the delta rule does not fire; the absolute
-    // 2.80 bar bound still does.
-    s.avg = 3.0f;
+    s.avg = 3.4f;
     s.avgValid = true;
 
-    const BypassModeEvent event = updateBypassModeState(s, 2.75f, 30);
+    BypassModeEvent event = updateBypassModeState(s, 2.75f, 30);
+    assert(event == BypassModeEvent::NONE);
+    assert(s.active);
+    assert(s.lowPressureCount == 1);
+
+    event = updateBypassModeState(s, 3.3f, 40);
+    assert(event == BypassModeEvent::NONE);
+    assert(s.active);
+    assert(s.lowPressureCount == 0);
+
+    event = updateBypassModeState(s, 2.75f, 50);
+    assert(event == BypassModeEvent::NONE);
+    assert(s.active);
+    assert(s.lowPressureCount == 1);
+    assert(s.sinceSec == 0);
+}
+
+static void testTwoConsecutiveAbsoluteSamplesSwitchImmediately()
+{
+    BypassModeState s;
+    s.active = true;
+    s.sinceSec = 0;
+    s.avg = 3.4f;
+    s.avgValid = true;
+
+    BypassModeEvent event = updateBypassModeState(s, 2.7f, 30);
+    assert(event == BypassModeEvent::NONE);
+    assert(s.active);
+    assert(s.lowPressureCount == 1);
+
+    // Fires ~20 s after the first low sample, regardless of the hold timer.
+    event = updateBypassModeState(s, 2.75f, 40);
     assert(event == BypassModeEvent::EXITED_FAST_DROP);
     assert(!s.active);
     assert(s.avg == 2.75f);
-    assert(s.sinceSec == 30);
+    assert(s.lowPressureCount == 0);
+    assert(s.sinceSec == 40);
 }
 
 static void testNoReentryOnStaleAvg()
@@ -108,31 +150,30 @@ static void testNoReentryOnStaleAvg()
     s.avg = 3.4f;
     s.avgValid = true;
 
-    BypassModeEvent event = updateBypassModeState(s, 2.9f, 30);
-    assert(event == BypassModeEvent::EXITED_FAST_DROP);
-    assert(s.avg == 2.9f);
-
-    for (uint32_t nowSec = 40; nowSec <= 130; nowSec += 10) {
-        event = updateBypassModeState(s, 3.5f, nowSec);
-        assert(event == BypassModeEvent::NONE);
-        assert(!s.active);
-    }
-
-    // The EMA is already above 3.20 here, but the hold timer has not elapsed.
-    event = updateBypassModeState(s, 3.5f, 140);
+    // Two consecutive low samples trigger the fast drop at t=40.
+    BypassModeEvent event = updateBypassModeState(s, 2.75f, 30);
     assert(event == BypassModeEvent::NONE);
-    assert(!s.active);
-    assert(s.avg > BYPASS_ENTER_PRESSURE_BAR);
+    event = updateBypassModeState(s, 2.7f, 40);
+    assert(event == BypassModeEvent::EXITED_FAST_DROP);
+    assert(s.avg == 2.7f);
+    assert(s.sinceSec == 40);
 
-    for (uint32_t nowSec = 150; nowSec <= 320; nowSec += 10) {
+    for (uint32_t nowSec = 50; nowSec <= 330; nowSec += 10) {
         event = updateBypassModeState(s, 3.5f, nowSec);
         assert(event == BypassModeEvent::NONE);
         assert(!s.active);
+        if (nowSec == 140) {
+            // The EMA is already above 3.20 here, but the hold timer has not
+            // elapsed.
+            assert(s.avg > BYPASS_ENTER_PRESSURE_BAR);
+        }
     }
 
-    event = updateBypassModeState(s, 3.5f, 330);
+    // Both the 300-s hold and the EMA enter threshold are satisfied here.
+    event = updateBypassModeState(s, 3.5f, 340);
     assert(event == BypassModeEvent::ENTERED_BYPASS);
     assert(s.active);
+    assert(s.sinceSec == 340);
 }
 
 static void testNoSamplesMeansUnchangedState()
@@ -152,6 +193,7 @@ static void testNoSamplesMeansUnchangedState()
     assert(s.sinceSec == snapshot.sinceSec);
     assert(s.avg == snapshot.avg);
     assert(s.avgValid == snapshot.avgValid);
+    assert(s.lowPressureCount == snapshot.lowPressureCount);
 }
 
 static void testFreshStart()
@@ -170,12 +212,13 @@ int main()
 {
     testNoiseNearThreshold();
     testHoldEnforcement();
-    testFastDropByDelta();
-    testFastDropByAbsoluteBound();
+    testSharpDropWithoutAbsoluteBreach();
+    testOneAbsoluteSampleDoesNotSwitch();
+    testTwoConsecutiveAbsoluteSamplesSwitchImmediately();
     testNoReentryOnStaleAvg();
     testNoSamplesMeansUnchangedState();
     testFreshStart();
 
-    std::printf("bypass_mode scenarios passed: 7\n");
+    std::printf("bypass_mode scenarios passed: 8\n");
     return 0;
 }

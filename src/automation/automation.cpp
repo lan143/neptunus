@@ -794,7 +794,6 @@ void Automation::updateOutdoorPumpIdleProtection(bool overrideActive)
 void Automation::updateBypassMode(float pressure)
 {
     const uint32_t nowSec = esp_timer_get_time() / 1000000;
-    const float avgBefore = _bypassMode.avgValid ? _bypassMode.avg : pressure;
     const BypassModeEvent event = updateBypassModeState(_bypassMode, pressure, nowSec);
 
     switch (event) {
@@ -805,7 +804,7 @@ void Automation::updateBypassMode(float pressure)
             LOGI("update", "bypass mode OFF: avg pressure low, avg: %.2f, pressure: %.2f", _bypassMode.avg, pressure);
             break;
         case BypassModeEvent::EXITED_FAST_DROP:
-            LOGI("update", "bypass mode OFF: fast pressure drop, avg before: %.2f, pressure: %.2f", avgBefore, pressure);
+            LOGI("update", "bypass mode OFF (fast pressure drop): %.2f bar", pressure);
             break;
         case BypassModeEvent::NONE:
             break;
