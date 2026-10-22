@@ -204,18 +204,15 @@ void Automation::update()
             auto fillingBarrel = _fillingBarrelRelay->isEnabled();
             auto rainwaterPit = _rainwaterPitRelay->isEnabled();
 
-            // Counters only move when no filling valve is open. Pit relay state must
-            // be valid (conservative: an invalid state freezes the counters).
+            // State only moves when no filling valve is open. Pit relay state must
+            // be valid (conservative: an invalid state freezes the bypass debounce
+            // and the bad-pressure counter).
             if (
                 !_meter->isFlowOfWaterActive()
                 && fillingBarrel.second && fillingBarrel.first
                 && rainwaterPit.second && rainwaterPit.first
             ) {
-                if (calculatedPressure > SWITCH_TO_HOME_PUMP_STATION_PRESSURE && _goodPressureCount < 24) {
-                    _goodPressureCount++;
-                } else if (calculatedPressure < SWITCH_TO_HOME_PUMP_STATION_PRESSURE && _goodPressureCount > 0) {
-                    _goodPressureCount--;
-                }
+                updateBypassMode(calculatedPressure);
 
                 if (calculatedPressure < EMERGENCY_PRESSURE && _badPressureCount < 24) {
                     _badPressureCount++;
@@ -514,7 +511,10 @@ void Automation::update()
                 }
             } else if (!fillingActive) {
                 bool enableHomePumpStation = true;
-                if (_goodPressureCount > 12) { // disable pump station and open bypass for saving electricity
+                // Debounced bypass mode (300-s hold, 0.2-bar hysteresis): open the
+                // bypass and stop the pump station to save electricity only when
+                // high city pressure has persisted, not on single samples.
+                if (_bypassMode.active) {
                     changeBypassValveOpenInternal(true);
                     enableHomePumpStation = false;
                 } else {
@@ -533,7 +533,7 @@ void Automation::update()
 
         LOGD(
             "update",
-            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, good pressure count: %d, bad pressure count: %d",
+            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, bad pressure count: %d",
             enableLevel,
             disableLevel,
             level,
@@ -541,7 +541,6 @@ void Automation::update()
             fillingActive ? "true" : "false",
             pitDataOk ? pitPct : -1.0f,
             _rainwaterPitFillingSession ? "true" : "false",
-            _goodPressureCount,
             _badPressureCount
         );
     }
@@ -789,6 +788,27 @@ void Automation::updateOutdoorPumpIdleProtection(bool overrideActive)
     } else {
         // State-based guard re-fires on the next tick, but log the enqueue failure.
         LOGE("update", "failed to disable idle outdoor pump station");
+    }
+}
+
+void Automation::updateBypassMode(float pressure)
+{
+    const uint32_t nowSec = esp_timer_get_time() / 1000000;
+    const float avgBefore = _bypassMode.avgValid ? _bypassMode.avg : pressure;
+    const BypassModeEvent event = updateBypassModeState(_bypassMode, pressure, nowSec);
+
+    switch (event) {
+        case BypassModeEvent::ENTERED_BYPASS:
+            LOGI("update", "bypass mode ON: avg pressure high, avg: %.2f, pressure: %.2f", _bypassMode.avg, pressure);
+            break;
+        case BypassModeEvent::EXITED_LOW_AVG:
+            LOGI("update", "bypass mode OFF: avg pressure low, avg: %.2f, pressure: %.2f", _bypassMode.avg, pressure);
+            break;
+        case BypassModeEvent::EXITED_FAST_DROP:
+            LOGI("update", "bypass mode OFF: fast pressure drop, avg before: %.2f, pressure: %.2f", avgBefore, pressure);
+            break;
+        case BypassModeEvent::NONE:
+            break;
     }
 }
 

@@ -38,6 +38,8 @@
 #define OUTDOOR_PUMP_IDLE_WINDOW_SEC 600
 #define OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS 2
 
+#include "bypass_mode.h"
+
 struct AutomationState
 {
     bool autoMode = false;
@@ -103,6 +105,10 @@ private:
     // full window with less than the minimum yard flow over that window.
     void updateOutdoorPumpIdleProtection(bool overrideActive);
 
+    // Advances the debounced bypass-mode state machine. Must only be called from
+    // the 10-s pressure sample path with a valid supplier pressure.
+    void updateBypassMode(float pressure);
+
     // Returns the relay backing a device id and, for the three valves, sets
     // *isValve to true (valve "open" semantics are inverted from the relay
     // desired state). Returns nullptr / false for unknown or out-of-range ids.
@@ -132,7 +138,7 @@ private:
 private:
     uint64_t _lastUpdateTime = 0;
     uint64_t _pressureSensorLastUpdateTime = 0;
-    uint32_t _goodPressureCount = 0;
+    BypassModeState _bypassMode;
     uint32_t _badPressureCount = 0;
     bool _autoModeSeeding = false;
     bool _drainagePumpSeeding = false;
