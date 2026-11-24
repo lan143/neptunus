@@ -1,0 +1,52 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache PlatformIO and pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build firmware
+        run: pio run -e kc868a6
+
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bypass mode scenarios
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined \
+              test/bypass_mode_scenarios.cpp -o /tmp/bypass_test && /tmp/bypass_test
+
+      - name: Level trend scenarios
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined \
+              test/level_trend_scenarios.cpp -o /tmp/level_trend_test && /tmp/level_trend_test
+
+      - name: WB-MAI6 pressure validation scenarios
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined \
+              test/wb_mai6_pressure_validation_scenarios.cpp -o /tmp/wb_pressure_validation_test \
+              && /tmp/wb_pressure_validation_test

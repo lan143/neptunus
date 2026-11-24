@@ -208,6 +208,74 @@ static void testFreshStart()
     assert(s.sinceSec == 0);
 }
 
+static void testFastDropEscapeDuringFlow()
+{
+    // A real supplier collapse during a household draw must still escape bypass
+    // mode even though entry is suppressed for the duration of the draw.
+    BypassModeState s;
+    s.active = true;
+    s.sinceSec = 0;
+    s.avg = 3.4f;
+    s.avgValid = true;
+
+    BypassModeEvent event = updateBypassModeState(s, 2.0f, 30, false);
+    assert(event == BypassModeEvent::NONE);
+    assert(s.active);
+    assert(s.lowPressureCount == 1);
+
+    event = updateBypassModeState(s, 2.0f, 40, false);
+    assert(event == BypassModeEvent::EXITED_FAST_DROP);
+    assert(!s.active);
+    assert(s.sinceSec == 40);
+}
+
+static void testEnterSuppressedDuringFlow()
+{
+    // Sustained high pressure while a draw is active must never switch into
+    // bypass mode; once the draw ends, the same conditions may enter.
+    BypassModeState s;
+    s.active = false;
+    s.sinceSec = 0;
+    s.avg = 3.3f;
+    s.avgValid = true;
+
+    for (uint32_t nowSec = 10; nowSec <= 300; nowSec += 10) {
+        const BypassModeEvent event = updateBypassModeState(s, 3.4f, nowSec, false);
+        assert(event == BypassModeEvent::NONE);
+        assert(!s.active);
+    }
+    assert(s.avg > BYPASS_ENTER_PRESSURE_BAR);
+
+    const BypassModeEvent event = updateBypassModeState(s, 3.4f, 310, true);
+    assert(event == BypassModeEvent::ENTERED_BYPASS);
+    assert(s.active);
+    assert(s.sinceSec == 310);
+}
+
+static void testAvgAndStreakTrackWhileEnterSuppressed()
+{
+    // Suppression must not freeze the EMA or the fast-drop streak; it only
+    // blocks the ENTER transition.
+    BypassModeState s;
+    s.active = false;
+    s.sinceSec = 0;
+    s.avg = 3.0f;
+    s.avgValid = true;
+
+    for (uint32_t nowSec = 10; nowSec <= 300; nowSec += 10) {
+        const BypassModeEvent event = updateBypassModeState(s, 3.5f, nowSec, false);
+        assert(event == BypassModeEvent::NONE);
+        assert(!s.active);
+    }
+    // The EMA tracked the high samples past the enter threshold while suppressed.
+    assert(s.avg > BYPASS_ENTER_PRESSURE_BAR);
+
+    const BypassModeEvent event = updateBypassModeState(s, 2.0f, 310, false);
+    assert(event == BypassModeEvent::NONE);
+    assert(!s.active);
+    assert(s.lowPressureCount == 1);
+}
+
 int main()
 {
     testNoiseNearThreshold();
@@ -218,7 +286,10 @@ int main()
     testNoReentryOnStaleAvg();
     testNoSamplesMeansUnchangedState();
     testFreshStart();
+    testFastDropEscapeDuringFlow();
+    testEnterSuppressedDuringFlow();
+    testAvgAndStreakTrackWhileEnterSuppressed();
 
-    std::printf("bypass_mode scenarios passed: 8\n");
+    std::printf("bypass_mode scenarios passed: 11\n");
     return 0;
 }

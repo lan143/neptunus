@@ -130,7 +130,10 @@ void Handler::init()
         config->addressQDY30A = addressQDY30A;
         config->addressWBMAI6 = addressWBMAI6;
 
-        _configMgr->store();
+        if (!_configMgr->store()) {
+            request->send(500, "application/json", "{\"message\": \"failed to save config\"}");
+            return;
+        }
 
         request->send(200, "application/json", "{}");
     });
@@ -195,7 +198,10 @@ void Handler::init()
         config->rainwaterPitMaxHeight = maxHeight;
         config->rainwaterPitMaxFillLevel = maxFillLevel;
 
-        _configMgr->store();
+        if (!_configMgr->store()) {
+            request->send(500, "application/json", "{\"message\": \"failed to save config\"}");
+            return;
+        }
 
         request->send(200, "application/json", "{}");
     });
@@ -229,7 +235,10 @@ void Handler::init()
         Config* config = _configMgr->getData();
         std::strcpy(config->electricityTopic, electricityTopic->value().c_str());
 
-        _configMgr->store();
+        if (!_configMgr->store()) {
+            request->send(500, "application/json", "{\"message\": \"failed to save config\"}");
+            return;
+        }
 
         request->send(200, "application/json", "{}");
     });
@@ -313,7 +322,10 @@ void Handler::init()
         std::strcpy(config->network.wifiPassword, wifiPassword->value().c_str());
         config->network.isAPMode = false;
 
-        _configMgr->store();
+        if (!_configMgr->store()) {
+            request->send(500, "application/json", "{\"message\": \"failed to save config\"}");
+            return;
+        }
 
         request->send(200, "application/json", "{}");
     });

@@ -13,9 +13,11 @@
 #include <counter/pcf8574.h>
 
 #include "config.h"
+#include "storage/safe_littlefs_storage.hpp"
 #include "rainwater_level_consumer.h"
 #include "electricity_status_consumer.h"
 #include "wb_mai6_pressure_sensor.h"
+#include "fresh_water_level_sensor.h"
 #include "level_trend.h"
 
 #define WATER_MIN_LEVEL 0.37f
@@ -37,6 +39,29 @@
 // periods as invalid so a stalled Modbus/loop cannot freeze stale data.
 #define PRESSURE_READING_MAX_AGE_US 30000000
 
+// The barrel level is polled every ~1 s; a reading older than 30 s is unknown
+// (same policy family as the pressure sensor's 30 s window over a 10 s poll).
+// An unknown level forces the fill valve closed and the home pump off.
+#define WATER_LEVEL_READING_MAX_AGE_US 30000000
+
+// Hysteresis above WATER_MIN_LEVEL before the home-pump min-level latch is
+// released, so a level hovering at the minimum cannot chatter the pump.
+#define HOME_PUMP_MIN_LEVEL_HYSTERESIS_M 0.07f
+
+// Hard cap on continuous outdoor-pump runtime. Applies in every mode; the
+// idle-flow shutoff only covers the AUTO low-flow case.
+#define OUTDOOR_PUMP_MAX_RUN_SEC 7200
+
+// A rainwater pit fill session that exceeds this duration is abandoned (valve
+// closed) even if the level never reaches the configured target, so a leaking
+// supply or stuck feedback cannot fill forever.
+#define RAINWATER_PIT_FILL_MAX_SESSION_SEC 1800
+
+// Cooldown before a NEW pit fill session may start after one was abandoned
+// by the max-session cap, so a stuck/leaking supply cannot simply restart
+// filling tick after tick.
+#define RAINWATER_PIT_FILL_COOLDOWN_SEC 600
+
 // A fill whose storage level RISES is real filling: the big-draw outdoor pit
 // fill collapses city pressure to ~0 with sensor errors, and that is normal
 // operation, not an accident. A flat/falling level with the valve open is a
@@ -47,9 +72,9 @@
 #define PIT_LEVEL_RISING_DELTA_PERCENT 0.5f
 #define LEVEL_TREND_MAX_AGE_US 30000000
 
-// AUTO-only idle protection for the outdoor pump: pump continuously ON for
+// Idle protection for the outdoor pump: pump continuously ON for
 // >= OUTDOOR_PUMP_IDLE_WINDOW_SEC with < OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS on
-// the yard meter over the trailing window -> force OFF.
+// the yard meter over the trailing window -> force OFF. Applies in every mode.
 #define OUTDOOR_PUMP_IDLE_WINDOW_SEC 600
 #define OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS 2
 
@@ -73,7 +98,7 @@ public:
         EDCommon::Counter::PCF8574P* yardMeter
     ) : _discoveryMgr(discoveryMgr), _mqtt(mqtt), _relayDriver(relayDriver), _wirenboard(wirenboard), _meter(meter), _yardMeter(yardMeter)
     {
-        _localStateMgr = new EDConfig::DataMgr<AutomationState>(new EDConfig::StorageLittleFS<AutomationState>("/automation_v3.bin"));
+        _localStateMgr = new EDConfig::DataMgr<AutomationState>(new Neptunus::SafeStorageLittleFS<AutomationState>("/automation_v3.bin"));
     }
 
     void init(EDHA::Device* device, Config config);
@@ -116,13 +141,16 @@ private:
     bool changeRainwaterPitValveOpenInternal(bool open);
     bool changeOutdoorPumpStationEnableInternal(bool enable);
 
-    // AUTO-only: force the outdoor pump OFF when it has run continuously for a
-    // full window with less than the minimum yard flow over that window.
+    // Force the outdoor pump OFF when it has run continuously for a full window
+    // with less than the minimum yard flow over that window. Applies in every
+    // mode; only the automatic re-enable path stays AUTO-only.
     void updateOutdoorPumpIdleProtection(bool overrideActive);
 
     // Advances the debounced bypass-mode state machine. Must only be called from
     // the 10-s pressure sample path with a valid supplier pressure.
-    void updateBypassMode(float pressure);
+    // allowEnter=false while a water draw is in progress (entry suppressed,
+    // exits still fire).
+    void updateBypassMode(float pressure, bool allowEnter);
 
     // Returns the relay backing a device id and, for the three valves, sets
     // *isValve to true (valve "open" semantics are inverted from the relay
@@ -173,9 +201,10 @@ private:
     EDCommon::Relay::Relay* _outdoorPumpStationRelay = nullptr;
     EDCommon::Relay::Relay* _autoModeRelay = nullptr;
     EDCommon::BinarySensor::BinarySensor* _emergencyModeSensor = nullptr;
+    EDCommon::BinarySensor::BinarySensor* _barrelLevelStaleSensor = nullptr;
 
     Config _config;
-    EDCommon::Sensor::WaterLevel* _waterLevelSensor = nullptr;
+    Neptunus::FreshWaterLevelSensor* _waterLevelSensor = nullptr;
     Neptunus::ValidatedWBMAI6Pressure* _pressureSensor = nullptr;
     EDCommon::Counter::PCF8574P* _meter = nullptr;
     EDCommon::Counter::PCF8574P* _yardMeter = nullptr;
@@ -200,6 +229,19 @@ private:
     // Rainwater pit fill session state (in-memory only).
     bool _rainwaterPitFillingSession = false;
     bool _outdoorPumpStoppedByLevel = false;
+    // Start of the current pit fill session, for the max-session-time cap.
+    // 0 means no session start recorded.
+    uint32_t _rainwaterPitFillingSessionStartSec = 0;
+    // Until this second a new pit fill session may not start after a
+    // max-session-time abandonment (main-loop only).
+    uint32_t _rainwaterPitFillingBlockedUntilSec = 0;
+
+    // Home-pump min-level latch: set when the barrel drops to/below
+    // WATER_MIN_LEVEL, released once it recovers by the hysteresis margin. Gates
+    // every home-pump ON writer (normal, battery override, pit fill).
+    bool _homePumpOffByMinLevel = false;
+    // One LOGE per staleness episode instead of one per tick.
+    bool _barrelLevelStaleAnnounced = false;
 
     // Storage level trends, sampled once per 10 s pressure tick. Only valid
     // samples are recorded; they let the pressure logic and the emergency path

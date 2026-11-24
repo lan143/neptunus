@@ -50,7 +50,13 @@ enum class BypassModeEvent : uint8_t
 // absolute-only (below BYPASS_FAST_DROP_ABS_BAR) and must be confirmed by
 // BYPASS_FAST_DROP_CONFIRM_SAMPLES consecutive valid samples. No Arduino or
 // logging symbols.
-inline BypassModeEvent updateBypassModeState(BypassModeState& s, float p, uint32_t nowSec)
+//
+// allowEnter=false suppresses only the ENTER transition (used while a water
+// draw is in progress: the draw itself explains a pressure dip, so the
+// automation must not switch modes mid-draw). EMA and the fast-drop streak
+// keep updating; EXIT transitions (fast drop / low average) fire regardless,
+// so a real supplier collapse during a draw still escapes bypass mode.
+inline BypassModeEvent updateBypassModeState(BypassModeState& s, float p, uint32_t nowSec, bool allowEnter = true)
 {
     if (s.avgValid) {
         s.avg += BYPASS_PRESSURE_EMA_ALPHA * (p - s.avg);
@@ -85,7 +91,7 @@ inline BypassModeEvent updateBypassModeState(BypassModeState& s, float p, uint32
             return BypassModeEvent::EXITED_LOW_AVG;
         }
     } else {
-        if (held >= BYPASS_MIN_HOLD_SEC && s.avg > BYPASS_ENTER_PRESSURE_BAR) {
+        if (allowEnter && held >= BYPASS_MIN_HOLD_SEC && s.avg > BYPASS_ENTER_PRESSURE_BAR) {
             s.active = true;
             s.sinceSec = nowSec;
             return BypassModeEvent::ENTERED_BYPASS;

@@ -42,7 +42,7 @@ void Automation::init(EDHA::Device* device, Config config)
     }
 
     auto qdy30a = _wirenboard->addQDY30A(config.addressQDY30A);
-    _waterLevelSensor = new EDCommon::Sensor::WaterLevel(qdy30a);
+    _waterLevelSensor = new Neptunus::FreshWaterLevelSensor(qdy30a);
     if (!_waterLevelSensor->init(3, 1000, {
         EDCommon::Sensor::withMQTT(_mqtt, topicPrefix, "neptunus_sensor", "Barrel water level"),
         EDCommon::Sensor::withDiscovery(_discoveryMgr, device)
@@ -127,6 +127,12 @@ void Automation::init(EDHA::Device* device, Config config)
         EDCommon::BinarySensor::withDiscovery(_discoveryMgr, device),
     });
 
+    _barrelLevelStaleSensor = new EDCommon::BinarySensor::BinarySensor();
+    _barrelLevelStaleSensor->init(1000, {
+        EDCommon::BinarySensor::withMQTT(_mqtt, topicPrefix, "neptunus_sensor", "Barrel water level stale"),
+        EDCommon::BinarySensor::withDiscovery(_discoveryMgr, device),
+    });
+
     if (strlen(_config.rainwaterPitLevelTopic) > 0) {
         _rainwaterPitLevelConsumer = new RainwaterPitLevelConsumer();
         _rainwaterPitLevelConsumer->onLevel([this](float value) {
@@ -194,6 +200,7 @@ void Automation::update()
     _autoModeSeeding = false;
     _drainagePumpSeeding = false;
     _emergencyModeSensor->update();
+    _barrelLevelStaleSensor->update();
     _pressureSensor->update();
 
     if ((_pressureSensorLastUpdateTime + 10000000) < esp_timer_get_time()) {
@@ -214,7 +221,9 @@ void Automation::update()
         // recorded; invalid data must not assert progress.
         const int64_t trendNowUs = esp_timer_get_time();
         if (_waterLevelSensor != nullptr) {
-            auto barrelLevel = _waterLevelSensor->getValue();
+            // Freshness-gated: a stale/unknown sample must never be recorded as
+            // fill progress, or a dead sensor would look like a rising fill.
+            auto barrelLevel = _waterLevelSensor->getFreshReading(WATER_LEVEL_READING_MAX_AGE_US);
             if (barrelLevel.second) {
                 _barrelLevelTrend.record(trendNowUs, barrelLevel.first);
             }
@@ -232,31 +241,39 @@ void Automation::update()
         const bool pitLevelRising = _pitLevelTrend.isRising(PIT_LEVEL_RISING_DELTA_PERCENT, LEVEL_TREND_MAX_AGE_US, trendNowUs);
 
         // Water actually moving (a draw or a fill in progress) explains a pressure
-        // dip, so counting freezes while flow is active on either meter. A fill
-        // whose storage level RISES is real filling — the big-draw pit fill
-        // collapses city pressure to ~0 with sensor errors and that is normal.
-        // A flat/falling level with the valve open is a stalled fill on a dead
-        // supply. With no flow and no progressing fill, a low or unavailable
-        // supplier pressure is suspicious whether the filling valves are closed
-        // (idle line) or open and stalled.
+        // dip, so bad-pressure COUNTING freezes while flow is active on either
+        // meter, and the bypass state machine suppresses ENTRY for the same reason
+        // (H4); its EXIT transitions still run so a real supplier collapse escapes
+        // bypass mode mid-draw. A fill whose storage level RISES is real filling —
+        // the big-draw pit fill collapses city pressure to ~0 with sensor errors
+        // and that is normal. A flat/falling level with the valve open is a stalled
+        // fill on a dead supply. With no flow and no progressing fill, a low or
+        // unavailable supplier pressure is suspicious whether the filling valves
+        // are closed (idle line) or open and stalled. The relay-validity and
+        // progressing-fill guards suppress the whole block.
         if (
-            !_meter->isFlowOfWaterActive()
-            && !_yardMeter->isFlowOfWaterActive()
-            && fillingBarrel.second && rainwaterPit.second
+            fillingBarrel.second && rainwaterPit.second
             && !(barrelValveOpen && barrelLevelRising)
             && !(pitValveOpen && pitLevelRising)
         ) {
+            // A household draw explains a pressure dip, so the bypass state machine
+            // must still run mid-draw: exits (fast drop / low average) fire and engage
+            // the pump, while entry is suppressed for the same reason (H4). Only the
+            // bad-pressure counting is fully flow-gated.
+            const bool anyFlowActive = _meter->isFlowOfWaterActive() || _yardMeter->isFlowOfWaterActive();
             if (pressure.second) {
                 float_t calculatedPressure = pressure.first;
 
-                updateBypassMode(calculatedPressure);
+                updateBypassMode(calculatedPressure, !anyFlowActive);
 
-                if (calculatedPressure < EMERGENCY_PRESSURE && _badPressureCount < 24) {
-                    _badPressureCount++;
-                } else if (calculatedPressure > EMERGENCY_PRESSURE && _badPressureCount > 0) {
-                    _badPressureCount--;
+                if (!anyFlowActive) {
+                    if (calculatedPressure < EMERGENCY_PRESSURE && _badPressureCount < 24) {
+                        _badPressureCount++;
+                    } else if (calculatedPressure > EMERGENCY_PRESSURE && _badPressureCount > 0) {
+                        _badPressureCount--;
+                    }
                 }
-            } else {
+            } else if (!anyFlowActive) {
                 LOGE("update", "failed to get supplier water pressure");
                 // Unavailable pressure counts as bad pressure. Decay still requires
                 // a valid reading above EMERGENCY_PRESSURE, so a persistently
@@ -273,19 +290,47 @@ void Automation::update()
     if ((_lastUpdateTime + 1000000) < esp_timer_get_time()) {
         _lastUpdateTime = esp_timer_get_time();
 
+        const uint32_t nowSec = esp_timer_get_time() / 1000000;
+
+        // Barrel water level: read FIRST every tick so the per-tick safety
+        // re-assertion below (fill valve closed, home pump off) runs in every
+        // mode, including battery/CRITICAL overrides and manual, before any
+        // other home-pump writer. The base sensor keeps the last GOOD value
+        // forever; getFreshReading() is the authoritative freshness gate.
+        if (_waterLevelSensor == nullptr) {
+            LOGE("update", "water level sensor not initialized");
+            return;
+        }
+        _waterLevelSensor->update();
+        auto levelResult = _waterLevelSensor->getFreshReading(WATER_LEVEL_READING_MAX_AGE_US);
+        const bool barrelLevelOk = levelResult.second;
+        const float level = levelResult.first;
+        _barrelLevelStaleSensor->setValue(!barrelLevelOk);
+
+        // Pit feature: an empty topic means DISABLED, which is not the same as
+        // stale data. An enabled feature with no fresh data is stale.
+        const bool pitFeatureEnabled = strlen(_config.rainwaterPitLevelTopic) > 0;
+        float pitPct = 0.0f;
+        const bool pitDataOk = getRainwaterPitLevelPercent(&pitPct);
+        // The override-exit restore must never re-enable the outdoor pump on
+        // unknown/stale pit data (feature disabled is fine).
+        const bool pitGuardAllowsRestore = !pitFeatureEnabled
+            || (pitDataOk && pitPct > RAINWATER_PIT_PUMP_ENABLE_PERCENT);
+
         // Electricity grid-state override (automatic mode only). Evaluated and
-        // actuated at the very TOP of the decision tick, before the water-level
-        // sensor handling below, so a dead QDY30A (whose early returns follow)
-        // cannot freeze the pumps/bypass and defeat the stale/critical failsafe.
-        // When active this is the ONLY writer of the outdoor pump, home pump and
+        // actuated at the very TOP of the decision tick, so the stale/critical
+        // failsafe cannot be defeated by later per-tick early returns. When
+        // active this is the ONLY writer of the outdoor pump, home pump and
         // bypass relays this tick; the normal writers below are gated on
         // gridOverride == NONE.
         GridOverride gridOverride = GridOverride::NONE;
         const char* gridOverrideDescription = nullptr;
 
         if (_electricityStatusConsumer && _autoModeRelay->isEnabled().first) {
-            uint32_t nowSec = esp_timer_get_time() / 1000000;
-            bool stale = (nowSec - _electricityStateLastUpdateSec) > ELECTRICITY_DATA_TIMEOUT_SEC;
+            // Signed diff: the MQTT task may write the timestamp AFTER the loop
+            // task reads nowSec, so an unsigned subtraction could underflow and
+            // report a false "stale" for one tick.
+            bool stale = static_cast<int32_t>(nowSec - _electricityStateLastUpdateSec) > static_cast<int32_t>(ELECTRICITY_DATA_TIMEOUT_SEC);
             bool received = _electricityStateReceived;
             ElectricityState state = _electricityState;
 
@@ -298,14 +343,28 @@ void Automation::update()
                 // Rule 2: on battery power keep the pump running while city
                 // pressure is low (or unknown); switch to bypass only on high
                 // pressure. Invalid pressure keeps pump on / bypass closed.
-                float pressure = 0.0f;
-                bool pressureValid = getSupplierPressure(&pressure);
-                if (pressureValid && pressure > ELECTRICITY_BATTERY_BYPASS_PRESSURE_BAR) {
-                    gridOverride = GridOverride::BATTERY_HIGH_PRESSURE;
-                    gridOverrideDescription = "battery, high pressure";
+                //
+                // Safety layer takes priority: the battery pump-ON requires a
+                // fresh, valid barrel level above the minimum. Without it the
+                // home pump must not run dry, so fall back to SHUTDOWN semantics
+                // (pump OFF + bypass OPEN=supply fed directly). This deliberately
+                // overrides the previous spec-literal BATTERY_LOW behaviour.
+                // The explicit level check closes the one-tick gap before the
+                // min-level latch is re-evaluated later this same tick.
+                const bool homePumpAllowedByLevel = barrelLevelOk && level > WATER_MIN_LEVEL && !_homePumpOffByMinLevel;
+                if (!homePumpAllowedByLevel) {
+                    gridOverride = GridOverride::SHUTDOWN;
+                    gridOverrideDescription = "battery, home pump blocked by barrel level safety";
                 } else {
-                    gridOverride = GridOverride::BATTERY_LOW_PRESSURE;
-                    gridOverrideDescription = "battery, low pressure";
+                    float pressure = 0.0f;
+                    bool pressureValid = getSupplierPressure(&pressure);
+                    if (pressureValid && pressure > ELECTRICITY_BATTERY_BYPASS_PRESSURE_BAR) {
+                        gridOverride = GridOverride::BATTERY_HIGH_PRESSURE;
+                        gridOverrideDescription = "battery, high pressure";
+                    } else {
+                        gridOverride = GridOverride::BATTERY_LOW_PRESSURE;
+                        gridOverrideDescription = "battery, low pressure";
+                    }
                 }
             } else if (received && state == ElectricityState::CRITICAL) {
                 // Rule 3: critical grid state, stop both pumps and open bypass.
@@ -337,9 +396,9 @@ void Automation::update()
                     }
                     break;
                 case GridOverride::BATTERY_LOW_PRESSURE:
-                    // Rule 2 low pressure deliberately wins over the normal
-                    // level<=WATER_MIN_LEVEL pump-off and the filling-freeze
-                    // below: spec-literal product decision, not a bug.
+                    // Deliberate policy change: the safety layer now outranks the
+                    // old spec-literal "battery keeps the pump on" rule — entry
+                    // above only reaches here with a fresh, above-minimum level.
                     if (!changeBypassValveOpenInternal(false)) {
                         LOGE("update", "electricity override failed to close bypass valve");
                     }
@@ -368,9 +427,11 @@ void Automation::update()
             LOGI("update", "electricity override active: %s", gridOverrideDescription);
         } else if (!overrideActive && _electricityOverrideActive) {
             // Exit edge: restore the outdoor pump only when it was on before the
-            // override, automatic mode still owns it, and the pit-level latch does
-            // not. Cleared unconditionally so the restore fires at most once.
-            if (_outdoorPumpOnBeforeOverride && _autoModeRelay->isEnabled().first && !_outdoorPumpStoppedByLevel) {
+            // override, automatic mode still owns it, the pit-level latch does
+            // not, and fresh pit data (or a disabled feature) allows it. Never
+            // restore the outdoor pump on unknown/stale pit level. Cleared
+            // unconditionally so the restore fires at most once.
+            if (_outdoorPumpOnBeforeOverride && _autoModeRelay->isEnabled().first && !_outdoorPumpStoppedByLevel && pitGuardAllowsRestore) {
                 if (changeOutdoorPumpStationEnableInternal(true)) {
                     LOGI("update", "outdoor pump station restored after electricity override");
                 } else {
@@ -382,32 +443,48 @@ void Automation::update()
         }
         _electricityOverrideActive = overrideActive;
 
-        float pitPct;
-        bool pitDataOk = getRainwaterPitLevelPercent(&pitPct);
-
         // Outdoor pump protection: stop it when the rainwater pit is too low.
-        // Runs before the barrel sensor checks so it survives sensor failures.
-        // On missing/stale level data the pump is left untouched.
-        if (pitDataOk) {
-            if (pitPct < RAINWATER_PIT_PUMP_DISABLE_PERCENT && !_outdoorPumpStoppedByLevel) {
-                // Only latch ownership (and re-enable later) if this code actually
-                // stopped the pump. A pump that is already off (manual off / cold
-                // boot) must not be re-enabled by the recovery branch.
-                auto pumpNow = _outdoorPumpStationRelay->isEnabled();
-                if (pumpNow.second && !pumpNow.first) {
-                    // Pump already off; do nothing, do not latch.
-                } else if (changeOutdoorPumpStationEnableInternal(false)) {
-                    _outdoorPumpStoppedByLevel = true;
-                    LOGI("update", "outdoor pump station disabled, rainwater pit level: %f%%", pitPct);
-                } else {
-                    LOGE("update", "failed to disable outdoor pump station");
-                }
-            } else if (!gridOutdoorForcedOff && _outdoorPumpStoppedByLevel && pitPct > RAINWATER_PIT_PUMP_ENABLE_PERCENT) {
+        // State-based: the OFF is re-fired every tick while the level stays
+        // below the disable threshold (changeX is idempotent once the relay
+        // already reads OFF). Runs before the barrel sensor checks so it
+        // survives sensor failures, and in every mode. On missing/stale level
+        // data the pump is left to the stale-pit guard below.
+        if (pitDataOk && pitPct < RAINWATER_PIT_PUMP_DISABLE_PERCENT) {
+            // State-based OFF every tick (changeX is idempotent once OFF). Latch
+            // ownership only when this tick actually found the pump ON: a pump
+            // already off (manual off / cold boot) must not be re-enabled later
+            // by the recovery branch. Log only the first disable of the episode.
+            auto pumpNow = _outdoorPumpStationRelay->isEnabled();
+            const bool pumpAlreadyOff = pumpNow.second && !pumpNow.first;
+            if (!changeOutdoorPumpStationEnableInternal(false)) {
+                LOGE("update", "failed to disable outdoor pump station");
+            } else if (!_outdoorPumpStoppedByLevel && !pumpAlreadyOff) {
+                _outdoorPumpStoppedByLevel = true;
+                LOGI("update", "outdoor pump station disabled, rainwater pit level: %f%%", pitPct);
+            }
+        } else if (pitDataOk && !gridOutdoorForcedOff && _outdoorPumpStoppedByLevel && pitPct > RAINWATER_PIT_PUMP_ENABLE_PERCENT) {
+            // Automatic re-enable stays AUTO-only (M1): never resurrect the
+            // outdoor pump in manual mode after a pit-low stop.
+            if (_autoModeRelay->isEnabled().first) {
                 if (changeOutdoorPumpStationEnableInternal(true)) {
                     _outdoorPumpStoppedByLevel = false;
                     LOGI("update", "outdoor pump station enabled, rainwater pit level: %f%%", pitPct);
                 } else {
                     LOGE("update", "failed to enable outdoor pump station");
+                }
+            }
+        }
+
+        // Stale-pit guard (H6): an ENABLED pit feature with no fresh data must
+        // not leave the outdoor pump running on unknown pit level. Skipped when
+        // the feature is disabled (empty topic = off, not stale).
+        if (pitFeatureEnabled && !pitDataOk && !gridOutdoorForcedOff) {
+            auto stalePump = _outdoorPumpStationRelay->isEnabled();
+            if (stalePump.second && stalePump.first) {
+                if (changeOutdoorPumpStationEnableInternal(false)) {
+                    LOGI("update", "outdoor pump station disabled: rainwater pit data stale");
+                } else {
+                    LOGE("update", "failed to disable outdoor pump station on stale pit data");
                 }
             }
         }
@@ -442,27 +519,76 @@ void Automation::update()
             }
         }
 
-        // Outdoor pump idle-flow shutoff; placed before the barrel-level-sensor
-        // early returns so it survives that sensor's failure, and after the grid
-        // override block which owns the pump while active.
+        // Outdoor pump idle-flow shutoff. Placed after the grid override block
+        // which owns the pump while active, and after the pit valve safety. Now
+        // applies in every mode: only the automatic re-enable path stays AUTO.
         updateOutdoorPumpIdleProtection(overrideActive);
 
-        if (_waterLevelSensor == nullptr) {
-            LOGE("update", "water level sensor not initialized");
+        // Hard cap on continuous outdoor-pump runtime, in every mode. The
+        // idle-flow shutoff only covers the AUTO low-flow case; this also stops
+        // a pump that keeps flowing but runs for hours (e.g. a burst pipe).
+        if (!gridOutdoorForcedOff && _outdoorPumpIdleArmed
+            && (nowSec - _outdoorPumpOnSinceSec) >= OUTDOOR_PUMP_MAX_RUN_SEC) {
+            auto maxRunPump = _outdoorPumpStationRelay->isEnabled();
+            if (maxRunPump.second && maxRunPump.first) {
+                if (changeOutdoorPumpStationEnableInternal(false)) {
+                    LOGI("update", "outdoor pump station disabled: max continuous runtime");
+                } else {
+                    LOGE("update", "failed to disable outdoor pump station on max runtime");
+                }
+            }
+        }
+
+        // HOME PUMP SAFETY GATE (C1): evaluated before any other home-pump
+        // writer. The latch is state-based (re-asserted every tick); the
+        // hysteresis margin keeps a level hovering at the minimum from
+        // chattering the pump. Does not touch the relay when the level is
+        // unknown — the stale-barrel safe state below owns that case.
+        if (barrelLevelOk && level <= WATER_MIN_LEVEL) {
+            if (!_homePumpOffByMinLevel) {
+                _homePumpOffByMinLevel = true;
+                LOGI("update", "home pump disabled: barrel level at minimum (%f m)", level);
+            }
+            changeHomePumpStationEnableInternal(false);
+        } else if (barrelLevelOk && _homePumpOffByMinLevel
+                   && level >= WATER_MIN_LEVEL + HOME_PUMP_MIN_LEVEL_HYSTERESIS_M) {
+            _homePumpOffByMinLevel = false;
+            LOGI("update", "home pump min-level latch released");
+        }
+
+        // STALE BARREL SAFE STATE (C2): with the barrel level unknown the fill
+        // valve may be filling a full barrel and the home pump may be running
+        // dry. Force both to their safe state in EVERY mode and skip the rest of
+        // the level-dependent logic this tick. The pit/outdoor guards above have
+        // already run; the bypass and pit valves stay at their previous state.
+        if (!barrelLevelOk) {
+            changeFillingBarrelValveOpenInternal(false);
+            changeHomePumpStationEnableInternal(false);
+            if (!_barrelLevelStaleAnnounced) {
+                _barrelLevelStaleAnnounced = true;
+                LOGE("update", "barrel water level stale: fill valve closed, home pump off");
+            }
             return;
         }
-        _waterLevelSensor->update();
-        auto levelResult = _waterLevelSensor->getValue();
-        if (!levelResult.second) {
-            LOGE("update", "failed to get water level");
-            return;
+        _barrelLevelStaleAnnounced = false;
+        // Overflow protection in every mode (manual included): the fill-valve
+        // hysteresis below only runs in AUTO, so a manually opened fill valve
+        // must still be force-closed when the barrel reaches the physical
+        // maximum. State-based: re-fires every tick while the level is at max.
+        if (level >= WATER_MAX_LEVEL) {
+            auto fillValve = _fillingBarrelRelay->isEnabled();
+            if (fillValve.second && !fillValve.first) {
+                if (changeFillingBarrelValveOpenInternal(false)) {
+                    LOGI("update", "barrel fill valve force-closed at max level: %f m", level);
+                } else {
+                    LOGE("update", "failed to close barrel fill valve at max level");
+                }
+            }
         }
 
         if (!_autoModeRelay->isEnabled().first) {
             return;
         }
-
-        auto level = levelResult.first;
 
         const auto span = WATER_MAX_LEVEL - WATER_MIN_LEVEL;
         auto enableLevel = WATER_MIN_LEVEL + span * (BARREL_FILL_ON_PERCENT / 100.0f);
@@ -535,17 +661,46 @@ void Automation::update()
             }
         }
 
+        // Abandon a fill session that has run too long: a leaking supply or
+        // stuck feedback must not fill forever. The valve is forced closed (it
+        // may still be open when the cap fires mid-fill) and the start time is
+        // cleared. This also covers sessions ended by the barrel-priority close
+        // above, which retains the session flag and leaves the start time set.
+        bool pitSessionAbandonedThisTick = false;
+        if (_rainwaterPitFillingSession
+            && _rainwaterPitFillingSessionStartSec != 0
+            && static_cast<int32_t>(nowSec - _rainwaterPitFillingSessionStartSec) >= static_cast<int32_t>(RAINWATER_PIT_FILL_MAX_SESSION_SEC)) {
+            pitSessionAbandonedThisTick = true;
+            _rainwaterPitFillingSession = false;
+            _rainwaterPitFillingSessionStartSec = 0;
+            _rainwaterPitFillingBlockedUntilSec = nowSec + RAINWATER_PIT_FILL_COOLDOWN_SEC;
+            if (pitValveOpen) {
+                if (changeRainwaterPitValveOpenInternal(false)) {
+                    pitValveOpen = false;
+                } else {
+                    LOGE("update", "failed to close rainwater pit valve on session timeout");
+                }
+            }
+            LOGI("update", "rainwater pit filling abandoned: max session time");
+        }
+
         if (_rainwaterPitFillingSession) {
             if (!barrelValveOpen && !pitValveOpen) {
-                if (changeRainwaterPitValveOpenInternal(true)) {
+                // Do not reopen on stale data or an already-completed fill.
+                if (pitDataOk && pitPct < _config.rainwaterPitMaxFillLevel
+                    && changeRainwaterPitValveOpenInternal(true)) {
                     pitValveOpen = true;
                     LOGI("update", "rainwater pit filling resumed");
                 }
             }
-        } else if (pitDataOk && pitPct < RAINWATER_PIT_FILL_START_PERCENT && !barrelValveOpen) {
+        } else if (!pitSessionAbandonedThisTick
+                   && nowSec >= _rainwaterPitFillingBlockedUntilSec && pitDataOk
+                   && pitPct < RAINWATER_PIT_FILL_START_PERCENT && !barrelValveOpen
+                   && !_homePumpOffByMinLevel) {
             if (changeRainwaterPitValveOpenInternal(true)) {
                 pitValveOpen = true;
                 _rainwaterPitFillingSession = true;
+                _rainwaterPitFillingSessionStartSec = nowSec;
                 LOGI("update", "rainwater pit filling started, level: %f%%", pitPct);
             }
         }
@@ -560,16 +715,25 @@ void Automation::update()
         // relays this tick (fixes same-tick opposite-command oscillation).
         if (gridOverride == GridOverride::NONE) {
             if (pitValveOpen) {
-                // Pit filling needs home pressure for its whole duration: close the
-                // bypass and run the home pump station.
-                if (!changeBypassValveOpenInternal(false)) {
-                    LOGE("update", "failed to close bypass valve for rainwater pit filling");
-                }
-                if (!changeHomePumpStationEnableInternal(true)) {
-                    LOGE("update", "failed to enable pump station for rainwater pit filling");
+                // Pit filling needs home pressure for its whole duration: close
+                // the bypass and run the home pump station. The barrel min-level
+                // latch outranks this: while it holds, leave BOTH relays
+                // untouched (filling paused) rather than run the pump dry.
+                if (_homePumpOffByMinLevel) {
+                    LOGI("update", "rainwater pit filling paused by barrel min-level safety");
+                } else {
+                    if (!changeBypassValveOpenInternal(false)) {
+                        LOGE("update", "failed to close bypass valve for rainwater pit filling");
+                    }
+                    if (!changeHomePumpStationEnableInternal(true)) {
+                        LOGE("update", "failed to enable pump station for rainwater pit filling");
+                    }
                 }
             } else if (!fillingActive) {
-                bool enableHomePumpStation = true;
+                // The min-level latch IS the protection now (with hysteresis);
+                // the removed one-shot here was dead because a level at/below
+                // WATER_MIN_LEVEL always forces the barrel valve open above.
+                bool enableHomePumpStation = !_homePumpOffByMinLevel;
                 // Debounced bypass mode (300-s hold, 0.2-bar hysteresis): open the
                 // bypass and stop the pump station to save electricity only when
                 // high city pressure has persisted, not on single samples.
@@ -580,10 +744,6 @@ void Automation::update()
                     changeBypassValveOpenInternal(false);
                 }
 
-                if (level <= WATER_MIN_LEVEL) {
-                    enableHomePumpStation = false;
-                }
-
                 if (!changeHomePumpStationEnableInternal(enableHomePumpStation)) {
                     LOGE("update", "failed to change pump station state. enable: %s", enableHomePumpStation ? "true" : "false");
                 }
@@ -592,7 +752,7 @@ void Automation::update()
 
         LOGD(
             "update",
-            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, bad pressure count: %d, barrel level rising: %s, pit level rising: %s",
+            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, bad pressure count: %d, barrel level rising: %s, pit level rising: %s, min latch: %s",
             enableLevel,
             disableLevel,
             level,
@@ -602,7 +762,8 @@ void Automation::update()
             _rainwaterPitFillingSession ? "true" : "false",
             _badPressureCount,
             barrelLevelRising ? "true" : "false",
-            pitLevelRising ? "true" : "false"
+            pitLevelRising ? "true" : "false",
+            _homePumpOffByMinLevel ? "true" : "false"
         );
     }
 }
@@ -713,7 +874,7 @@ bool Automation::getBarrelWaterLevel(float* value)
         return false;
     }
 
-    auto result = _waterLevelSensor->getValue();
+    auto result = _waterLevelSensor->getFreshReading(WATER_LEVEL_READING_MAX_AGE_US);
     if (!result.second) {
         return false;
     }
@@ -833,7 +994,11 @@ void Automation::updateOutdoorPumpIdleProtection(bool overrideActive)
     // that restore only fires when the pump was ON at override entry, and after
     // an idle shutoff the pump reads OFF, so a later entry snapshots false. If a
     // restore does re-enable the pump, the OFF->ON edge above re-arms the timer.
-    if (overrideActive || !_autoModeRelay->isEnabled().first || !_outdoorPumpIdleArmed || historyInvalid) {
+    //
+    // Applies in every mode (H6): manual mode previously skipped this entirely,
+    // leaving an idle-running outdoor pump unprotected. Actuation is OFF-only,
+    // so it is always safe; the automatic re-enable path stays AUTO-only.
+    if (overrideActive || !_outdoorPumpIdleArmed || historyInvalid) {
         return;
     }
     if ((nowSec - _outdoorPumpOnSinceSec) < OUTDOOR_PUMP_IDLE_WINDOW_SEC) {
@@ -852,10 +1017,10 @@ void Automation::updateOutdoorPumpIdleProtection(bool overrideActive)
     }
 }
 
-void Automation::updateBypassMode(float pressure)
+void Automation::updateBypassMode(float pressure, bool allowEnter)
 {
     const uint32_t nowSec = esp_timer_get_time() / 1000000;
-    const BypassModeEvent event = updateBypassModeState(_bypassMode, pressure, nowSec);
+    const BypassModeEvent event = updateBypassModeState(_bypassMode, pressure, nowSec, allowEnter);
 
     switch (event) {
         case BypassModeEvent::ENTERED_BYPASS:
@@ -901,8 +1066,11 @@ bool Automation::getRainwaterPitLevelPercent(float* percent)
         return false;
     }
 
+    // Signed diff: the MQTT task may write the timestamp AFTER the loop task
+    // reads nowSec, so an unsigned subtraction could underflow and report a
+    // false "stale" for one tick.
     uint32_t nowSec = esp_timer_get_time() / 1000000;
-    if ((nowSec - _rainwaterPitLevelLastUpdateSec) > RAINWATER_PIT_DATA_TIMEOUT_SEC) {
+    if (static_cast<int32_t>(nowSec - _rainwaterPitLevelLastUpdateSec) > static_cast<int32_t>(RAINWATER_PIT_DATA_TIMEOUT_SEC)) {
         return false;
     }
 

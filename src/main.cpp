@@ -3,6 +3,7 @@
 #include <data_mgr.h>
 #include <storage/littlefs_storage.hpp>
 #include <esp_log.h>
+#include <esp_task_wdt.h>
 #include <discovery.h>
 #include <mqtt.h>
 #include <healthcheck.h>
@@ -15,6 +16,7 @@
 #include "defines.h"
 #include "config.h"
 #include "automation/automation.h"
+#include "storage/safe_littlefs_storage.hpp"
 #include <counter/pcf8574.h>
 
 #include "meter/handler.h"
@@ -22,7 +24,7 @@
 #include "controls/handler.h"
 #include "web/handler.h"
 
-EDConfig::DataMgr<Config> configMgr(new EDConfig::StorageLittleFS<Config>("/config.bin"));
+EDConfig::DataMgr<Config> configMgr(new Neptunus::SafeStorageLittleFS<Config>("/config.bin"));
 EDNetwork::NetworkMgr networkMgr;
 EDNetwork::NetworkApi networkApi(networkMgr);
 EDMQTT::MQTT mqtt;
@@ -36,12 +38,12 @@ EDHealthCheck::HealthCheck healthCheck;
 EDHA::DiscoveryMgr discoveryMgr;
 EDHA::Device* device = nullptr;
 
-EDConfig::DataMgr<MeterState> homeRingStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/meter.bin"));
+EDConfig::DataMgr<MeterState> homeRingStorageDataMgr(new Neptunus::SafeStorageLittleFS<MeterState>("/meter.bin"));
 RingStorage homeRingStorage(&homeRingStorageDataMgr);
 RingStoragePersistence homePersistence(&homeRingStorage);
 EDCommon::Counter::PCF8574P homeMeter(&inputDriver);
 
-EDConfig::DataMgr<MeterState> yardRingStorageDataMgr(new EDConfig::StorageLittleFS<MeterState>("/yard_meter.bin"));
+EDConfig::DataMgr<MeterState> yardRingStorageDataMgr(new Neptunus::SafeStorageLittleFS<MeterState>("/yard_meter.bin"));
 RingStorage yardRingStorage(&yardRingStorageDataMgr);
 RingStoragePersistence yardPersistence(&yardRingStorage);
 EDCommon::Counter::PCF8574P yardMeter(&inputDriver);
@@ -55,6 +57,12 @@ ControlsHandler controlsHandler(&automation, &homeMeter, &yardMeter);
 Handler handler(&configMgr, &networkApi, &networkMgr, &healthCheck, &meterHandler, &controlsHandler);
 
 bool inited = false;
+
+// Set from the ArduinoOTA onStart callback (runs in the OTA/network context)
+// and acted on by loop(); the automation API must not be used during OTA
+// because its relay queues are only drained by automation.update().
+static volatile bool s_otaActive = false;
+static volatile bool s_otaSafeStateApplied = false;
 
 // Mirrors EDConfig::DataMgr::calculateChecksum (CRC16, poly 0xa001, init 0xffff,
 // byte-wise) so the legacy blob can be validated before the normal load.
@@ -99,10 +107,31 @@ void setup()
     LOGI("setup", "Neptunus");
     LOGI("setup", "start");
 
+    // Bring up I2C and the relay expander before anything that can fail (FS,
+    // network). The PCF8574 powers up writing 0xFF, which leaves the
+    // normally-open valves de-energized = physically OPEN, so the very first
+    // successful write must be the safe (all valves closed, pumps off) mask.
+    LOGI("setup", "init i2c");
+    Wire.begin(I2CSDA, I2CSCL);
+    Wire.setClock(100000);
+
+    LOGI("setup", "init PCF8574");
+    inputDriver.begin();
+    if (relayDriver.begin(RELAY_SAFE_BOOT_MASK)) {
+        LOGI("setup", "relay driver safe state applied");
+    } else {
+        // Device may be absent; do not abort boot. Keep going so the rest of
+        // the controller still comes up.
+        LOGE("setup", "relay driver safe state write failed");
+    }
+
     LOGI("setup", "littlefs begin");
     if (!LittleFS.begin(true)) {
-        LOGE("setup", "failed to init littlefs");
-        return;
+        LOGE("setup", "failed to init littlefs, formatting");
+        LittleFS.format();
+        if (!LittleFS.begin(true)) {
+            LOGE("setup", "failed to init littlefs after format; running with default config, stores will fail");
+        }
     }
 
     configMgr.setDefault([](Config* config) {
@@ -193,19 +222,24 @@ void setup()
     Serial2.begin(configMgr.getData()->modbusSpeed, SERIAL_8N1, RS485RX, RS485TX);
     wirenboard.init(200);
 
-    LOGI("setup", "init i2c");
-    Wire.begin(I2CSDA, I2CSCL);
-    Wire.setClock(100000);
-
-    LOGI("setup", "init PCF8574");
-    inputDriver.begin();
-    relayDriver.begin();
-
     LOGI("setup", "init network");
     networkMgr.init(configMgr.getData()->network, false);
 
     LOGI("setup", "init OTA");
     ArduinoOTA.setPassword(configMgr.getData()->otaPassword);
+    ArduinoOTA.onStart([]() {
+        s_otaActive = true;
+        LOGW("setup", "OTA started: switching outputs to safe state");
+    });
+    // On a failed transfer the OTA server returns to idle without a reboot, so
+    // clear the flag to resume automation (otherwise pumps would stay disabled
+    // until the next reset). A successful update reboots, so onEnd is moot.
+    ArduinoOTA.onError([](ota_error_t error) {
+        (void) error;
+        s_otaActive = false;
+        s_otaSafeStateApplied = false;
+        LOGE("setup", "OTA failed: resuming automation");
+    });
     ArduinoOTA.begin();
 
     LOGI("setup", "mqtt init");
@@ -281,14 +315,41 @@ void setup()
     LOGI("setup", "automation init");
     automation.init(device, *configMgr.getData());
 
+    // Subscribe the Arduino loop task to the task watchdog, then feed it from
+    // the top of loop(). This core (Arduino 2.0.x / ESP-IDF 4.x) does not
+    // necessarily initialize the TWDT for the app, so initialize it explicitly
+    // (5 s, panic on timeout; a no-op config update if already initialized) and
+    // tolerate an already-initialized/absent TWDT rather than aborting boot.
+    if (esp_task_wdt_init(5, true) != ESP_OK) {
+        LOGE("setup", "failed to init watchdog");
+    }
+    if (esp_task_wdt_add(NULL) != ESP_OK) {
+        LOGE("setup", "failed to subscribe loop task to watchdog");
+    }
+
     inited = true;
     LOGI("setup", "complete");
 }
 
 void loop()
 {
+    esp_task_wdt_reset();
+
     if (!inited) {
         return;
+    }
+
+    // OTA must not drive the valves: automation.update() is skipped below, and
+    // here we force the outputs to the same safe mask used at boot. Done once
+    // per OTA session so we do not fight other writers afterwards.
+    if (s_otaActive && !s_otaSafeStateApplied) {
+        // All three valves closed (energized LOW) and every pump off (HIGH).
+        // During OTA the unit is unattended, so no uncontrolled fill may start;
+        // the bypass valve is closed too so neither the pump nor the city line
+        // can feed the plumbing.
+        relayDriver.write8(RELAY_SAFE_BOOT_MASK);
+        s_otaSafeStateApplied = true;
+        LOGW("setup", "OTA safe state applied: valves closed, pumps off");
     }
 
     networkMgr.loop();
@@ -296,7 +357,10 @@ void loop()
     ArduinoOTA.handle();
     healthCheck.loop();
     networkLogger.update();
-    automation.update();
+    if (!s_otaActive) {
+        // Automation may re-open valves; it must not run mid-flash.
+        automation.update();
+    }
     homeMeter.update();
     yardMeter.update();
 }
