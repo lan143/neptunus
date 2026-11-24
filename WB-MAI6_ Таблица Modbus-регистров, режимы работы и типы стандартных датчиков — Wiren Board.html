@@ -1,0 +1,2826 @@
+<!DOCTYPE html>
+<!-- saved from url=(0057)https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers -->
+<html class="client-js vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-sticky-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-0 vector-feature-appearance-pinned-clientpref-0 vector-feature-night-mode-disabled skin-theme-clientpref-day vector-toc-available vector-animations-ready" lang="ru" dir="ltr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script src="./WB-MAI6_ Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board_files/tag_ec.js" type="text/javascript" charset="utf-8" async=""></script><script crossorigin="anonymous" src="./WB-MAI6_ Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board_files/tag_phono.js" type="text/javascript" charset="utf-8" async=""></script>
+
+<title>WB-MAI6: Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board</title>
+<script async="" src="./WB-MAI6_ Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board_files/tag.js"></script><script>(function(){var className="client-js vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-sticky-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-0 vector-feature-appearance-pinned-clientpref-0 vector-feature-night-mode-disabled skin-theme-clientpref-day vector-toc-available";var cookie=document.cookie.match(/(?:^|; )wirenru_mw822_mw_mwclientpreferences=([^;]+)/);if(cookie){cookie[1].split('%2C').forEach(function(pref){className=className.replace(new RegExp('(^| )'+pref.replace(/-clientpref-\w+$|[^\w-]+/g,'')+'-clientpref-\\w+( |$)'),'$1'+pref+'$2');});}document.documentElement.className=className;}());RLCONF={"wgBreakFrames":false,"wgSeparatorTransformTable":[",\t."," \t,"],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"],"wgRequestId":"2632c85573d96f4cfc12dcbc","wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"WB-MAI6_Modbus_Registers","wgTitle":"WB-MAI6 Modbus Registers","wgCurRevisionId":116022,"wgRevisionId":116022,"wgArticleId":20028,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageViewLanguage":"ru","wgPageContentLanguage":"ru","wgPageContentModel":"wikitext","wgRelevantPageName":"WB-MAI6_Modbus_Registers","wgRelevantArticleId":20028,"wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgCargoDefaultQueryLimit":100,"wgCargoMapClusteringMinimum":80,"wgCargoMonthNamesShort":["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"],"wgULSAcceptLanguageList":["ru-ru","ru","en-us","en","mt","zh-cn","zh"],"wgMediaViewerOnClick":true,"wgMediaViewerEnabledByDefault":true,"wgMFDisplayWikibaseDescriptions":{"search":false,"watchlist":false,"tagline":false},"wgULSPosition":"personal","wgULSisCompactLinksEnabled":false,"wgVector2022LanguageInHeader":true,"wgULSisLanguageSelectorEmpty":false,"wgEditLatestRevision":true};
+RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.options":"loading","ext.ApprovedRevs":"ready","skins.vector.search.codex.styles":"ready","skins.vector.styles":"ready","skins.vector.icons":"ready","ext.uls.pt":"ready","ext.embedVideo.styles":"ready","ext.wbInlineToc.styles":"ready","ext.wbInlineToc.hideSkinToc":"ready"};RLPAGEMODULES=["site","mediawiki.page.ready","mediawiki.toc","skins.vector.js","ext.uls.interface","ext.embedVideo.overlay"];</script>
+<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.impl(function(){return["user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
+}];});});</script>
+<link rel="stylesheet" href="./WB-MAI6_ Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board_files/load.php">
+<script async="" src="./WB-MAI6_ Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board_files/load(1).php"></script>
+<style>
+.vector-icon.mw-ui-icon-wikimedia-appearance{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=appearance&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=appearance&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-appearance-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=appearance&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=appearance&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-appearance-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=appearance&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=appearance&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-speechBubbleAdd{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbleAdd&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbleAdd&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-speechBubbleAdd-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbleAdd&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbleAdd&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-speechBubbleAdd-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbleAdd&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbleAdd&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-speechBubbles{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbles&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbles&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-speechBubbles-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbles&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbles&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-speechBubbles-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbles&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=speechBubbles&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-article{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=article&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=article&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-article-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=article&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=article&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-article-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=article&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=article&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-history{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=history&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=history&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-history-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=history&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=history&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-history-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=history&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=history&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-wikiText{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=wikiText&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=wikiText&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-wikiText-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=wikiText&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=wikiText&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-wikiText-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=wikiText&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=wikiText&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-edit{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=edit&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=edit&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-edit-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=edit&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=edit&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-edit-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=edit&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=edit&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-editLock{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=editLock&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=editLock&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-editLock-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=editLock&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=editLock&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-editLock-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=editLock&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=editLock&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-exitFullscreen{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=exitFullscreen&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=exitFullscreen&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-exitFullscreen-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=exitFullscreen&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=exitFullscreen&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-exitFullscreen-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=exitFullscreen&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=exitFullscreen&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-fullScreen{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=fullScreen&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=fullScreen&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-fullScreen-invert{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=fullScreen&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=fullScreen&variant=invert&format=original&lang=ru&skin=vector-2022&version=128k0)}.vector-icon.mw-ui-icon-wikimedia-fullScreen-progressive{-webkit-mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=fullScreen&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0);mask-image:url(/wiki/load.php?modules=skins.vector.icons.js&image=fullScreen&variant=progressive&format=original&lang=ru&skin=vector-2022&version=128k0)}
+.embedvideo-consent .hidden{opacity:0;visibility:hidden;pointer-events:none}.embedvideo-thumbnail{width:100%;height:100%;top:0;left:0;position:absolute}.embedvideo-thumbnail__image{width:inherit;height:inherit;object-fit:cover}.embedvideo-thumbnail + .embedvideo-overlay .embedvideo-loader{color:#eaecf0}.embedvideo-thumbnail + .embedvideo-overlay .embedvideo-loader__title{background:linear-gradient(to bottom,#000000,40%,transparent)}.embedvideo-overlay{color:#54595d;display:flex;justify-content:center;align-items:center;width:100%;height:100%;position:relative;font-size:0.875rem;user-select:none}.embedvideo-overlay > div{position:absolute;top:0;left:0;right:0;bottom:0;transition:opacity 250ms ease}.embedvideo-loader{display:grid;cursor:pointer}.embedvideo-loader__title{padding:0.75rem;text-align:start;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}.embedvideo-loader__title a{color:#eaecf0}.embedvideo-loader__title a:hover{color:#fff}.embedvideo-loader__fakeButton{place-self:center;padding:0.5rem 1rem;color:#fff;background-color:rgba(0,0,0,0.6);border-radius:1000px;cursor:pointer;transition:background-color 250ms ease}.embedvideo-loader__footer{align-self:end;display:flex;padding:0.5rem;font-size:0.8125rem;justify-content:space-between}.embedvideo-loader__footer > div{padding:0.25rem 0.5rem;border-radius:0.25rem;background-color:rgba(0,0,0,0.6);color:#eaecf0}.embedvideo-loader__title,.embedvideo-loader__footer{left:0;right:0;font-weight:bold;transition:opacity 250ms ease}.embedvideo-loader__title,.embedvideo-loader__fakeButton,.embedvideo-loader__footer{position:absolute}.embedvideo-loader:hover .embedvideo-loader__fakeButton{background-color:#36c}.embedvideo-privacyNotice{padding:1rem;display:flex;flex-direction:column;justify-content:center;gap:0.5rem;background-color:rgba(0,0,0,0.6);color:#eaecf0;text-align:center}.embedvideo-privacyNotice__link{color:#eaf3ff;text-decoration:underline}.embedvideo-privacyNotice__buttons > button{appearance:none;padding:0.5rem 1rem;border:0;border-radius:1000px;color:#fff;font-size:inherit;cursor:pointer}.embedvideo-privacyNotice__continue{background-color:#36c}.embedvideo-privacyNotice__continue:hover{background-color:#447ff5}.embedvideo-privacyNotice__continue:active{background-color:#2a4b8d}.embedvideo-privacyNotice__dismiss{background-color:transparent}.embedvideo-privacyNotice__dismiss:hover{color:#d33}.embedvideo-privacyNotice__dismiss:active{color:#b32424}[data-service="local-embed"] .embedvideo-consent{background-color:transparent}.center .floatnone > .embedvideo{margin:0 auto}
+@media screen {
+	.toctoggle{-webkit-user-select:none;-moz-user-select:none;user-select:none;font-size:94%}}
+#mw-teleport-target{position:absolute;z-index:450}   #mw-teleport-target{font-size:0.875rem}
+#vector-appearance form{font-size:0.875rem;padding:6px 0}#vector-appearance a.skin-theme-beta-notice-success{color:var(--color-success,#177860);pointer-events:none}#vector-appearance .vector-icon.vector-icon--heart{ min-width:16px;min-height:16px;width:1rem;height:1rem;display:inline-block;vertical-align:text-bottom}@supports not ((-webkit-mask-image:none) or (mask-image:none)){#vector-appearance .vector-icon.vector-icon--heart{background-position:center;background-repeat:no-repeat;background-size:calc(max(1rem,16px))}}@supports (-webkit-mask-image:none) or (mask-image:none){#vector-appearance .vector-icon.vector-icon--heart{ -webkit-mask-size:calc(max(1rem,16px));mask-size:calc(max(1rem,16px));-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center; }}@supports not ((-webkit-mask-image:none) or (mask-image:none)){#vector-appearance .vector-icon.vector-icon--heart{background-image:url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"%23000000\"><path d=\"M14.75 1A5.24 5.24 0 0010 4 5.24 5.24 0 000 6.25C0 11.75 10 19 10 19s10-7.25 10-12.75A5.25 5.25 0 0014.75 1\"/></svg>");filter:invert(var(--filter-invert-icon,0));opacity:var(--opacity-icon-base,0.87)}.cdx-button:not(.cdx-button--weight-quiet):disabled #vector-appearance .vector-icon.vector-icon--heart,.cdx-button--weight-primary.cdx-button--action-progressive #vector-appearance .vector-icon.vector-icon--heart,.cdx-button--weight-primary.cdx-button--action-destructive #vector-appearance .vector-icon.vector-icon--heart{filter:invert(var(--filter-invert-primary-button-icon,1))}}@supports (-webkit-mask-image:none) or (mask-image:none){#vector-appearance .vector-icon.vector-icon--heart{ -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"%23000000\"><path d=\"M14.75 1A5.24 5.24 0 0010 4 5.24 5.24 0 000 6.25C0 11.75 10 19 10 19s10-7.25 10-12.75A5.25 5.25 0 0014.75 1\"/></svg>"); mask-image:url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"%23000000\"><path d=\"M14.75 1A5.24 5.24 0 0010 4 5.24 5.24 0 000 6.25C0 11.75 10 19 10 19s10-7.25 10-12.75A5.25 5.25 0 0014.75 1\"/></svg>");background-color:var(--color-success,#177860)}}#skin-theme-beta-notice{display:none}@media screen and (prefers-color-scheme:dark){html.skin-theme-clientpref-os #skin-theme-beta-notice{display:block}}html.skin-theme-clientpref-night #skin-theme-beta-notice{display:block}
+#uls-settings-block{background-color:#fcfcfc}#uls-settings-block.uls-settings-block--vector-2022{display:flex;justify-content:space-between;padding:8px 12px}#uls-settings-block.uls-settings-block--vector-2022.row::before,#uls-settings-block.uls-settings-block--vector-2022.row::after{content:none}#uls-settings-block.uls-settings-block--vector-2022.uls-settings-block--with-add-languages{background-color:#f8f9fa;border-top:1px solid #c8ccd1}#uls-settings-block.uls-settings-block--vector-2022 > button.uls-add-languages-button{background:transparent url(/wiki/extensions/UniversalLanguageSelector/resources/images/add.svg?3165e) no-repeat left center;margin-right:32px;padding-left:32px}#uls-settings-block.uls-settings-block--vector-2022 > button.uls-language-settings-button{background:transparent url(/wiki/extensions/UniversalLanguageSelector/resources/images/cog.svg?ce0b4) no-repeat center;margin-left:auto;border:0;min-height:20px;min-width:20px}#uls-settings-block:not(.uls-settings-block--vector-2022){background-color:#f8f9fa;border-top:1px solid #c8ccd1;padding-left:10px;line-height:1.2em;border-radius:0 0 2px 2px}#uls-settings-block:not(.uls-settings-block--vector-2022) > button{background:left top transparent no-repeat;background-size:20px auto;color:#54595d;display:inline-block;margin:8px 15px;border:0;padding:0 0 0 26px;font-size:medium;cursor:pointer}#uls-settings-block:not(.uls-settings-block--vector-2022) > button:hover{color:#202122}#uls-settings-block:not(.uls-settings-block--vector-2022) > button.display-settings-block{background-image:url(/wiki/extensions/UniversalLanguageSelector/resources/images/display.svg?9fd85)}#uls-settings-block:not(.uls-settings-block--vector-2022) > button.input-settings-block{background-image:url(/wiki/extensions/UniversalLanguageSelector/resources/images/input.svg?60384)}.uls-tipsy.uls-tipsy{z-index:1000}.uls-empty-state{padding:28px}.uls-empty-state .uls-empty-state__header,.uls-empty-state .uls-empty-state__desc{color:#54595d}.uls-empty-state .uls-language-action-items{list-style:none;margin:1em 0}.empty-language-selector__language-settings-button{margin:12px}.uls-menu.uls-language-actions-dialog{min-width:248px}.uls-menu.uls-language-actions-dialog .uls-language-actions-title{border-bottom:1px solid #c8ccd1;display:flex;align-items:center;height:32px;padding:5px 0}.uls-menu.uls-language-actions-dialog .uls-language-actions-title .uls-language-actions-close{min-width:unset;width:44px;background:transparent url(/wiki/extensions/UniversalLanguageSelector/resources/images/arrow-previous-ltr.svg?279af) no-repeat center}.uls-menu.uls-language-actions-dialog .uls-language-action-items .uls-language-action.oo-ui-widget{margin:0;padding:12px 8px;display:block}.uls-menu.uls-language-actions-dialog .uls-language-action-items .uls-language-action.oo-ui-widget .oo-ui-buttonElement-button{padding-left:36px}.mw-interlanguage-selector-disabled #p-lang-btn-sticky-header{display:none}</style><style>
+.firstHeading::before{content:url(/wiki/images/7/75/Wb_logo.png);display:block;height:40px;left:-9999px;line-height:0;margin-bottom:20px;position:absolute;width:160px}
+.mw-wiki-logo{background-image:url(/wiki/resources/assets/change-your-logo.svg?3b2ad)}
+@media print{ .firstHeading::before{left:auto;position:relative}}
+.mw-ui-icon-wikimedia-expand{ min-width:20px;min-height:20px;width:1.25rem;height:1.25rem;min-width:12px;min-height:12px;width:0.75rem;height:0.75rem;display:inline-block;vertical-align:text-bottom}@supports not ((-webkit-mask-image:none) or (mask-image:none)){.mw-ui-icon-wikimedia-expand{background-position:center;background-repeat:no-repeat;background-size:calc(max(1.25rem,20px))}}@supports (-webkit-mask-image:none) or (mask-image:none){.mw-ui-icon-wikimedia-expand{ -webkit-mask-size:calc(max(1.25rem,20px));mask-size:calc(max(1.25rem,20px));-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center; }}@supports not ((-webkit-mask-image:none) or (mask-image:none)){.mw-ui-icon-wikimedia-expand{background-image:url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"%23000000\"><path d=\"m17.5 4.75-7.5 7.5-7.5-7.5L1 6.25l9 9 9-9z\"/></svg>");filter:invert(var(--filter-invert-icon,0));opacity:var(--opacity-icon-base,0.87)}.cdx-button:not(.cdx-button--weight-quiet):disabled .mw-ui-icon-wikimedia-expand,.cdx-button--weight-primary.cdx-button--action-progressive .mw-ui-icon-wikimedia-expand,.cdx-button--weight-primary.cdx-button--action-destructive .mw-ui-icon-wikimedia-expand{filter:invert(var(--filter-invert-primary-button-icon,1))}}@supports (-webkit-mask-image:none) or (mask-image:none){.mw-ui-icon-wikimedia-expand{ -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"%23000000\"><path d=\"m17.5 4.75-7.5 7.5-7.5-7.5L1 6.25l9 9 9-9z\"/></svg>"); mask-image:url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"%23000000\"><path d=\"m17.5 4.75-7.5 7.5-7.5-7.5L1 6.25l9 9 9-9z\"/></svg>");background-color:var(--color-base,#202122)}}@supports not ((-webkit-mask-image:none) or (mask-image:none)){.mw-ui-icon-wikimedia-expand{background-position:center;background-repeat:no-repeat;background-size:calc(max(0.75rem,12px))}}@supports (-webkit-mask-image:none) or (mask-image:none){.mw-ui-icon-wikimedia-expand{ -webkit-mask-size:calc(max(0.75rem,12px));mask-size:calc(max(0.75rem,12px));-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center; }}.vector-popup-notification{font-size:0.875rem}.vector-popup-notification p{margin:0}.vector-popup-notification p:last-child{padding-bottom:0} .vector-sticky-header-container{position:fixed;top:0;left:0;right:0;z-index:3;transition:transform 250ms linear;display:none;transform:translateY(-100%);opacity:0}.vector-sticky-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--background-color-interactive,#eaecf0)}.vector-sticky-header-start,.vector-sticky-header-end,.vector-sticky-header-icons,.vector-sticky-header-buttons,.vector-sticky-header-context-bar{display:flex;align-items:center}.vector-sticky-header-start{flex-grow:1;min-width:0}.vector-sticky-header-context-bar-primary,.vector-sticky-header-end{white-space:nowrap}.vector-sticky-header-context-bar{border-left:1px solid #c8c8c8;padding-left:30px;min-width:0;margin-left:30px}.vector-sticky-header-context-bar-primary{overflow:hidden;font-family:'Linux Libertine','Georgia','Times','Source Serif Pro',serif;font-size:1.5em;text-overflow:ellipsis}.vector-sticky-header-context-bar-primary wbr{display:none}.vector-sticky-header-buttons{font-size:0.875em}.vector-sticky-header-icons,.vector-sticky-header-buttons{column-gap:8px}.vector-sticky-header .vector-search-box{display:none}.vector-sticky-header.vector-header-search-toggled .vector-sticky-header-search-toggle,.vector-sticky-header.vector-header-search-toggled .vector-sticky-header-context-bar{display:none}.vector-sticky-header.vector-header-search-toggled .vector-search-box{display:block;margin-left:4px}.vector-sticky-header.vector-header-search-toggled .vector-search-box-show-thumbnail{margin-left:-9px}.vector-sticky-header.vector-header-search-toggled .vector-search-box-show-thumbnail .cdx-text-input__start-icon{color:var(--color-base,#202122)}@media (min-width:1120px){.client-js.vector-sticky-header-enabled{scroll-padding-top:calc(3.125rem + 75px)}.client-js.vector-sticky-header-enabled .vector-sticky-header-container{display:flex}.client-js.vector-sticky-header-enabled .vector-sticky-header-visible .vector-sticky-header-container{opacity:1;transform:translateY(0)}.client-js.vector-sticky-header-enabled .vector-sticky-pinned-container{top:calc(3.125rem + 24px);max-height:calc(100vh - 3.125rem - (24px * 2))}.client-js.vector-sticky-header-enabled .mw-sticky-header-element,.client-js.vector-sticky-header-enabled .charts-stickyhead th{ top:3.125rem !important}}.client-js .vector-settings{display:block;position:fixed;bottom:8px;right:8px;z-index:1}.client-js .vector-settings ul{padding:0;list-style:none;display:flex;flex-direction:column-reverse;align-items:center;gap:8px 8px}</style><meta name="ResourceLoaderDynamicStyles" content="">
+<link rel="stylesheet" href="./WB-MAI6_ Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board_files/load(2).php">
+<meta name="generator" content="MediaWiki 1.43.9">
+<meta name="robots" content="max-image-preview:standard">
+<meta name="format-detection" content="telephone=no">
+<meta name="viewport" content="width=1120">
+<link rel="search" type="application/opensearchdescription+xml" href="https://wiki.wirenboard.com/wiki/rest.php/v1/search" title="Wiren Board (ru)">
+<link rel="EditURI" type="application/rsd+xml" href="https://wiki.wirenboard.com/wiki/api.php?action=rsd">
+<link rel="alternate" type="application/atom+xml" title="Wiren Board&nbsp;— Atom-лента" href="https://wiki.wirenboard.com/wiki/index.php?title=%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%A1%D0%B2%D0%B5%D0%B6%D0%B8%D0%B5_%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D0%B8&amp;feed=atom">
+</head>
+<body class="skin--responsive skin-vector skin-vector-search-vue mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-WB-MAI6_Modbus_Registers rootpage-WB-MAI6_Modbus_Registers skin-vector-2022 action-view approvedRevs-approved uls-dialog-sticky-hide webfonts-changed vector-below-page-title"><a class="mw-jump-link" href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#bodyContent">Перейти к содержанию</a>
+<div class="vector-header-container">
+	<header class="vector-header mw-header">
+		<div class="vector-header-start">
+			<nav class="vector-main-menu-landmark" aria-label="Сайт">
+				
+<div id="vector-main-menu-dropdown" class="vector-dropdown vector-main-menu-dropdown vector-button-flush-left vector-button-flush-right">
+	<input type="checkbox" id="vector-main-menu-dropdown-checkbox" role="button" aria-haspopup="true" data-event-name="ui.dropdown-vector-main-menu-dropdown" class="vector-dropdown-checkbox webfonts-changed" aria-label="Главное меню">
+	<label id="vector-main-menu-dropdown-label" for="vector-main-menu-dropdown-checkbox" class="vector-dropdown-label cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--icon-only " aria-hidden="true"><span class="vector-icon mw-ui-icon-menu mw-ui-icon-wikimedia-menu"></span>
+
+<span class="vector-dropdown-label-text">Главное меню</span>
+	</label>
+	<div class="vector-dropdown-content">
+
+
+				<div id="vector-main-menu-unpinned-container" class="vector-unpinned-container">
+		
+<div id="vector-main-menu" class="vector-main-menu vector-pinnable-element">
+	<div class="vector-pinnable-header vector-main-menu-pinnable-header vector-pinnable-header-unpinned" data-feature-name="main-menu-pinned" data-pinnable-element-id="vector-main-menu" data-pinned-container-id="vector-main-menu-pinned-container" data-unpinned-container-id="vector-main-menu-unpinned-container" data-saved-pinned-state="false">
+	<div class="vector-pinnable-header-label">Главное меню</div>
+	<button class="vector-pinnable-header-toggle-button vector-pinnable-header-pin-button webfonts-changed" data-event-name="pinnable-header.vector-main-menu.pin">переместить в боковую панель</button>
+	<button class="vector-pinnable-header-toggle-button vector-pinnable-header-unpin-button webfonts-changed" data-event-name="pinnable-header.vector-main-menu.unpin">скрыть</button>
+</div>
+
+	
+<div id="p-Вернуться_на_главный_сайт:" class="vector-menu mw-portlet mw-portlet-Вернуться_на_главный_сайт">
+	<div class="vector-menu-heading">
+		Вернуться на главный сайт:
+	</div>
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			<li id="n-wirenboard.com" class="mw-list-item"><a href="https://wirenboard.com/" rel="nofollow" target="_blank"><span>wirenboard.com</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+	
+	
+<div id="p-navigation" class="vector-menu mw-portlet mw-portlet-navigation">
+	<div class="vector-menu-heading">
+		Навигация
+	</div>
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			<li id="n-mainpage-description" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0" title="Перейти на заглавную страницу [ctrl-option-z]" accesskey="z"><span>Заглавная страница</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+<div id="p-Читателям" class="vector-menu mw-portlet mw-portlet-Читателям">
+	<div class="vector-menu-heading">
+		Читателям
+	</div>
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			<li id="n-Как-внести-правку-или-задать-вопрос" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/%D0%9A%D0%B0%D0%BA_%D0%B2%D0%BD%D0%B5%D1%81%D1%82%D0%B8_%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D1%83_%D0%B8%D0%BB%D0%B8_%D0%B7%D0%B0%D0%B4%D0%B0%D1%82%D1%8C_%D0%B2%D0%BE%D0%BF%D1%80%D0%BE%D1%81"><span>Как внести правку или задать вопрос</span></a></li><li id="n-Справочник-по-синтаксису" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/Syntax"><span>Справочник по синтаксису</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+</div>
+
+				</div>
+
+	</div>
+</div>
+
+		</nav>
+			
+<a href="https://wiki.wirenboard.com/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0" class="mw-logo">
+	<span class="mw-logo-container skin-invert">
+		<img class="mw-logo-wordmark" alt="Wiren Board" src="./WB-MAI6_ Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board_files/Wb_logo.png" style="width: 10em; height: 2.5em;">
+	</span>
+</a>
+
+		</div>
+		<div class="vector-header-end">
+			
+<div id="p-search" role="search" class="vector-search-box-vue  vector-search-box-collapses vector-search-box">
+	<a href="https://wiki.wirenboard.com/wiki/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%9F%D0%BE%D0%B8%D1%81%D0%BA" class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--icon-only search-toggle" title="Искать в Wiren Board [ctrl-option-f]" accesskey="f"><span class="vector-icon mw-ui-icon-search mw-ui-icon-wikimedia-search"></span>
+
+<span>Поиск</span>
+	</a>
+	<div class="vector-typeahead-search-container">
+		<div class="cdx-typeahead-search">
+			<form action="https://wiki.wirenboard.com/wiki/index.php" id="searchform" class="cdx-search-input cdx-search-input--has-end-button">
+				<div id="simpleSearch" class="cdx-search-input__input-wrapper" data-search-loc="header-moved">
+					<div class="cdx-text-input cdx-text-input--has-start-icon">
+						<input class="cdx-text-input__input webfonts-changed" type="search" name="search" placeholder="Искать в Wiren Board" aria-label="Искать в Wiren Board" autocapitalize="sentences" title="Искать в Wiren Board [ctrl-option-f]" accesskey="f" id="searchInput" autocomplete="off">
+						<span class="cdx-text-input__icon cdx-text-input__start-icon"></span>
+					</div>
+					<input type="hidden" name="title" value="Служебная:Поиск" class="webfonts-changed">
+				</div>
+				<button class="cdx-button cdx-search-input__end-button webfonts-changed">Найти</button>
+			</form>
+		</div>
+	</div>
+</div>
+
+			<nav class="vector-user-links vector-user-links-wide" aria-label="Персональные инструменты">
+	<div class="vector-user-links-main">
+	
+<div id="p-vector-user-menu-preferences" class="vector-menu mw-portlet">
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			<li id="ca-uls" class="mw-list-item active user-links-collapsible-item"><a data-mw="interface" href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#" class="uls-trigger cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet"><span class="vector-icon mw-ui-icon-wikimedia-language mw-ui-icon-wikimedia-wikimedia-language"></span>
+
+<span>русский</span></a>
+</li>
+
+			
+		</ul>
+		
+	</div>
+</div>
+
+	
+<div id="p-vector-user-menu-userpage" class="vector-menu mw-portlet emptyPortlet">
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			
+		</ul>
+		
+	</div>
+</div>
+
+	<nav class="vector-appearance-landmark" aria-label="Внешний вид">
+		
+<div id="vector-appearance-dropdown" class="vector-dropdown " title="Измените внешний вид страницы, размер, ширину и цвет шрифта.">
+	<input type="checkbox" id="vector-appearance-dropdown-checkbox" role="button" aria-haspopup="true" data-event-name="ui.dropdown-vector-appearance-dropdown" class="vector-dropdown-checkbox webfonts-changed" aria-label="Внешний вид">
+	<label id="vector-appearance-dropdown-label" for="vector-appearance-dropdown-checkbox" class="vector-dropdown-label cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--icon-only " aria-hidden="true"><span class="vector-icon mw-ui-icon-appearance mw-ui-icon-wikimedia-appearance"></span>
+
+<span class="vector-dropdown-label-text">Внешний вид</span>
+	</label>
+	<div class="vector-dropdown-content">
+
+
+			<div id="vector-appearance-unpinned-container" class="vector-unpinned-container">
+				<div id="vector-appearance" class="vector-appearance vector-pinnable-element">
+	<div class="vector-pinnable-header vector-appearance-pinnable-header vector-pinnable-header-unpinned" data-feature-name="appearance-pinned" data-pinnable-element-id="vector-appearance" data-pinned-container-id="vector-appearance-pinned-container" data-unpinned-container-id="vector-appearance-unpinned-container" data-saved-pinned-state="false">
+	<div class="vector-pinnable-header-label">Внешний вид</div>
+	<button class="vector-pinnable-header-toggle-button vector-pinnable-header-pin-button webfonts-changed" data-event-name="pinnable-header.vector-appearance.pin">переместить в боковую панель</button>
+	<button class="vector-pinnable-header-toggle-button vector-pinnable-header-unpin-button webfonts-changed" data-event-name="pinnable-header.vector-appearance.unpin">скрыть</button>
+</div>
+
+
+<div class="mw-portlet mw-portlet-skin-client-prefs-vector-feature-custom-font-size vector-menu" id="skin-client-prefs-vector-feature-custom-font-size"><div class="vector-menu-heading">Текст</div><div class="vector-menu-content"><ul class="vector-menu-content-list"><li class="mw-list-item mw-list-item-js"><div class=""><form><div class="cdx-radio"><input name="skin-client-pref-vector-feature-custom-font-size-group" id="skin-client-pref-vector-feature-custom-font-size-value-0" type="radio" value="0" data-event-name="skin-client-pref-vector-feature-custom-font-size-value-0" class="cdx-radio__input webfonts-changed"><span class="cdx-radio__icon"></span><label for="skin-client-pref-vector-feature-custom-font-size-value-0" class="cdx-radio__label">Мелкий</label></div><div class="cdx-radio"><input name="skin-client-pref-vector-feature-custom-font-size-group" id="skin-client-pref-vector-feature-custom-font-size-value-1" type="radio" value="1" data-event-name="skin-client-pref-vector-feature-custom-font-size-value-1" class="cdx-radio__input webfonts-changed"><span class="cdx-radio__icon"></span><label for="skin-client-pref-vector-feature-custom-font-size-value-1" class="cdx-radio__label">Стандартный</label></div><div class="cdx-radio"><input name="skin-client-pref-vector-feature-custom-font-size-group" id="skin-client-pref-vector-feature-custom-font-size-value-2" type="radio" value="2" data-event-name="skin-client-pref-vector-feature-custom-font-size-value-2" class="cdx-radio__input webfonts-changed"><span class="cdx-radio__icon"></span><label for="skin-client-pref-vector-feature-custom-font-size-value-2" class="cdx-radio__label">Крупный</label></div></form></div></li></ul><span class="skin-client-pref-exclusion-notice">На этой странице всегда используется мелкий размер шрифта.</span></div></div><div class="mw-portlet mw-portlet-skin-client-prefs-vector-feature-limited-width vector-menu" id="skin-client-prefs-vector-feature-limited-width"><div class="vector-menu-heading">Ширина</div><div class="vector-menu-content"><ul class="vector-menu-content-list"><li class="mw-list-item mw-list-item-js"><div class=""><form><div class="cdx-radio"><input name="skin-client-pref-vector-feature-limited-width-group" id="skin-client-pref-vector-feature-limited-width-value-1" type="radio" value="1" data-event-name="skin-client-pref-vector-feature-limited-width-value-1" class="cdx-radio__input webfonts-changed"><span class="cdx-radio__icon"></span><label for="skin-client-pref-vector-feature-limited-width-value-1" class="cdx-radio__label">Стандартно</label></div><div class="cdx-radio"><input name="skin-client-pref-vector-feature-limited-width-group" id="skin-client-pref-vector-feature-limited-width-value-0" type="radio" value="0" data-event-name="skin-client-pref-vector-feature-limited-width-value-0" class="cdx-radio__input webfonts-changed"><span class="cdx-radio__icon"></span><label for="skin-client-pref-vector-feature-limited-width-value-0" class="cdx-radio__label">Широко</label></div></form></div></li></ul><span class="skin-client-pref-exclusion-notice">Контент широк настолько, насколько это возможно для окна вашего браузера.</span></div></div></div>
+
+			</div>
+		
+	</div>
+</div>
+
+	</nav>
+	
+<div id="p-vector-user-menu-notifications" class="vector-menu mw-portlet emptyPortlet">
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			
+		</ul>
+		
+	</div>
+</div>
+
+	
+<div id="p-vector-user-menu-overflow" class="vector-menu mw-portlet">
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			<li id="pt-createaccount-2" class="user-links-collapsible-item mw-list-item user-links-collapsible-item"><a data-mw="interface" href="https://wiki.wirenboard.com/wiki/index.php?title=%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%A1%D0%BE%D0%B7%D0%B4%D0%B0%D1%82%D1%8C_%D1%83%D1%87%D1%91%D1%82%D0%BD%D1%83%D1%8E_%D0%B7%D0%B0%D0%BF%D0%B8%D1%81%D1%8C&amp;returnto=WB-MAI6+Modbus+Registers" title="Мы предлагаем вам создать учётную запись и войти в систему, хотя это и не обязательно." class=""><span>Создать учётную запись</span></a>
+</li>
+<li id="pt-login-2" class="user-links-collapsible-item mw-list-item user-links-collapsible-item"><a data-mw="interface" href="https://wiki.wirenboard.com/wiki/index.php?title=%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%92%D1%85%D0%BE%D0%B4&amp;returnto=WB-MAI6+Modbus+Registers" title="Здесь можно зарегистрироваться в системе, но это необязательно. [ctrl-option-o]" accesskey="o" class=""><span>Войти</span></a>
+</li>
+
+			
+		</ul>
+		
+	</div>
+</div>
+
+	</div>
+	
+<div id="vector-user-links-dropdown" class="vector-dropdown vector-user-menu vector-button-flush-right vector-user-menu-logged-out user-links-collapsible-item" title="Больше возможностей">
+	<input type="checkbox" id="vector-user-links-dropdown-checkbox" role="button" aria-haspopup="true" data-event-name="ui.dropdown-vector-user-links-dropdown" class="vector-dropdown-checkbox webfonts-changed" aria-label="Персональные инструменты">
+	<label id="vector-user-links-dropdown-label" for="vector-user-links-dropdown-checkbox" class="vector-dropdown-label cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--icon-only " aria-hidden="true"><span class="vector-icon mw-ui-icon-ellipsis mw-ui-icon-wikimedia-ellipsis"></span>
+
+<span class="vector-dropdown-label-text">Персональные инструменты</span>
+	</label>
+	<div class="vector-dropdown-content">
+
+
+		
+<div id="p-personal" class="vector-menu mw-portlet mw-portlet-personal user-links-collapsible-item" title="Пользовательское меню">
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			<li id="pt-createaccount" class="user-links-collapsible-item mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%A1%D0%BE%D0%B7%D0%B4%D0%B0%D1%82%D1%8C_%D1%83%D1%87%D1%91%D1%82%D0%BD%D1%83%D1%8E_%D0%B7%D0%B0%D0%BF%D0%B8%D1%81%D1%8C&amp;returnto=WB-MAI6+Modbus+Registers" title="Мы предлагаем вам создать учётную запись и войти в систему, хотя это и не обязательно."><span class="vector-icon mw-ui-icon-userAdd mw-ui-icon-wikimedia-userAdd"></span> <span>Создать учётную запись</span></a></li><li id="pt-login" class="user-links-collapsible-item mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%92%D1%85%D0%BE%D0%B4&amp;returnto=WB-MAI6+Modbus+Registers" title="Здесь можно зарегистрироваться в системе, но это необязательно. [ctrl-option-o]" accesskey="o"><span class="vector-icon mw-ui-icon-logIn mw-ui-icon-wikimedia-logIn"></span> <span>Войти</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+	
+	</div>
+</div>
+
+</nav>
+
+		</div>
+	</header>
+</div>
+<div class="mw-page-container">
+	<div class="mw-page-container-inner">
+		<div class="vector-sitenotice-container">
+			<div id="siteNotice"></div>
+		</div>
+		<div class="vector-column-start">
+			<div class="vector-main-menu-container">
+		<div id="mw-navigation">
+			<nav id="mw-panel" class="vector-main-menu-landmark" aria-label="Сайт">
+				<div id="vector-main-menu-pinned-container" class="vector-pinned-container">
+				
+				</div>
+		</nav>
+		</div>
+	</div>
+	<div class="vector-sticky-pinned-container">
+				<nav id="mw-panel-toc" aria-label="Содержание" data-event-name="ui.sidebar-toc" class="mw-table-of-contents-container vector-toc-landmark">
+					<div id="vector-toc-pinned-container" class="vector-pinned-container">
+					<div id="vector-toc" class="vector-toc vector-pinnable-element">
+	<div class="vector-pinnable-header vector-toc-pinnable-header vector-pinnable-header-pinned" data-feature-name="toc-pinned" data-pinnable-element-id="vector-toc">
+	<h2 class="vector-pinnable-header-label">Содержание</h2>
+	<button class="vector-pinnable-header-toggle-button vector-pinnable-header-pin-button webfonts-changed" data-event-name="pinnable-header.vector-toc.pin">переместить в боковую панель</button>
+	<button class="vector-pinnable-header-toggle-button vector-pinnable-header-unpin-button webfonts-changed" data-event-name="pinnable-header.vector-toc.unpin">скрыть</button>
+</div>
+
+
+	<ul class="vector-toc-contents" id="mw-panel-toc-list">
+		<li id="toc-mw-content-text" class="vector-toc-list-item vector-toc-level-1">
+			<a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#" class="vector-toc-link">
+				<div class="vector-toc-text">Начало</div>
+			</a>
+		</li>
+		<li id="toc-Режимы" class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#%D0%A0%D0%B5%D0%B6%D0%B8%D0%BC%D1%8B">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">1</span>
+				<span>Режимы</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Режимы-sublist" class="vector-toc-list">
+		</ul>
+	</li>
+	<li id="toc-Типы_поддерживаемых_стандартных_датчиков" class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#%D0%A2%D0%B8%D0%BF%D1%8B_%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D0%B2%D0%B0%D0%B5%D0%BC%D1%8B%D1%85_%D1%81%D1%82%D0%B0%D0%BD%D0%B4%D0%B0%D1%80%D1%82%D0%BD%D1%8B%D1%85_%D0%B4%D0%B0%D1%82%D1%87%D0%B8%D0%BA%D0%BE%D0%B2">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">2</span>
+				<span>Типы поддерживаемых стандартных датчиков</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Типы_поддерживаемых_стандартных_датчиков-sublist" class="vector-toc-list">
+		</ul>
+	</li>
+	<li id="toc-Карта_регистров" class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded vector-toc-level-1-active vector-toc-list-item-active">
+		<a class="vector-toc-link" href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#%D0%9A%D0%B0%D1%80%D1%82%D0%B0_%D1%80%D0%B5%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%BE%D0%B2">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">3</span>
+				<span>Карта регистров</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Карта_регистров-sublist" class="vector-toc-list">
+		</ul>
+	</li>
+	<li id="toc-Общие_регистры" class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#%D0%9E%D0%B1%D1%89%D0%B8%D0%B5_%D1%80%D0%B5%D0%B3%D0%B8%D1%81%D1%82%D1%80%D1%8B">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">4</span>
+				<span>Общие регистры</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Общие_регистры-sublist" class="vector-toc-list">
+		</ul>
+	</li>
+</ul>
+</div>
+
+					</div>
+		</nav>
+			</div>
+		</div>
+		<div class="mw-content-container">
+			<main id="content" class="mw-body">
+				<header class="mw-body-header vector-page-titlebar">
+					<nav aria-label="Содержание" class="vector-toc-landmark">
+						
+<div id="vector-page-titlebar-toc" class="vector-dropdown vector-page-titlebar-toc vector-button-flush-left">
+	<input type="checkbox" id="vector-page-titlebar-toc-checkbox" role="button" aria-haspopup="true" data-event-name="ui.dropdown-vector-page-titlebar-toc" class="vector-dropdown-checkbox webfonts-changed" aria-label="Отобразить/Скрыть содержание">
+	<label id="vector-page-titlebar-toc-label" for="vector-page-titlebar-toc-checkbox" class="vector-dropdown-label cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--icon-only" aria-hidden="true"><span class="vector-icon mw-ui-icon-listBullet mw-ui-icon-wikimedia-listBullet"></span>
+
+<span class="vector-dropdown-label-text">Отобразить/Скрыть содержание</span>
+	</label>
+	<div class="vector-dropdown-content">
+
+
+							<div id="vector-page-titlebar-toc-unpinned-container" class="vector-unpinned-container">
+			</div>
+		
+	</div>
+</div>
+
+					</nav>
+					<h1 id="firstHeading" class="firstHeading mw-first-heading">WB-MAI6: Таблица Modbus-регистров, режимы работы и типы стандартных датчиков</h1>
+				</header>
+				<div class="vector-page-toolbar">
+					<div class="vector-page-toolbar-container">
+						<div id="left-navigation">
+							<nav aria-label="Пространства имён">
+								
+<div id="p-associated-pages" class="vector-menu vector-menu-tabs mw-portlet mw-portlet-associated-pages">
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			<li id="ca-nstab-main" class="selected vector-tab-noicon mw-list-item"><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers" title="Просмотреть контентную страницу [ctrl-option-c]" accesskey="c"><span>Статья</span></a></li><li id="ca-talk" class="new vector-tab-noicon mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=%D0%9E%D0%B1%D1%81%D1%83%D0%B6%D0%B4%D0%B5%D0%BD%D0%B8%D0%B5:WB-MAI6_Modbus_Registers&amp;action=edit&amp;redlink=1" rel="discussion" class="new" title="Обсуждение основной страницы (страница не существует) [ctrl-option-t]" accesskey="t"><span>Обсуждение</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+								
+<div id="vector-variants-dropdown" class="vector-dropdown emptyPortlet">
+	<input type="checkbox" id="vector-variants-dropdown-checkbox" role="button" aria-haspopup="true" data-event-name="ui.dropdown-vector-variants-dropdown" class="vector-dropdown-checkbox webfonts-changed" aria-label="Изменить вариант языка">
+	<label id="vector-variants-dropdown-label" for="vector-variants-dropdown-checkbox" class="vector-dropdown-label cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet" aria-hidden="true"><span class="vector-dropdown-label-text">русский</span>
+	</label>
+	<div class="vector-dropdown-content">
+
+
+					
+<div id="p-variants" class="vector-menu mw-portlet mw-portlet-variants emptyPortlet">
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			
+		</ul>
+		
+	</div>
+</div>
+
+				
+	</div>
+</div>
+
+							</nav>
+						</div>
+						<div id="right-navigation" class="vector-collapsible">
+							<nav aria-label="Просмотры">
+								
+<div id="p-views" class="vector-menu vector-menu-tabs mw-portlet mw-portlet-views">
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			<li id="ca-view" class="selected vector-tab-noicon mw-list-item"><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers"><span>Читать</span></a></li><li id="ca-viewsource" class="vector-tab-noicon mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;action=edit" title="Эта страница защищена от изменений.
+Вы можете посмотреть её исходный текст. [ctrl-option-e]" accesskey="e"><span>Просмотр кода</span></a></li><li id="ca-history" class="vector-tab-noicon mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;action=history" title="Журнал изменений страницы [ctrl-option-h]" accesskey="h"><span>История</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+							</nav>
+				
+							<nav class="vector-page-tools-landmark" aria-label="Инструменты для страниц">
+								
+<div id="vector-page-tools-dropdown" class="vector-dropdown vector-page-tools-dropdown">
+	<input type="checkbox" id="vector-page-tools-dropdown-checkbox" role="button" aria-haspopup="true" data-event-name="ui.dropdown-vector-page-tools-dropdown" class="vector-dropdown-checkbox webfonts-changed" aria-label="Инструменты">
+	<label id="vector-page-tools-dropdown-label" for="vector-page-tools-dropdown-checkbox" class="vector-dropdown-label cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet" aria-hidden="true"><span class="vector-dropdown-label-text">Инструменты</span>
+	</label>
+	<div class="vector-dropdown-content">
+
+
+									<div id="vector-page-tools-unpinned-container" class="vector-unpinned-container">
+						
+<div id="vector-page-tools" class="vector-page-tools vector-pinnable-element">
+	<div class="vector-pinnable-header vector-page-tools-pinnable-header vector-pinnable-header-unpinned" data-feature-name="page-tools-pinned" data-pinnable-element-id="vector-page-tools" data-pinned-container-id="vector-page-tools-pinned-container" data-unpinned-container-id="vector-page-tools-unpinned-container" data-saved-pinned-state="false">
+	<div class="vector-pinnable-header-label">Инструменты</div>
+	<button class="vector-pinnable-header-toggle-button vector-pinnable-header-pin-button webfonts-changed" data-event-name="pinnable-header.vector-page-tools.pin">переместить в боковую панель</button>
+	<button class="vector-pinnable-header-toggle-button vector-pinnable-header-unpin-button webfonts-changed" data-event-name="pinnable-header.vector-page-tools.unpin">скрыть</button>
+</div>
+
+	
+<div id="p-cactions" class="vector-menu mw-portlet mw-portlet-cactions emptyPortlet vector-has-collapsible-items" title="Больше возможностей">
+	<div class="vector-menu-heading">
+		Действия
+	</div>
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			<li id="ca-more-view" class="selected vector-more-collapsible-item mw-list-item"><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers"><span>Читать</span></a></li><li id="ca-more-viewsource" class="vector-more-collapsible-item mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;action=edit"><span>Просмотр кода</span></a></li><li id="ca-more-history" class="vector-more-collapsible-item mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;action=history"><span>История</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+<div id="p-tb" class="vector-menu mw-portlet mw-portlet-tb">
+	<div class="vector-menu-heading">
+		Общие
+	</div>
+	<div class="vector-menu-content">
+		
+		<ul class="vector-menu-content-list">
+			
+			<li id="t-whatlinkshere" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%A1%D1%81%D1%8B%D0%BB%D0%BA%D0%B8_%D1%81%D1%8E%D0%B4%D0%B0/WB-MAI6_Modbus_Registers" title="Список всех страниц, ссылающихся на данную [ctrl-option-j]" accesskey="j"><span>Ссылки сюда</span></a></li><li id="t-recentchangeslinked" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%A1%D0%B2%D1%8F%D0%B7%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5_%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D0%B8/WB-MAI6_Modbus_Registers" rel="nofollow" title="Последние изменения в страницах, на которые ссылается эта страница [ctrl-option-k]" accesskey="k"><span>Связанные правки</span></a></li><li id="t-specialpages" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%A1%D0%BF%D0%B5%D1%86%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B" title="Список служебных страниц [ctrl-option-q]" accesskey="q"><span>Служебные страницы</span></a></li><li id="t-print" class="mw-list-item"><a href="javascript:print();" rel="alternate" title="Версия этой страницы для печати [ctrl-option-p]" accesskey="p"><span>Версия для печати</span></a></li><li id="t-permalink" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;oldid=116022" title="Постоянная ссылка на эту версию страницы"><span>Постоянная ссылка</span></a></li><li id="t-info" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;action=info" title="Подробнее об этой странице"><span>Сведения о&nbsp;странице</span></a></li><li id="t-cargopagevalueslink" class="mw-list-item"><a href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;action=pagevalues" rel="cargo-pagevalues"><span>Данные cargo</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+</div>
+
+									</div>
+				
+	</div>
+</div>
+
+							</nav>
+						</div>
+					</div>
+				</div>
+				<div class="vector-column-end">
+					<div class="vector-sticky-pinned-container">
+						<nav class="vector-page-tools-landmark" aria-label="Инструменты для страниц">
+							<div id="vector-page-tools-pinned-container" class="vector-pinned-container">
+				
+							</div>
+		</nav>
+						<nav class="vector-appearance-landmark" aria-label="Внешний вид">
+							<div id="vector-appearance-pinned-container" class="vector-pinned-container">
+				
+							</div>
+		</nav>
+					</div>
+				</div>
+				<div id="bodyContent" class="vector-body" aria-labelledby="firstHeading" data-mw-ve-target-container="">
+					<div class="vector-body-before-content">
+							<div class="mw-indicators">
+		</div>
+
+						<div id="siteSub" class="noprint">Материал из Wiren Board</div>
+					</div>
+					<div id="contentSub"><div id="mw-content-subtitle"><span class="approvedAndLatestMsg">Это утверждённая версия страницы. Она же — наиболее свежая версия.</span></div></div>
+					
+					
+					<div id="mw-content-text" class="mw-body-content"><div class="mw-content-ltr mw-parser-output" lang="ru" dir="ltr"><div id="toc" class="toc" role="navigation" aria-labelledby="mw-toc-heading"><input type="checkbox" role="button" id="toctogglecheckbox" class="toctogglecheckbox webfonts-changed" style="display:none" aria-label="Скрыть содержание"><div class="toctitle" lang="ru" dir="ltr"><h2 id="mw-toc-heading">Содержание</h2><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#%D0%A0%D0%B5%D0%B6%D0%B8%D0%BC%D1%8B"><span class="tocnumber">1</span> <span class="toctext">Режимы</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#%D0%A2%D0%B8%D0%BF%D1%8B_%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D0%B2%D0%B0%D0%B5%D0%BC%D1%8B%D1%85_%D1%81%D1%82%D0%B0%D0%BD%D0%B4%D0%B0%D1%80%D1%82%D0%BD%D1%8B%D1%85_%D0%B4%D0%B0%D1%82%D1%87%D0%B8%D0%BA%D0%BE%D0%B2"><span class="tocnumber">2</span> <span class="toctext">Типы поддерживаемых стандартных датчиков</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#%D0%9A%D0%B0%D1%80%D1%82%D0%B0_%D1%80%D0%B5%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%BE%D0%B2"><span class="tocnumber">3</span> <span class="toctext">Карта регистров</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#%D0%9E%D0%B1%D1%89%D0%B8%D0%B5_%D1%80%D0%B5%D0%B3%D0%B8%D1%81%D1%82%D1%80%D1%8B"><span class="tocnumber">4</span> <span class="toctext">Общие регистры</span></a></li>
+</ul>
+</div>
+
+<h2><span id=".D0.A0.D0.B5.D0.B6.D0.B8.D0.BC.D1.8B"></span><span class="mw-headline" id="Режимы">Режимы</span></h2>
+<p><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs" title="WB-MAI6 Modbus Analog Inputs">WB-MAI6</a> позволяет для каждого входа настроить следующие режимы работы:
+</p>
+<ul><li>Измерение напряжения — в&nbsp;дифференциальном или однополярном режиме.</li>
+<li>Измерение сопротивления — в&nbsp;дифференциальном или однополярном режиме.</li>
+<li>Измерение тока — только в&nbsp;однополярном режиме.</li></ul>
+<p>В&nbsp;таблице 3 приведено полное описание базовых режимов работы, на которых основано измерение сигналов со стандартных датчиков.
+</p><p>В&nbsp;регистры «тип датчика» (0x<b>X</b>400, 0x<b>X</b>401) <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#table-5">таблицы 5</a> для каждого входа могут быть занесены коды из таблицы 3 либо из&nbsp;<a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#table-4">таблицы 4</a>. Для измерения нестандартных величин можно выбрать режим входа и&nbsp;диапазон измерения вручную из&nbsp;таблицы 3.
+</p>
+<div class="anchor" id="table-3"></div>
+<table class="wikitable">
+<caption>Таблица 3. Режимы работы устройства
+</caption>
+<tbody><tr>
+<th>Тип измеряемого сигнала
+</th>
+<th>Режим входа
+</th>
+<th>Код HEX
+</th>
+<th>Код DEC
+</th>
+<th>Описание
+</th>
+<th>Коэффициент усиления
+</th>
+<th>Диапазон измерения
+</th>
+<th>Погрешность
+</th>
+<th>Формат выходных данных
+</th>
+<th>Примечание
+</th></tr>
+<tr>
+<td>Вход отключен
+</td>
+<td>-
+</td>
+<td>0x0000
+</td>
+<td>0
+</td>
+<td>-
+</td>
+<td>-
+</td>
+<td>-
+</td>
+<td>-
+</td>
+<td>-
+</td></tr>
+<tr>
+<td rowspan="4">Измерение
+<p>напряжения
+</p>
+</td>
+<td rowspan="3">Однополярный
+</td>
+<td rowspan="3">0x0001
+</td>
+<td rowspan="3">1
+</td>
+<td rowspan="3">Измерение напряжения в&nbsp;однополярном режиме, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 1</a>
+</td>
+<td rowspan="3">1…4
+</td>
+<td>2…10 В
+</td>
+<td>±0.5&nbsp;%
+</td>
+<td rowspan="4">мкВ
+</td>
+<td rowspan="4">
+</td></tr>
+<tr>
+<td>10…30 В
+</td>
+<td>±1&nbsp;%
+</td></tr>
+
+<tr>
+<td>0…2000&nbsp;мВ
+</td>
+<td>±(0.2&nbsp;% + 50&nbsp;мкВ)
+</td></tr>
+<tr>
+<td>Дифференциальный
+</td>
+<td>0x0101
+</td>
+<td>257
+</td>
+<td>Измерение напряжения в&nbsp;дифференциальном режиме от&nbsp;−2&nbsp;до&nbsp;2 В относительно iGnd, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 6</a>
+<p>Измерение напряжения с&nbsp;термопары,&nbsp;<a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 7</a>
+</p>
+</td>
+<td>1…128
+</td>
+<td>±2048&nbsp;мВ
+</td>
+<td>±(0.2&nbsp;% + 30&nbsp;мкВ)
+</td></tr>
+<tr>
+<td rowspan="4">Измерение
+<p>сопротивления
+</p>
+</td>
+<td rowspan="3">Однополярный
+</td>
+<td rowspan="3">0x0002
+</td>
+<td rowspan="3">2
+</td>
+<td rowspan="3">Измерение сопротивления по&nbsp;двухпроводной схеме, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 3</a>
+<p>Подключение датчиков типа «сухой контакт», <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 4</a>
+</p>
+</td>
+<td rowspan="4">1
+</td>
+<td>0…1&nbsp;кОм
+</td>
+<td>±(0.1&nbsp;% + 0.3&nbsp;Ом)
+</td>
+<td rowspan="4">Ом · 100
+</td>
+<td rowspan="4">
+</td></tr>
+<tr>
+<td>1…100 кОм
+</td>
+<td>±0.2&nbsp;%
+</td></tr>
+<tr>
+<td>100…500 кОм
+</td>
+<td>±1.5&nbsp;%
+</td></tr>
+<tr>
+<td>Дифференциальный
+<p>(трехпроводная схема)
+</p>
+</td>
+<td>0x0102
+</td>
+<td>258
+</td>
+<td>Измерение сопротивления по&nbsp;трехпроводной схеме, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 8</a>
+</td>
+<td>0…5000&nbsp;Ом
+</td>
+<td>±(0.1&nbsp;% + 0.15&nbsp;Ом)
+</td></tr>
+<tr>
+<td>Измерение
+<p>тока
+</p>
+</td>
+<td>Однополярный
+</td>
+<td>0x0003
+</td>
+<td>3
+</td>
+<td>Измерение тока от&nbsp;0&nbsp;до&nbsp;20&nbsp;мА, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 2</a>
+</td>
+<td>1…4
+</td>
+<td>0…20.48&nbsp;мА
+</td>
+<td>±(0.2&nbsp;% + 1 мкА)
+</td>
+<td>нА
+</td>
+<td>
+</td></tr>
+
+<tr>
+<td rowspan="2">Измерение напряжения с внешним делителем <a href="https://wiki.wirenboard.com/wiki/WB-VDIV" title="WB-VDIV"> WB-VDIV</a>
+</td>
+<td>Однополярный
+</td>
+<td>0x0005
+</td>
+<td>5
+</td>
+<td>Измерение напряжения от 0 до 60 В
+</td>
+<td>1…4
+</td>
+<td>0…60 В
+</td>
+<td>±(0.2&nbsp;% + 20 мВ)
+</td>
+<td rowspan="2">мВ
+</td>
+<td>С версии прошивки 2.1.0
+</td></tr>
+<tr>
+<td>Дифференциальный
+</td>
+<td>0x0105
+</td>
+<td>261
+</td>
+<td>Измерение напряжения от −30 до 30 В
+</td>
+<td>1…128
+</td>
+<td>±32 В
+</td>
+<td>±(0.2&nbsp;% + 30 мкВ)
+</td>
+<td>С версии прошивки 2.4.0
+</td></tr>
+
+<tr>
+<td>Измерение напряжения с пользовательским внешним делителем
+</td>
+<td>Однополярный
+</td>
+<td>0x0006
+</td>
+<td>6
+</td>
+<td>Предел измерения зависит от характеристик внешнего делителя.
+<p>Напряжение после делителя должно быть в диапазоне 0…2 В, в котором WB-MAI6 обладает максимальной точностью измерений, либо в диапазоне 0…4.5 В, в котором у WB-MAI6 близкая к максимальной точность измерений.
+</p>
+</td>
+<td>1…4
+</td>
+<td>
+</td>
+<td>±(0.2&nbsp;% + 50 мкВ) + погрешность внешнего делителя
+</td>
+<td>мВ
+</td>
+<td>С версии прошивки 2.1.0
+</td></tr>
+
+</tbody></table>
+<h2><span id=".D0.A2.D0.B8.D0.BF.D1.8B_.D0.BF.D0.BE.D0.B4.D0.B4.D0.B5.D1.80.D0.B6.D0.B8.D0.B2.D0.B0.D0.B5.D0.BC.D1.8B.D1.85_.D1.81.D1.82.D0.B0.D0.BD.D0.B4.D0.B0.D1.80.D1.82.D0.BD.D1.8B.D1.85_.D0.B4.D0.B0.D1.82.D1.87.D0.B8.D0.BA.D0.BE.D0.B2"></span><span class="mw-headline" id="Типы_поддерживаемых_стандартных_датчиков">Типы поддерживаемых стандартных датчиков</span></h2>
+<p>В таблице 4 приведены типы поддерживаемых стандартных датчиков, которые надо занести в регистры «тип датчика» <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#table-5">таблицы 5</a>. 
+</p><p>При использовании стандартных датчиков значения регистров 0x<b>X</b>40A&nbsp;и&nbsp;0x<b>X</b>40B&nbsp;(коэффициент усиления) игнорируются. Стандартные датчики имеют код <b>0x1XXX</b>.
+</p>
+<div class="anchor" id="table-4"></div>
+<table class="wikitable">
+<caption>Таблица 4. Типы стандартных датчиков
+</caption>
+<tbody><tr>
+<th style="width:10%;">Код датчика HEX
+</th>
+<th style="width:10%;">Код датчика DEC
+</th>
+<th style="width:25%;">Описание
+</th>
+<th style="width:10%;">Формат сырых данных
+</th>
+<th style="width:30%;">Формат пересчитанных данных
+</th>
+<th style="width:15%;">Погрешность
+</th></tr>
+<tr>
+<th colspan="6">Термоэлектрические преобразователи
+<p>Режим работы — измерение напряжения с&nbsp;термопары, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 7</a>
+</p>
+</th></tr>
+<tr>
+<td>0x1000
+</td>
+<td>4096
+</td>
+<td>ТХА (K)
+</td>
+<td>мкВ
+</td>
+<td>°C · 10, °C · 100
+</td>
+<td>±(0.8 °C + 0.2&nbsp;% · Δt)
+</td></tr>
+<tr>
+<td colspan="2">
+</td>
+<td colspan="4">Примечание: Δt — разница между измеряемой термопарой температурой и&nbsp;температурой WB-MAI6, если термопара подключена напрямую к&nbsp;входу WB-MAI6&nbsp;без удлинения проводов.
+</td></tr>
+<tr>
+<th colspan="6">Термометры сопротивления по&nbsp;двухпроводной схеме
+<p>Режим работы — измерение сопротивления по&nbsp;двухпроводной схеме, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис.&nbsp;3</a>
+</p>
+</th></tr>
+<tr>
+<td>0x1100
+</td>
+<td>4352
+</td>
+<td>Pt 50 (α = 0.00385 °C<sup>−1</sup>)
+</td>
+<td rowspan="15">Ом · 100
+</td>
+<td rowspan="15">°C · 10, °C · 100
+</td>
+<td>±1.5 °C
+</td></tr>
+<tr>
+<td>0x1101
+</td>
+<td>4353
+</td>
+<td>Pt 100 (α = 0.00385 °C<sup>−1</sup>)
+</td>
+<td>±0.8 °C
+</td></tr>
+<tr>
+<td>0x1102
+</td>
+<td>4354
+</td>
+<td>Pt 500 (α = 0.00385 °C<sup>−1</sup>)
+</td>
+<td>±0.2 °C
+</td></tr>
+<tr>
+<td>0x1103
+</td>
+<td>4355
+</td>
+<td>Pt 1000 (α = 0.00385 °C<sup>−1</sup>)
+</td>
+<td>±0.15 °C
+</td></tr>
+<tr>
+<td>0x1110
+</td>
+<td>4368
+</td>
+<td>50П (α = 0.00391 °C<sup>−1</sup>)
+</td>
+<td>±1.5 °C
+</td></tr>
+<tr>
+<td>0x1111
+</td>
+<td>4369
+</td>
+<td>100П (α = 0.00391 °C<sup>−1</sup>)
+</td>
+<td>±0.8 °C
+</td></tr>
+<tr>
+<td>0x1112
+</td>
+<td>4370
+</td>
+<td>500П (α = 0.00391 °C<sup>−1</sup>)
+</td>
+<td>±0.2 °C
+</td></tr>
+<tr>
+<td>0x1113
+</td>
+<td>4371
+</td>
+<td>1000П (α = 0.00391 °C<sup>−1</sup>)
+</td>
+<td>±0.15 °C
+</td></tr>
+<tr>
+<td>0x1120
+</td>
+<td>4384
+</td>
+<td>50М (α = 0.00428 °C<sup>−1</sup>)
+</td>
+<td>±1.4 °C
+</td></tr>
+<tr>
+<td>0x1121
+</td>
+<td>4385
+</td>
+<td>100М (α = 0.00428 °C<sup>−1</sup>)
+</td>
+<td>±0.7 °C
+</td></tr>
+<tr>
+<td>0x1122
+</td>
+<td>4386
+</td>
+<td>500М (α = 0.00428 °C<sup>−1</sup>)
+</td>
+<td>±0.2 °C
+</td></tr>
+<tr>
+<td>0x1123
+</td>
+<td>4387
+</td>
+<td>1000М (α = 0.00428 °C<sup>−1</sup>)
+</td>
+<td>±0.14 °C
+</td></tr>
+<tr>
+<td>0x1130
+</td>
+<td>4400
+</td>
+<td>Ni 100 (α = 0.00617 °C<sup>−1</sup>)
+</td>
+<td>±0.5 °C
+</td></tr>
+<tr>
+<td>0x1131
+</td>
+<td>4401
+</td>
+<td>Ni 500 (α = 0.00617 °C<sup>−1</sup>)
+</td>
+<td>±0.13 °C
+</td></tr>
+<tr>
+<td>0x1132
+</td>
+<td>4402
+</td>
+<td>Ni 1000 (α = 0.00617 °C<sup>−1</sup>)
+</td>
+<td>±0.1 °C
+</td></tr>
+
+
+<tr>
+<td>0x1701
+</td>
+<td>5889
+</td>
+<td>NTC 10k (B = 3988 K)
+</td>
+<td rowspan="8">Ом · 100
+</td>
+<td rowspan="8">°C · 10, °C · 100
+</td>
+<td rowspan="8">±0.2 °C
+</td></tr>
+<tr>
+<td>0x1702
+</td>
+<td>5890
+</td>
+<td>NTC 10k (B = 3950 K)
+</td></tr>
+<tr>
+<td>0x1703
+</td>
+<td>5891
+</td>
+<td>NTC 100k (B = 3950 K)
+</td></tr>
+<tr>
+<td>0x1704
+</td>
+<td>5892
+</td>
+<td>NTC 10k (B = 3435 K)
+</td></tr>
+<tr>
+<td>0x1705
+</td>
+<td>5893
+</td>
+<td>NTC 10k (B = 3470 K)
+</td></tr>
+<tr>
+<td>0x1706
+</td>
+<td>5894
+</td>
+<td>NTC 5k (B = 3470 K)
+</td></tr>
+<tr>
+<td>0x1707
+</td>
+<td>5895
+</td>
+<td>NTC 1.8k (B = 3380 K)
+</td></tr>
+<tr>
+<td>0x1708
+</td>
+<td>5896
+</td>
+<td>NTC 50k (B = 3920 K), с версии прошивки 2.6.0
+</td></tr>
+
+<tr>
+<td colspan="2">
+</td>
+<td colspan="4">Примечание: без учёта сопротивления проводов и&nbsp;контактов
+</td></tr>
+<tr>
+<th colspan="6">Термометры сопротивления по&nbsp;трехпроводной схеме
+<p>Режим работы — измерение сопротивления по&nbsp;трехпроводной схеме, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 8</a>
+</p>
+</th></tr>
+<tr>
+<td>0x1200
+</td>
+<td>4608
+</td>
+<td>Pt 50 (α = 0.00385 °C<sup>−1</sup>)
+</td>
+<td rowspan="15">Ом · 100
+</td>
+<td rowspan="15">°C · 10, °C · 100
+</td>
+<td>±0.6 °C
+</td></tr>
+<tr>
+<td>0x1201
+</td>
+<td>4609
+</td>
+<td>Pt 100 (α = 0.00385 °C<sup>−1</sup>)
+</td>
+<td>±0.33 °C
+</td></tr>
+<tr>
+<td>0x1202
+</td>
+<td>4610
+</td>
+<td>Pt 500 (α = 0.00385 °C<sup>−1</sup>)
+</td>
+<td>±0.14 °C
+</td></tr>
+<tr>
+<td>0x1203
+</td>
+<td>4611
+</td>
+<td>Pt 1000 (α = 0.00385 °C<sup>−1</sup>)
+</td>
+<td>±0.13 °C
+</td></tr>
+<tr>
+<td>0x1210
+</td>
+<td>4624
+</td>
+<td>50П (α = 0.00391 °C<sup>−1</sup>)
+</td>
+<td>±0.6 °C
+</td></tr>
+<tr>
+<td>0x1211
+</td>
+<td>4625
+</td>
+<td>100П (α = 0.00391 °C<sup>−1</sup>)
+</td>
+<td>±0.33 °C
+</td></tr>
+<tr>
+<td>0x1212
+</td>
+<td>4626
+</td>
+<td>500П (α = 0.00391 °C<sup>−1</sup>)
+</td>
+<td>±0.14 °C
+</td></tr>
+<tr>
+<td>0x1213
+</td>
+<td>4627
+</td>
+<td>1000П (α = 0.00391 °C<sup>−1</sup>)
+</td>
+<td>±0.13 °C
+</td></tr>
+<tr>
+<td>0x1220
+</td>
+<td>4640
+</td>
+<td>50М (α = 0.00428 °C<sup>−1</sup>)
+</td>
+<td>±0.6 °C
+</td></tr>
+<tr>
+<td>0x1221
+</td>
+<td>4641
+</td>
+<td>100М (α = 0.00428 °C<sup>−1</sup>)
+</td>
+<td>±0.31 °C
+</td></tr>
+<tr>
+<td>0x1222
+</td>
+<td>4642
+</td>
+<td>500М (α = 0.00428 °C<sup>−1</sup>)
+</td>
+<td>±0.13 °C
+</td></tr>
+<tr>
+<td>0x1223
+</td>
+<td>4643
+</td>
+<td>1000М (α = 0.00428 °C<sup>−1</sup>)
+</td>
+<td>±0.12 °C
+</td></tr>
+<tr>
+<td>0x1230
+</td>
+<td>4656
+</td>
+<td>Ni 100 (α = 0.00617 °C<sup>−1</sup>)
+</td>
+<td>±0.23 °C
+</td></tr>
+<tr>
+<td>0x1231
+</td>
+<td>4657
+</td>
+<td>Ni 500 (α = 0.00617 °C<sup>−1</sup>)
+</td>
+<td>±0.09 °C
+</td></tr>
+<tr>
+<td>0x1232
+</td>
+<td>4658
+</td>
+<td>Ni 1000 (α = 0.00617 °C<sup>−1</sup>)
+</td>
+<td>±0.08 °C
+</td></tr>
+<tr>
+<td colspan="2">
+</td>
+<td colspan="4">Примечание: Rw — сопротивление каждого провода. Должны использоваться одинаковые провода одинаковой длины для подключения к&nbsp;клеммам P и&nbsp;N.
+</td></tr>
+<tr>
+<th colspan="6">Датчики с&nbsp;токовым выходом
+<p>Режим работы — измерение тока от&nbsp;0&nbsp;до&nbsp;20&nbsp;мА, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 2</a>
+</p>
+</th></tr>
+<tr>
+<td>0x1300
+</td>
+<td>4864
+</td>
+<td>от 0&nbsp;до&nbsp;5&nbsp;мА
+</td>
+<td>нА
+</td>
+<td>0&nbsp;мА&nbsp;= нижняя граница (регистры 0x<b>X</b>408 / 0x<b>X</b>409)
+<p>5&nbsp;мА&nbsp;= верхняя граница (регистры 0x<b>X</b>40A / 0x<b>X</b>40B)
+</p>
+</td>
+<td>±(0.2&nbsp;% + 1 мкА)
+</td></tr>
+<tr>
+<td>0x1301
+</td>
+<td>4865
+</td>
+<td>от 0&nbsp;до&nbsp;20&nbsp;мА
+</td>
+<td>нА
+</td>
+<td>0&nbsp;мА&nbsp;= нижняя граница (регистры 0x<b>X</b>408 / 0x<b>X</b>409)
+<p>20&nbsp;мА&nbsp;= верхняя граница (регистры 0x<b>X</b>40A / 0x<b>X</b>40B)
+</p>
+</td>
+<td>±(0.2&nbsp;% + 1 мкА)
+</td></tr>
+<tr>
+<td>0x1302
+</td>
+<td>4866
+</td>
+<td>от 4&nbsp;до&nbsp;20&nbsp;мА
+</td>
+<td>нА
+</td>
+<td>4&nbsp;мА&nbsp;= нижняя граница (регистры 0x<b>X</b>408 / 0x<b>X</b>409)
+<p>20&nbsp;мА&nbsp;= верхняя граница (регистры 0x<b>X</b>40A / 0x<b>X</b>40B)
+</p>
+</td>
+<td>±(0.2&nbsp;% + 1 мкА)
+</td></tr>
+<tr>
+<th colspan="6">Датчики с&nbsp;выходом «напряжение» в&nbsp;однополярном режиме
+<p>Режим работы — измерение напряжения в&nbsp;однополярном режиме, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 1</a>
+</p>
+</th></tr>
+<tr>
+<td>0x1400
+</td>
+<td>5120
+</td>
+<td>от 0&nbsp;до&nbsp;1 В
+</td>
+<td>мкВ
+</td>
+<td>0 В&nbsp;= нижняя граница (регистры 0x<b>X</b>408 / 0x<b>X</b>409)
+<p>1 В&nbsp;= верхняя граница (регистры 0x<b>X</b>40A / 0x<b>X</b>40B)
+</p>
+</td>
+<td>±(0.2&nbsp;% + 50 мкВ)
+</td></tr>
+<tr>
+<td>0x1401
+</td>
+<td>5121
+</td>
+<td>от 0&nbsp;до&nbsp;10 В
+</td>
+<td>мкВ
+</td>
+<td>0 В&nbsp;= нижняя граница (регистры 0x<b>X</b>408 / 0x<b>X</b>409)
+<p>10 В&nbsp;= верхняя граница (регистры 0x<b>X</b>40A / 0x<b>X</b>40B)
+</p>
+</td>
+<td>±(0.5&nbsp;% + 50 мкВ)
+</td></tr>
+<tr>
+<td colspan="2">
+</td>
+<td colspan="4">Примечание: входы WB-MAI6 в&nbsp;этом режиме имеют низкий импеданс (подтяжка вверх током 50 мкА), чтобы обнаруживать входы, к&nbsp;которым ничего не&nbsp;подключено. Обратитесь к&nbsp;производителю для отключения.
+</td></tr>
+<tr>
+<th colspan="6">Датчики с&nbsp;выходом «напряжение» в&nbsp;дифференциальном режиме
+<p>Режим работы — измерение напряжения в&nbsp;дифференциальном режиме от&nbsp;−2&nbsp;до&nbsp;2 В, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис. 6</a>
+</p>
+</th></tr>
+<tr>
+<td>0x1500
+</td>
+<td>5376
+</td>
+<td>от −50&nbsp;до&nbsp;50&nbsp;мВ
+</td>
+<td>мкВ
+</td>
+<td>−50&nbsp;мВ&nbsp;= нижняя граница (регистры 0x<b>X</b>408 / 0x<b>X</b>409)
+<p>50&nbsp;мВ&nbsp;= верхняя граница (регистры 0x<b>X</b>40A / 0x<b>X</b>40B)
+</p>
+</td>
+<td>±(0.2&nbsp;% + 30 мкВ)
+</td></tr>
+<tr>
+<th colspan="6">Датчики контактные (сухие)
+<p>Режим работы — измерение сопротивления по&nbsp;двухпроводной схеме,&nbsp;<a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис.&nbsp;4</a>
+</p>
+</th></tr>
+<tr>
+<td>0x1600
+</td>
+<td>5632
+</td>
+<td>Сухой контакт
+</td>
+<td>Ом · 100
+</td>
+<td>0 — датчик разомкнут или отсутствует
+<p>1 — датчик замкнут (сопротивление менее 100 Ом)
+</p>
+</td>
+<td>
+</td></tr>
+<tr>
+<th colspan="6">Датчики тока на эффекте Холла
+<p>Режим работы — измерение напряжения в однополярном режиме,&nbsp;<a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Analog_Inputs#pics" title="WB-MAI6 Modbus Analog Inputs"> рис.&nbsp;5</a>
+</p>
+</th></tr>
+<tr>
+<td>0x1800
+</td>
+<td>6144
+</td>
+<td>С выходом (2.500±0.625) В
+</td>
+<td>мкВ
+</td>
+<td>2.500 В соответствует 0 А, или сдвигу (регистры 0xX408 / 0xX409)
+<p>(2.500+0.625) В — соответствует номинальному значению (регистры 0xX40A / 0xX40B)
+</p><p>формат регистров 0xX408-0xX40B — А · 10
+</p>
+</td>
+<td>±(0.2&nbsp;% + 0.3&nbsp;% шкалы тока)
+<p>(без учёта погрешности датчика)
+</p>
+</td></tr>
+</tbody></table>
+<h2><span id=".D0.9A.D0.B0.D1.80.D1.82.D0.B0_.D1.80.D0.B5.D0.B3.D0.B8.D1.81.D1.82.D1.80.D0.BE.D0.B2"></span><span class="mw-headline" id="Карта_регистров">Карта регистров</span></h2>
+<p>В таблице 5 символ <b>X</b> в&nbsp;адресе регистра — это номер входа от&nbsp;1&nbsp;до&nbsp;6 (от&nbsp;0x1&nbsp;до&nbsp;0x6).
+</p><p>Так как каждый вход поддерживает и&nbsp;дифференциальный, и&nbsp;однополярный режим работы, то&nbsp;тип датчика задается для входов INxP и&nbsp;INxN в&nbsp;отдельности в&nbsp;соответствующих регистрах 0x<b>X</b>400 и&nbsp;0x<b>X</b>401, где <b>X</b> — номер входа от&nbsp;1&nbsp;до&nbsp;6 в&nbsp;шестнадцатеричной системе счисления.
+</p><p>Не рекомендуется вручную устанавливать коэффициент усиления. Для однополярного режима работы канала доступны только коэффициенты усиления 1, 2 и&nbsp;4.
+</p><p>Если для входа INxP установлен дифференциальный режим, значения регистров конфигурации входов INxN игнорируются. Для входов INxN может быть установлен только однополярный режим.
+</p>
+<div id="table-5"></div>
+<table class="wikitable">
+<caption>Таблица 5. Modbus-регистры настройки измерительных каналов и получения измеренных значений
+</caption>
+<tbody><tr>
+<th>Адрес HEX
+</th>
+<th>Адрес DEC
+</th>
+<th>Тип
+</th>
+<th>Чтение/запись
+</th>
+<th>Значение по&nbsp;умолчанию
+</th>
+<th>Формат
+</th>
+<th>Назначение
+</th>
+<th>Примечание
+</th></tr>
+<tr>
+<th colspan="8">Настройка измерительных каналов
+</th></tr>
+<tr>
+<td>0x<b>X</b>400
+</td>
+<td>4096·<b>X</b> + 1024
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#table-3">Таблица 3</a>, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#table-4">таблица 4</a>, 0 — выкл.
+</td>
+<td>Тип датчика, подключенного к&nbsp;каналу INxP либо к&nbsp;INx в&nbsp;дифференциальном режиме (см.&nbsp;таблицы 3 и&nbsp;4)
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>401
+</td>
+<td>4096·<b>X</b> + 1025
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td><a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#table-3">Таблица 3</a>, <a href="https://wiki.wirenboard.com/wiki/WB-MAI6_Modbus_Registers#table-4">таблица 4</a>, 0 — выкл.
+</td>
+<td>Тип датчика, подключенного к&nbsp;каналу INxN (см.&nbsp;таблицы 3 и&nbsp;4)
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>402
+</td>
+<td>4096·<b>X</b> + 1026
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>20
+</td>
+<td>20, 45, 90, 175, 330, 600, 1000
+</td>
+<td>Data rate для каналов INxP либо INx в&nbsp;дифференциальном режиме, 1/с. Например, число 20 соответствует времени сэмплирования 1/20 = 0.05 с.
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>403
+</td>
+<td>4096·<b>X</b> + 1027
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>20
+</td>
+<td>20, 45, 90, 175, 330, 600, 1000
+</td>
+<td>Data rate для каналов INxN, 1/с.
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>404
+</td>
+<td>4096·<b>X</b> + 1028
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>1
+</td>
+<td>1…50
+</td>
+<td>Число непрерывных измерений для каналов INxP либо INx в&nbsp;дифференциальном режиме
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>405
+</td>
+<td>4096·<b>X</b> + 1029
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>1
+</td>
+<td>1…50
+</td>
+<td>Число непрерывных измерений для каналов INxN
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>406
+</td>
+<td>4096·<b>X</b> + 1030
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>0…65000
+</td>
+<td>Характерное время lowpass-фильтра для каналов INxP либо INx в&nbsp;дифференциальном режиме, мс
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>407
+</td>
+<td>4096·<b>X</b> + 1031
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>0…65000
+</td>
+<td>Характерное время lowpass-фильтра для каналов INxN, мс
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>408
+</td>
+<td>4096·<b>X</b> + 1032
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>16-bit signed int
+</td>
+<td>Нижняя граница диапазона измерения активного датчика для каналов INxP либо INx в&nbsp;дифференциальном режиме
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>409
+</td>
+<td>4096·<b>X</b> + 1033
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>16-bit signed int
+</td>
+<td>Нижняя граница диапазона измерения активного датчика для каналов INxN
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>40A
+</td>
+<td>4096·<b>X</b> + 1034
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>10000
+</td>
+<td>16-bit signed int
+</td>
+<td>Верхняя граница диапазона измерения активного датчика для каналов INxP либо INx в&nbsp;дифференциальном режиме
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>40B
+</td>
+<td>4096·<b>X</b> + 1035
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>10000
+</td>
+<td>16-bit signed int
+</td>
+<td>Верхняя граница диапазона измерения активного датчика для каналов INxN
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>40C
+</td>
+<td>4096·<b>X</b> + 1036
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>0 (авто), 1, 2, 4, 8, 16, 32, 64, 128
+</td>
+<td>Коэффициент усиления для каналов INxP либо INx в&nbsp;дифференциальном режиме
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>40D
+</td>
+<td>4096·<b>X</b> + 1037
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>0 (авто), 1, 2, 4, 8, 16, 32, 64, 128
+</td>
+<td>Коэффициент усиления для каналов INxN
+</td>
+<td>
+</td></tr>
+
+<tr>
+<td>0x<b>X</b>40E
+</td>
+<td>4096·<b>X</b> + 1038
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>1…10000
+</td>
+<td>Сопротивление резистора верхнего плеча (R1) пользовательского внешнего делителя напряжения для каналов INxP, кОм·10
+</td>
+<td>С версии прошивки 2.1.0
+</td></tr>
+<tr>
+<td>0x<b>X</b>40F
+</td>
+<td>4096·<b>X</b> + 1039
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>1…10000
+</td>
+<td>Сопротивление резистора верхнего плеча (R1) пользовательского внешнего делителя напряжения для каналов INxN, кОм·10
+</td>
+<td>С версии прошивки 2.1.0
+</td></tr>
+<tr>
+<td>0x<b>X</b>410
+</td>
+<td>4096·<b>X</b> + 1040
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>1…10000
+</td>
+<td>Сопротивление резистора нижнего плеча (R2) пользовательского внешнего делителя напряжения для каналов INxP, кОм·10
+</td>
+<td>С версии прошивки 2.1.0
+</td></tr>
+<tr>
+<td>0x<b>X</b>411
+</td>
+<td>4096·<b>X</b> + 1041
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>0
+</td>
+<td>1…10000
+</td>
+<td>Сопротивление резистора нижнего плеча (R2) пользовательского внешнего делителя напряжения для каналов INxN, кОм·10
+</td>
+<td>С версии прошивки 2.1.0
+</td></tr>
+<tr>
+<td>0x<b>X</b>412
+</td>
+<td>4096·<b>X</b> + 1042
+</td>
+<td>holding
+</td>
+<td>RW
+</td>
+<td>300 (IN1…IN4), 200 (IN5), 100 (IN6)
+</td>
+<td>16-bit signed int, −1000…1000
+</td>
+<td>Поправка температуры холодного спая термопары K для канала INx, °C·100. Температура холодного спая = температура внутри устройства (0x0601) − поправка. Значения вне диапазона не принимаются
+</td>
+<td>С версии прошивки 2.6.0
+</td></tr>
+
+
+<tr>
+<th colspan="8">Измеренные значения
+</th></tr>
+<tr>
+<td>0x<b>X</b>500
+</td>
+<td>4096·<b>X</b> + 1280
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>32-bit signed int
+</td>
+<td>Измеренное значение для канала INxP либо дифференциального канала INx
+</td>
+<td>Error: 0x7FFFFFFF
+</td></tr>
+<tr>
+<td>0x<b>X</b>502
+</td>
+<td>4096·<b>X</b> + 1282
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>32-bit signed int
+</td>
+<td>Измеренное значение для канала INxN
+</td>
+<td>Error: 0x7FFFFFFF
+</td></tr>
+<tr>
+<td>0x<b>X</b>504
+</td>
+<td>4096·<b>X</b> + 1284
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>16-bit signed int
+</td>
+<td>Пересчитанное в&nbsp;физическую величину значение для канала INxP либо дифференциального канала INx
+</td>
+<td>Error: 0x7FFF
+</td></tr>
+<tr>
+<td>0x<b>X</b>505
+</td>
+<td>4096·<b>X</b> + 1285
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>16-bit signed int
+</td>
+<td>Пересчитанное в&nbsp;физическую величину значение для канала INxN
+</td>
+<td>Error: 0x7FFF
+</td></tr>
+<tr>
+<td>0x<b>X</b>506
+</td>
+<td>4096·<b>X</b> + 1286
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>1
+</td>
+<td>16-bit signed int
+</td>
+<td>Текущий коэффициент усиления для канала INxP либо дифференциального канала INx
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x<b>X</b>507
+</td>
+<td>4096·<b>X</b> + 1287
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>1
+</td>
+<td>16-bit signed int
+</td>
+<td>Текущий коэффициент усиления для канала INxN
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x0600
+</td>
+<td>1536
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>16-bit signed int
+</td>
+<td>Напряжение на&nbsp;клеммах +5V, мВ
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x0601
+</td>
+<td>1537
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>16-bit signed int
+</td>
+<td>Температура внутри устройства, °C·100
+</td>
+<td>
+</td></tr>
+<tr>
+<td>0x0700 - 0x070B
+</td>
+<td>1792 - 1803
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>32-bit signed int x 6
+</td>
+<td>Измеренные значения для каналов IN1P…IN6P
+</td>
+<td>Error: 0x7FFFFFFF; с версии прошивки 2.4.0
+</td></tr>
+<tr>
+<td>0x070C - 0x0717
+</td>
+<td>1804 - 1815
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>32-bit signed int x 6
+</td>
+<td>Измеренные значения для каналов IN1N…IN6N
+</td>
+<td>Error: 0x7FFFFFFF; с версии прошивки 2.4.0
+</td></tr>
+<tr>
+<td>0x0718 - 0x0723
+</td>
+<td>1816 - 1827
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>32-bit signed int x 6
+</td>
+<td>Пересчитанные в физическую величину значения (для температуры °C·100) для каналов IN1P…IN6P либо дифференциальных каналов IN1…IN6
+</td>
+<td>Error: 0x7FFFFFFF; с версии прошивки 2.4.0
+</td></tr>
+<tr>
+<td>0x0724 - 0x072F
+</td>
+<td>1828 - 1839
+</td>
+<td>input
+</td>
+<td>R
+</td>
+<td>0
+</td>
+<td>32-bit signed int x 6
+</td>
+<td>Пересчитанные в физическую величину значения для каналов IN1N…IN6N
+</td>
+<td>Error: 0x7FFFFFFF; с версии прошивки 2.4.0
+</td></tr>
+<tr>
+<th colspan="8">Служебные регистры
+</th></tr>
+<tr>
+<td>0x7400-0x740D,
+<p>0x7500-0x7507,
+0x8400-0x840D,
+0x8500-0x8507
+</p>
+</td>
+<td colspan="6">Регистры настроек и&nbsp;данных двух служебных калибровочных каналов. Описание см.&nbsp;в&nbsp;таблице выше.
+</td>
+<td>
+</td></tr>
+
+<tr>
+<td>0x0629</td>
+<td>1577</td>
+<td>input</td>
+<td>R</td>
+<td>0</td>
+<td>16-bit signed int</td>
+<td>Опорное напряжение AVCC, мВ</td>
+<td>
+</td></tr>
+<tr>
+<td>0x062A</td>
+<td>1578</td>
+<td>input</td>
+<td>R</td>
+<td>0</td>
+<td>16-bit signed int</td>
+<td>Сдвиг сопротивления 2-W, каналы 1-3, P, мОм</td>
+<td>
+</td></tr>
+<tr>
+<td>0x062B</td>
+<td>1579</td>
+<td>input</td>
+<td>R</td>
+<td>0</td>
+<td>16-bit signed int</td>
+<td>Сдвиг сопротивления 2-W, каналы 1-3, N, мОм</td>
+<td>
+</td></tr>
+<tr>
+<td>0x062C</td>
+<td>1580</td>
+<td>input</td>
+<td>R</td>
+<td>0</td>
+<td>16-bit signed int</td>
+<td>Сдвиг сопротивления 2-W, каналы 4-6, P, мОм</td>
+<td>
+</td></tr>
+<tr>
+<td>0x062D</td>
+<td>1581</td>
+<td>input</td>
+<td>R</td>
+<td>0</td>
+<td>16-bit signed int</td>
+<td>Сдвиг сопротивления 2-W, каналы 4-6, N, мОм</td>
+<td>
+</td></tr>
+<tr>
+<td>0x062E</td>
+<td>1582</td>
+<td>input</td>
+<td>R</td>
+<td>0</td>
+<td>16-bit unsigned int</td>
+<td>Счётчик циклов опроса входов</td>
+<td>
+</td></tr>
+<tr>
+<td>0x0610</td>
+<td>1552</td>
+<td>input</td>
+<td>R</td>
+<td>0</td>
+<td>16-bit unsigned int</td>
+<td>Длительность цикла опроса входов, мс</td>
+<td>
+</td></tr>
+<tr>
+<td>0x0800 - 0x80B</td>
+<td>2048 - 2059</td>
+<td>holding</td>
+<td>RW</td>
+<td></td>
+<td>16-bit signed int</td>
+<td>Калибровочные коэффициенты делителей для измерения большого напряжения, устанавливаются на заводе</td>
+<td>
+</td></tr>
+</tbody></table>
+<h2><span id=".D0.9E.D0.B1.D1.89.D0.B8.D0.B5_.D1.80.D0.B5.D0.B3.D0.B8.D1.81.D1.82.D1.80.D1.8B"></span><span class="mw-headline" id="Общие_регистры">Общие регистры</span></h2>
+<table border="1" class="wikitable hidden">
+<caption>Условные обозначения
+</caption>
+<tbody><tr>
+<td>RO / RW</td>
+<td>Только чтение / Чтение и запись
+</td></tr>
+<tr>
+<td>Выделено <b>жирным</b></td>
+<td>Значение регистра по умолчанию
+</td></tr>
+<tr>
+<td>xN</td>
+<td>Множитель, на который надо умножить число из регистра, чтобы получить значение в единицах измерения.
+<p>Не указан  — считать равным 1
+</p>
+</td></tr>
+<tr>
+<td>⚡</td>
+<td>Регистр поддерживает отправку данных с помощью событий <a href="https://wiki.wirenboard.com/wiki/Fast_Modbus" title="Fast Modbus">Быстрого Modbus</a>.
+</td></tr>
+<tr>
+<td>FW</td>
+<td>Версия прошивки устройства, с которой появился регистр. Пусто — регистр был всегда.
+</td></tr>
+<tr>
+<td>Error:</td>
+<td>Значение при ошибке
+</td></tr>
+<tr>
+<td class="cell-gray">Серый цвет ячейки</td>
+<td>Служебный регистр: назначение, формат и содержимое могут измениться в новых версиях прошивки
+</td></tr>
+</tbody></table>
+<table border="1" class="wikitable">
+<caption>Параметры подключения, версия прошивки и другие служебные регистры
+</caption>
+<tbody><tr>
+<th colspan="2">Адрес</th>
+<th colspan="3">Параметры регистра</th>
+<th rowspan="2">Описание</th>
+<th rowspan="2" style="width: 14.3em;">Значения</th>
+<th rowspan="2">Примечание
+</th></tr>
+<tr>
+<th>Dec</th>
+<th style="width: 4.3em;">Hex</th>
+<th style="width: 4.64em;">Тип</th>
+<th style="width: 3.7em;">Доступ</th>
+<th style="width: 4.1em;">Формат
+</th></tr>
+
+
+
+<tr>
+<th colspan="8"><b>Параметры подключения</b>
+</th></tr>
+<tr>
+<td>110
+</td>
+<td>0x006E
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Скорость порта RS-485.<br><a href="https://wiki.wirenboard.com/wiki/UART_Communication_Settings" title="UART Communication Settings"> Настройка параметров подключения по RS-485</a>
+</td>
+<td>x100, Боды<br>12 — 1200 бит/с,<br>24 — 2400 бит/с,<br>48 — 4800 бит/с, <br><b>96 — 9600 бит/с</b>, <br>192 — 19 200 бит/с, <br>384 — 38 400 бит/с, <br>576 — 57 600 бит/с,<br>1152 — 115 200 бит/с
+</td>
+<td>
+</td></tr>
+<tr>
+<td>111
+</td>
+<td>0x006F
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Настройка бита чётности порта RS-485
+</td>
+<td><b>0 — нет бита чётности (none)</b>,<br>1 — нечётный (odd),<br>2 — чётный (even)
+</td>
+<td>
+</td></tr>
+<tr>
+<td>112
+</td>
+<td>0x0070
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Количество стоп-битов порта RS-485<br>Подробнее: <a href="https://wiki.wirenboard.com/wiki/Modbus#%D0%98%D0%B3%D0%BD%D0%BE%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5_%D1%81%D1%82%D0%BE%D0%BF%D0%B1%D0%B8%D1%82%D0%BE%D0%B2" title="Modbus">игнорирование стопбитов</a>
+</td>
+<td>1, <b>2</b>
+</td>
+<td>
+</td></tr>
+<tr>
+<td>128
+</td>
+<td>0x0080
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Modbus-адрес устройства (<a href="https://wiki.wirenboard.com/wiki/Wiren_Board_Device_Modbus_Address" title="Wiren Board Device Modbus Address">подробнее</a>)
+</td>
+<td>
+</td></tr>
+
+
+<tr>
+<td class="text-right">200-219
+</td>
+<td>0x00C8 - 0x00DB
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>string
+</td>
+<td>Модель устройства
+</td>
+<td>
+</td>
+<td>
+</td></tr>
+<tr>
+<td>220-244
+</td>
+<td>0x00DC - 0x00F4
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>string
+</td>
+<td>Хэш коммита и название ветки откуда собрана прошивка (2 символа в регистре)
+</td>
+<td>
+</td>
+<td>
+</td></tr>
+<tr>
+<td>250-265
+</td>
+<td>0x00FA - 0x0109
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>string
+</td>
+<td>Версия прошивки
+</td>
+<td>
+</td>
+<td>
+</td></tr>
+<tr>
+<td>266-269
+</td>
+<td>0x010A - 0x010D
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u64
+</td>
+<td>Расширение серийного номера
+</td>
+<td>
+</td>
+<td>
+</td></tr>
+<tr>
+<td>270-271
+</td>
+<td>0x010E - 0x010F
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u32
+</td>
+<td>Серийный номер
+</td>
+<td>
+</td>
+<td>
+</td></tr>
+<tr>
+<td>290-301
+</td>
+<td>0x0122 - 0x012D
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>string
+</td>
+<td>Сигнатура прошивки
+</td>
+<td>
+</td>
+<td>
+</td></tr>
+<tr>
+<td class="text-right">320
+</td>
+<td>0x0140
+</td>
+<td rowspan="4">Input
+</td>
+<td rowspan="4">RO
+</td>
+<td rowspan="3">u16
+</td>
+<td rowspan="4">Версия прошивки в числовом формате (<a href="https://wiki.wirenboard.com/wiki/Modbus-hardware-version" title="Modbus-hardware-version">подробнее</a>)
+</td>
+<td>MAJOR
+</td>
+<td>
+</td></tr>
+<tr>
+<td class="text-right">321
+</td>
+<td>0x0141
+</td>
+<td>MINOR
+</td>
+<td>
+</td></tr>
+<tr>
+<td class="text-right">322
+</td>
+<td>0x0142
+</td>
+<td>PATCH
+</td>
+<td>
+</td></tr>
+<tr>
+<td class="text-right">323
+</td>
+<td>0x0143
+</td>
+<td>s16
+</td>
+<td>SUFFIX
+</td>
+<td>
+</td></tr>
+<tr>
+<td class="text-right">324-325
+</td>
+<td>0x0144 - 0x0145
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u32
+</td>
+<td>Версия прошивки в числовом формате
+</td>
+<td>
+</td>
+<td>
+</td></tr>
+<tr>
+<td class="text-right">326-327
+</td>
+<td>0x0146 - 0x0147
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u32
+</td>
+<td>Версия прошивки в Big Endian формате
+</td>
+<td>
+</td>
+<td>
+</td></tr>
+<tr>
+<th colspan="8"><b>Прочее</b>
+</th></tr>
+<tr>
+<td>104-105
+</td>
+<td>0x0068 - 0x0069
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u32
+</td>
+<td>Время работы с момента загрузки
+</td>
+<td>секунды
+</td>
+<td>
+</td></tr>
+<tr>
+<td>120
+</td>
+<td>0x0078
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Перезагрузка устройства без сохранения состояния
+</td>
+<td>любое, отличное от 0 перезагружает устройство
+</td></tr>
+<tr>
+<td>129
+</td>
+<td>0x0081
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Перевод в режим обновления прошивки на 2 минуты
+</td>
+<td>любое, отличное от 0 переводит устройство в режим обновления прошивки
+</td>
+<td>
+</td></tr>
+<tr>
+<td>330-337
+</td>
+<td>0x014A - 0x0151
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>string
+</td>
+<td>Версия загрузчика
+</td>
+<td>
+</td></tr>
+<tr>
+<td>130
+</td>
+<td>0x0082
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Отключение светодиода Status
+</td>
+<td><b>0 — включен</b> <br>1 — отключен
+</td>
+<td>
+</td></tr>
+<tr>
+<td>131
+</td>
+<td>0x0083
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Перевод в режим обновления прошивки на текущих настройках соединения.<br>Для проверки того, поддерживает ли текущая прошивка и загрузчик обновление прошивки на текущих настройках соединения, нужно прочитать значение данного регистра: если чтение успешно и значение равно <code>0</code>, то функция поддерживается.
+</td>
+<td>запись <b>1</b> переводит устройство в режим обновления прошивки
+</td>
+<td>С версии прошивки 2.0.7
+</td></tr>
+<tr>
+<td>113
+</td>
+<td>0x0071
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Время перед отправкой ответа на Modbus-запрос
+</td>
+<td><b>0</b>…254 мс
+</td>
+<td>
+</td></tr>
+<tr>
+<td>114
+</td>
+<td>0x0072
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Режим сплошного чтения регистров с зазором
+</td>
+<td><b>0 — отключен</b>,<br>1 — включен,<br>2 — включение сохраняется после перезагрузки
+</td>
+<td>
+</td></tr>
+<tr>
+<td>121
+</td>
+<td>0x0079
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Текущее напряжение внутренней шины 5 В
+</td>
+<td>мВ
+</td>
+<td>
+</td></tr>
+<tr>
+<td>122
+</td>
+<td>0x007A
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Минимальное напряжение внутренней шины 5 В с момента загрузки, без усреднения
+</td>
+<td>мВ
+</td>
+<td>
+</td></tr>
+<tr>
+<td>125
+</td>
+<td>0x007D
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Текущее напряжение внутренней шины 5 В, без усреднения
+</td>
+<td>мВ
+</td>
+<td>
+</td></tr>
+
+
+<tr>
+<td>119
+</td>
+<td>0x0077
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Минимальное напряжение питания микроконтроллера с момента загрузки до усреднения
+</td>
+<td>мВ
+</td>
+<td>
+</td></tr>
+<tr>
+<td>123
+</td>
+<td>0x007B
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Напряжение питания микроконтроллера
+</td>
+<td>мВ
+</td>
+<td>
+</td></tr>
+<tr>
+<td>124
+</td>
+<td>0x007C
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>s16
+</td>
+<td>Внутренняя температура микроконтроллера
+</td>
+<td>x0.1, °C
+</td>
+<td>
+</td></tr>
+<tr>
+<td>304-319
+</td>
+<td>0x0130-0x013F
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>string
+</td>
+<td>Номер партии устройства.
+<p>Регистр доступен только для устройств, произведенных с 21.01.26.
+</p>
+</td>
+<td>
+</td>
+<td>С версии прошивки 2.3.0
+</td></tr>
+<tr>
+<td>65402
+</td>
+<td>0xFF7A
+</td>
+<td>Holding
+</td>
+<td>RW
+</td>
+<td>u16
+</td>
+<td>Сброс настроек устройства к значениям по умолчанию. Настройки связи не сбрасываются.<br>После сброса настроек устройство будет перезагружено.
+</td>
+<td>запись <b>1</b> приводит к сбросу настроек
+</td>
+<td>С версии прошивки 2.1.4
+</td></tr>
+
+<tr style="background-color:lightgray">
+<td>64256-64383
+</td>
+<td>0xFB00-0xFB7F
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>FlashFS: свободное место на странице
+</td>
+<td>байт
+</td>
+<td rowspan="4">С версии прошивки 2.2.0
+</td></tr>
+
+<tr style="background-color:lightgray">
+<td>64384-64511
+</td>
+<td>0xFB80-0xFBFF
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>FlashFS: сумма размеров актуальных файлов на странице
+</td>
+<td>байт
+</td></tr>
+
+<tr style="background-color:lightgray">
+<td>64512-64639
+</td>
+<td>0xFC00-0xFC7F
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>FlashFS: фрагментация страницы
+</td>
+<td>0…100&nbsp;%<br>0 — все данные актуальны,<br>100 — нет актуальных данных
+</td></tr>
+
+<tr style="background-color:lightgray">
+<td>64640-64767
+</td>
+<td>0xFC80-0xFCFF
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>FlashFS: счетчик количества стираний страницы
+</td>
+<td>
+</td></tr>
+
+<tr style="background-color:lightgray">
+<td>65504
+</td>
+<td>0xFFE0
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Максимальный размер используемого стека
+</td>
+<td>байт<br>0 — стек поврежден
+</td>
+<td rowspan="4">С версии прошивки 2.2.0
+</td></tr>
+
+<tr style="background-color:lightgray">
+<td>65505
+</td>
+<td>0xFFE1
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Объём свободной оперативной памяти
+</td>
+<td>байт
+</td></tr>
+
+<tr style="background-color:lightgray">
+<td>65506
+</td>
+<td>0xFFE2
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Объем используемой оперативной памяти
+</td>
+<td>байт
+</td></tr>
+
+<tr style="background-color:lightgray">
+<td>65507
+</td>
+<td>0xFFE3
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Размер стека
+</td>
+<td>байт
+</td></tr>
+<tr style="background-color:lightgray">
+<td>65508
+</td>
+<td>0xFFE4
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Причина последней перезагрузки МК
+</td>
+<td>1 — LPWR,<br>2 — WWDG,<br>3 — IWDG,<br>4 — SFT,<br>5 — POR,<br>6 — PIN,<br>7 — OBL,<br>8 — V18PWR
+</td>
+<td>С версии прошивки 2.2.0
+</td></tr>
+<tr style="background-color:lightgray">
+<td>65509
+</td>
+<td>0xFFE5
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u32
+</td>
+<td>Счётчик обновлений прошивки
+</td>
+<td>
+</td>
+<td>С версии прошивки 2.2.0
+</td></tr>
+<tr style="background-color:lightgray">
+<td>65511
+</td>
+<td>0xFFE7
+</td>
+<td>Input
+</td>
+<td>RO
+</td>
+<td>u16
+</td>
+<td>Объём памяти МК
+</td>
+<td>старший байт — код объёма флеш, объём в КБ = 16 × 2<sup>код</sup>;<br>младший байт — объём ОЗУ в КБ.<br>Пример: 0x0208 (520) — 64 КБ флеш, 8 КБ ОЗУ
+</td>
+<td>С версии прошивки 2.5.0
+</td></tr></tbody></table>
+<!-- 
+NewPP limit report
+Cached time: 20261124020005
+Cache expiry: 86400
+Reduced expiry: false
+Complications: [show‐toc]
+CPU time usage: 0.110 seconds
+Real time usage: 0.143 seconds
+Preprocessor visited node count: 380/1000000
+Post‐expand include size: 14416/2097152 bytes
+Template argument size: 273/2097152 bytes
+Highest expansion depth: 5/100
+Expensive parser function count: 0/100
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 0/5000000 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   78.553      1 -total
+ 17.26%   13.558      1 Wbincludes:Registers_Vin
+  8.42%    6.613      1 Wbincludes:Registers_Connection_Settings
+  8.29%    6.512      1 Wbincludes:Registers_Service_Main
+  7.70%    6.050      1 Wbincludes:Registers_FW_Version_For_Device_With_Fast_Modbus
+  5.48%    4.303      1 Wbincludes:Header_Registers_Universal
+  4.85%    3.809      1 Wbincludes:Status_LED
+  4.74%    3.725      1 Wbincludes:Registers_Flashfs_Debug
+  4.59%    3.607      1 Wbincludes:Register_bootloader_start
+  4.57%    3.589      1 Wbincludes:Registers_MCU_Check_Stack
+-->
+
+<!-- Saved in parser cache with key wirenru_mw822-mw_:pcache:idhash:20028-0!canonical and timestamp 20261124020005 and revision id 116022. Rendering was triggered because: api-parse
+ -->
+</div>
+<div class="printfooter" data-nosnippet="">Источник — <a dir="ltr" href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;oldid=116022">https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;oldid=116022</a></div></div>
+					<div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div>
+				</div>
+			</main>
+			
+		</div>
+		<div class="mw-footer-container">
+			
+<footer id="footer" class="mw-footer">
+	<ul id="footer-info">
+	<li id="footer-info-lastmod"> Страница в последний раз была отредактирована 15 ноября 2026 года в 18:49.</li>
+</ul>
+
+	<ul id="footer-places">
+	<li id="footer-places-privacy"><a href="https://wiki.wirenboard.com/wiki/%D0%91%D0%B5%D1%81%D0%BA%D0%BE%D0%BD%D1%82%D0%B0%D0%BA%D1%82%D0%BD%D1%8B%D0%B5_%D1%83%D1%81%D1%82%D1%80%D0%BE%D0%B9%D1%81%D1%82%D0%B2%D0%B0:%D0%9F%D0%BE%D0%BB%D0%B8%D1%82%D0%B8%D0%BA%D0%B0_%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B4%D0%B5%D0%BD%D1%86%D0%B8%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8">Политика конфиденциальности</a></li>
+	<li id="footer-places-about"><a href="https://wiki.wirenboard.com/wiki/%D0%91%D0%B5%D1%81%D0%BA%D0%BE%D0%BD%D1%82%D0%B0%D0%BA%D1%82%D0%BD%D1%8B%D0%B5_%D1%83%D1%81%D1%82%D1%80%D0%BE%D0%B9%D1%81%D1%82%D0%B2%D0%B0:%D0%9E%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5">О Wiren Board</a></li>
+	<li id="footer-places-disclaimers"><a href="https://wiki.wirenboard.com/wiki/%D0%91%D0%B5%D1%81%D0%BA%D0%BE%D0%BD%D1%82%D0%B0%D0%BA%D1%82%D0%BD%D1%8B%D0%B5_%D1%83%D1%81%D1%82%D1%80%D0%BE%D0%B9%D1%81%D1%82%D0%B2%D0%B0:%D0%9E%D1%82%D0%BA%D0%B0%D0%B7_%D0%BE%D1%82_%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B5%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8">Отказ от ответственности</a></li>
+	<li id="footer-places-mobileview"><a href="https://wiki.wirenboard.com/wiki/index.php?title=WB-MAI6_Modbus_Registers&amp;mobileaction=toggle_view_mobile" class="noprint stopMobileRedirectToggle">Мобильная версия</a></li>
+</ul>
+
+	<ul id="footer-icons" class="noprint">
+	<li id="footer-poweredbyico"><a href="https://www.mediawiki.org/" class="cdx-button cdx-button--fake-button cdx-button--size-large cdx-button--fake-button--enabled" target="_blank"><img src="./WB-MAI6_ Таблица Modbus-регистров, режимы работы и типы стандартных датчиков — Wiren Board_files/poweredby_mediawiki.svg" alt="Powered by MediaWiki" width="88" height="31" loading="lazy"></a></li>
+</ul>
+
+</footer>
+
+		</div>
+	</div> 
+</div> 
+<div class="vector-settings" id="p-dock-bottom">
+	<ul></ul>
+</div><!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+   ym(48377798, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true,
+        trackHash:true,
+        ecommerce:"dataLayer"
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/48377798" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":136,"wgPageParseReport":{"limitreport":{"cputime":"0.110","walltime":"0.143","ppvisitednodes":{"value":380,"limit":1000000},"postexpandincludesize":{"value":14416,"limit":2097152},"templateargumentsize":{"value":273,"limit":2097152},"expansiondepth":{"value":5,"limit":100},"expensivefunctioncount":{"value":0,"limit":100},"unstrip-depth":{"value":0,"limit":20},"unstrip-size":{"value":0,"limit":5000000},"timingprofile":["100.00%   78.553      1 -total"," 17.26%   13.558      1 Wbincludes:Registers_Vin","  8.42%    6.613      1 Wbincludes:Registers_Connection_Settings","  8.29%    6.512      1 Wbincludes:Registers_Service_Main","  7.70%    6.050      1 Wbincludes:Registers_FW_Version_For_Device_With_Fast_Modbus","  5.48%    4.303      1 Wbincludes:Header_Registers_Universal","  4.85%    3.809      1 Wbincludes:Status_LED","  4.74%    3.725      1 Wbincludes:Registers_Flashfs_Debug","  4.59%    3.607      1 Wbincludes:Register_bootloader_start","  4.57%    3.589      1 Wbincludes:Registers_MCU_Check_Stack"]},"cachereport":{"timestamp":"20261124020005","ttl":86400,"transientcontent":false}}});});</script>
+
+<div id="mw-teleport-target" class="vector-body"></div></body></html>
