@@ -33,7 +33,7 @@ void Automation::init(EDHA::Device* device, Config config)
     std::string topicPrefix = _config.mqttTopicPrefix;
 
     auto mai6 = _wirenboard->addMAI6(config.addressWBMAI6);
-    _pressureSensor = new EDCommon::Sensor::WBMAI6Pressure(mai6, 1);
+    _pressureSensor = new Neptunus::ValidatedWBMAI6Pressure(mai6, 1);
     if (!_pressureSensor->init(2, 10000, {
         EDCommon::Sensor::withMQTT(_mqtt, topicPrefix, "neptunus_sensor", "Water pressure supplier"),
         EDCommon::Sensor::withDiscovery(_discoveryMgr, device)
@@ -197,7 +197,7 @@ void Automation::update()
     _pressureSensor->update();
 
     if ((_pressureSensorLastUpdateTime + 10000000) < esp_timer_get_time()) {
-        auto pressure = _pressureSensor->getValue();
+        auto pressure = _pressureSensor->getFreshReading(PRESSURE_READING_MAX_AGE_US);
         if (pressure.second) {
             float_t calculatedPressure = pressure.first;
 
@@ -637,7 +637,7 @@ bool Automation::getSupplierPressure(float* value)
         return false;
     }
 
-    auto result = _pressureSensor->getValue();
+    auto result = _pressureSensor->getFreshReading(PRESSURE_READING_MAX_AGE_US);
     if (!result.second) {
         return false;
     }

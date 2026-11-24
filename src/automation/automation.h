@@ -15,6 +15,7 @@
 #include "config.h"
 #include "rainwater_level_consumer.h"
 #include "electricity_status_consumer.h"
+#include "wb_mai6_pressure_sensor.h"
 
 #define WATER_MIN_LEVEL 0.37f
 #define WATER_MAX_LEVEL 1.2f
@@ -31,6 +32,9 @@
 #define ELECTRICITY_DATA_TIMEOUT_SEC 600
 // On battery power, city pressure above this value -> pump off + bypass open.
 #define ELECTRICITY_BATTERY_BYPASS_PRESSURE_BAR 1.5f
+// Supplier pressure is polled every 10 s; treat a reading older than ~3 poll
+// periods as invalid so a stalled Modbus/loop cannot freeze stale data.
+#define PRESSURE_READING_MAX_AGE_US 30000000
 
 // AUTO-only idle protection for the outdoor pump: pump continuously ON for
 // >= OUTDOOR_PUMP_IDLE_WINDOW_SEC with < OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS on
@@ -161,7 +165,7 @@ private:
 
     Config _config;
     EDCommon::Sensor::WaterLevel* _waterLevelSensor = nullptr;
-    EDCommon::Sensor::WBMAI6Pressure* _pressureSensor = nullptr;
+    Neptunus::ValidatedWBMAI6Pressure* _pressureSensor = nullptr;
     EDCommon::Counter::PCF8574P* _meter = nullptr;
     EDCommon::Counter::PCF8574P* _yardMeter = nullptr;
 
