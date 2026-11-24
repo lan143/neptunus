@@ -198,20 +198,26 @@ void Automation::update()
 
     if ((_pressureSensorLastUpdateTime + 10000000) < esp_timer_get_time()) {
         auto pressure = _pressureSensor->getFreshReading(PRESSURE_READING_MAX_AGE_US);
-        if (pressure.second) {
-            float_t calculatedPressure = pressure.first;
 
-            auto fillingBarrel = _fillingBarrelRelay->isEnabled();
-            auto rainwaterPit = _rainwaterPitRelay->isEnabled();
+        // Relay reads run every tick so the bad-pressure counter is not frozen by
+        // an unavailable pressure sample. Only the relay STATES must be valid
+        // (conservative: an invalid state freezes the bypass debounce and the
+        // bad-pressure counter).
+        auto fillingBarrel = _fillingBarrelRelay->isEnabled();
+        auto rainwaterPit = _rainwaterPitRelay->isEnabled();
 
-            // State only moves when no filling valve is open. Pit relay state must
-            // be valid (conservative: an invalid state freezes the bypass debounce
-            // and the bad-pressure counter).
-            if (
-                !_meter->isFlowOfWaterActive()
-                && fillingBarrel.second && fillingBarrel.first
-                && rainwaterPit.second && rainwaterPit.first
-            ) {
+        // Water actually moving (a draw or a fill in progress) explains a pressure
+        // dip, so counting freezes while flow is active. With no flow, a low or
+        // unavailable supplier pressure is suspicious whether the filling valves
+        // are closed (idle line) or open and stalled (dead mains: the valve sits
+        // open with nothing coming through).
+        if (
+            !_meter->isFlowOfWaterActive()
+            && fillingBarrel.second && rainwaterPit.second
+        ) {
+            if (pressure.second) {
+                float_t calculatedPressure = pressure.first;
+
                 updateBypassMode(calculatedPressure);
 
                 if (calculatedPressure < EMERGENCY_PRESSURE && _badPressureCount < 24) {
@@ -219,9 +225,15 @@ void Automation::update()
                 } else if (calculatedPressure > EMERGENCY_PRESSURE && _badPressureCount > 0) {
                     _badPressureCount--;
                 }
+            } else {
+                LOGE("update", "failed to get supplier water pressure");
+                // Unavailable pressure counts as bad pressure. Decay still requires
+                // a valid reading above EMERGENCY_PRESSURE, so a persistently
+                // unavailable sensor reaches the emergency threshold.
+                if (_badPressureCount < 24) {
+                    _badPressureCount++;
+                }
             }
-        } else {
-            LOGE("update", "failed to get supplier water pressure");
         }
 
         _pressureSensorLastUpdateTime = esp_timer_get_time();
@@ -441,8 +453,12 @@ void Automation::update()
 
         bool fillingActive = barrelValveOpen || pitValveOpen;
 
+        // A fill with no flow is stalled (dead supply): the valve is open but
+        // nothing comes through, so it must not block the emergency path.
+        bool fillingStalled = fillingActive && !_meter->isFlowOfWaterActive();
+
         bool emergencyMode = false;
-        if (!fillingActive && _badPressureCount > 12) { // fill the barrel completely if there is a suspicion of an accident
+        if ((!fillingActive || fillingStalled) && _badPressureCount > 12) { // fill the barrel completely on a suspicion of an accident, including a stalled fill on a dead supply
             enableLevel = WATER_MAX_LEVEL - WATER_MAX_LEVEL * 0.2f;
             disableLevel = WATER_MAX_LEVEL - WATER_MAX_LEVEL * 0.1f;
             emergencyMode = true;
