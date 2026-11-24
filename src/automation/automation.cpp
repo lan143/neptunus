@@ -726,10 +726,15 @@ void Automation::update()
         // below sees the valve state actually commanded by this tick.
         fillingActive = barrelValveOpen || pitValveOpen;
 
-        // While any filling valve is open, keep the bypass valve and the home pump
-        // station in their prior state. Also gated while a grid override is active
-        // so the override remains the only writer of the home pump and bypass
-        // relays this tick (fixes same-tick opposite-command oscillation).
+        // A barrel fill draws from the city line while the home pump serves the
+        // house from the tank, so the two are independent and the common
+        // pump/bypass rule below must run whether the barrel valve is open or
+        // closed. Otherwise a safety action (stale-barrel safe state, min-level
+        // latch release) or a reboot can leave the pump OFF and nothing ever
+        // re-enables it. The barrel min-level latch and the debounced bypass
+        // mode remain the pump-off authorities. Also gated while a grid override
+        // is active so the override remains the only writer of the home pump and
+        // bypass relays this tick (fixes same-tick opposite-command oscillation).
         if (gridOverride == GridOverride::NONE) {
             if (pitValveOpen) {
                 // Pit filling needs home pressure for its whole duration: close
@@ -746,7 +751,7 @@ void Automation::update()
                         LOGE("update", "failed to enable pump station for rainwater pit filling");
                     }
                 }
-            } else if (!fillingActive) {
+            } else {
                 // The min-level latch IS the protection now (with hysteresis);
                 // the removed one-shot here was dead because a level at/below
                 // WATER_MIN_LEVEL always forces the barrel valve open above.
