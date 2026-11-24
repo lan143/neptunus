@@ -206,14 +206,45 @@ void Automation::update()
         auto fillingBarrel = _fillingBarrelRelay->isEnabled();
         auto rainwaterPit = _rainwaterPitRelay->isEnabled();
 
+        // Sample the storage levels once per pressure tick and track their
+        // trend. A fill whose storage level rises is real filling, even when it
+        // collapses city pressure (the big-draw outdoor pit fill drops the
+        // supplier line to ~0 bar and the WB-MAI6 often reports errors). A fill
+        // whose level stays flat or falls is stalled. Only valid samples are
+        // recorded; invalid data must not assert progress.
+        const int64_t trendNowUs = esp_timer_get_time();
+        if (_waterLevelSensor != nullptr) {
+            auto barrelLevel = _waterLevelSensor->getValue();
+            if (barrelLevel.second) {
+                _barrelLevelTrend.record(trendNowUs, barrelLevel.first);
+            }
+        }
+        float pitTrendPct = 0.0f;
+        if (getRainwaterPitLevelPercent(&pitTrendPct)) {
+            _pitLevelTrend.record(trendNowUs, pitTrendPct);
+        }
+
+        // Relay pair semantics: .second is state validity, .first true means the
+        // relay is de-energized = valve CLOSED (valves use open semantics).
+        const bool barrelValveOpen = fillingBarrel.second && !fillingBarrel.first;
+        const bool pitValveOpen = rainwaterPit.second && !rainwaterPit.first;
+        const bool barrelLevelRising = _barrelLevelTrend.isRising(BARREL_LEVEL_RISING_DELTA_M, LEVEL_TREND_MAX_AGE_US, trendNowUs);
+        const bool pitLevelRising = _pitLevelTrend.isRising(PIT_LEVEL_RISING_DELTA_PERCENT, LEVEL_TREND_MAX_AGE_US, trendNowUs);
+
         // Water actually moving (a draw or a fill in progress) explains a pressure
-        // dip, so counting freezes while flow is active. With no flow, a low or
-        // unavailable supplier pressure is suspicious whether the filling valves
-        // are closed (idle line) or open and stalled (dead mains: the valve sits
-        // open with nothing coming through).
+        // dip, so counting freezes while flow is active on either meter. A fill
+        // whose storage level RISES is real filling — the big-draw pit fill
+        // collapses city pressure to ~0 with sensor errors and that is normal.
+        // A flat/falling level with the valve open is a stalled fill on a dead
+        // supply. With no flow and no progressing fill, a low or unavailable
+        // supplier pressure is suspicious whether the filling valves are closed
+        // (idle line) or open and stalled.
         if (
             !_meter->isFlowOfWaterActive()
+            && !_yardMeter->isFlowOfWaterActive()
             && fillingBarrel.second && rainwaterPit.second
+            && !(barrelValveOpen && barrelLevelRising)
+            && !(pitValveOpen && pitLevelRising)
         ) {
             if (pressure.second) {
                 float_t calculatedPressure = pressure.first;
@@ -453,9 +484,21 @@ void Automation::update()
 
         bool fillingActive = barrelValveOpen || pitValveOpen;
 
-        // A fill with no flow is stalled (dead supply): the valve is open but
-        // nothing comes through, so it must not block the emergency path.
-        bool fillingStalled = fillingActive && !_meter->isFlowOfWaterActive();
+        // Evaluation only: the 10 s tick records the level samples. A fill whose
+        // filled storage level is rising is making progress even when the home
+        // meter registers no flow (the pit fill's big draw bypasses it).
+        const int64_t trendNowUs = esp_timer_get_time();
+        const bool barrelLevelRising = _barrelLevelTrend.isRising(BARREL_LEVEL_RISING_DELTA_M, LEVEL_TREND_MAX_AGE_US, trendNowUs);
+        const bool pitLevelRising = _pitLevelTrend.isRising(PIT_LEVEL_RISING_DELTA_PERCENT, LEVEL_TREND_MAX_AGE_US, trendNowUs);
+        const bool fillProgressing = (barrelValveOpen && barrelLevelRising) || (pitValveOpen && pitLevelRising);
+
+        // A fill with no registered flow anywhere is stalled UNLESS the filled
+        // storage level is rising (dead supply: the valve is open but nothing
+        // comes through, so it must not block the emergency path).
+        bool fillingStalled = fillingActive
+            && !_meter->isFlowOfWaterActive()
+            && !_yardMeter->isFlowOfWaterActive()
+            && !fillProgressing;
 
         bool emergencyMode = false;
         if ((!fillingActive || fillingStalled) && _badPressureCount > 12) { // fill the barrel completely on a suspicion of an accident, including a stalled fill on a dead supply
@@ -549,7 +592,7 @@ void Automation::update()
 
         LOGD(
             "update",
-            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, bad pressure count: %d",
+            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, bad pressure count: %d, barrel level rising: %s, pit level rising: %s",
             enableLevel,
             disableLevel,
             level,
@@ -557,7 +600,9 @@ void Automation::update()
             fillingActive ? "true" : "false",
             pitDataOk ? pitPct : -1.0f,
             _rainwaterPitFillingSession ? "true" : "false",
-            _badPressureCount
+            _badPressureCount,
+            barrelLevelRising ? "true" : "false",
+            pitLevelRising ? "true" : "false"
         );
     }
 }

@@ -16,6 +16,7 @@
 #include "rainwater_level_consumer.h"
 #include "electricity_status_consumer.h"
 #include "wb_mai6_pressure_sensor.h"
+#include "level_trend.h"
 
 #define WATER_MIN_LEVEL 0.37f
 #define WATER_MAX_LEVEL 1.2f
@@ -35,6 +36,16 @@
 // Supplier pressure is polled every 10 s; treat a reading older than ~3 poll
 // periods as invalid so a stalled Modbus/loop cannot freeze stale data.
 #define PRESSURE_READING_MAX_AGE_US 30000000
+
+// A fill whose storage level RISES is real filling: the big-draw outdoor pit
+// fill collapses city pressure to ~0 with sensor errors, and that is normal
+// operation, not an accident. A flat/falling level with the valve open is a
+// stalled fill on a dead supply. These thresholds are the minimum rise over the
+// ~10 min trend window (1 cm barrel / 0.5 % pit); level data older than
+// LEVEL_TREND_MAX_AGE_US cannot assert progress.
+#define BARREL_LEVEL_RISING_DELTA_M 0.01f
+#define PIT_LEVEL_RISING_DELTA_PERCENT 0.5f
+#define LEVEL_TREND_MAX_AGE_US 30000000
 
 // AUTO-only idle protection for the outdoor pump: pump continuously ON for
 // >= OUTDOOR_PUMP_IDLE_WINDOW_SEC with < OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS on
@@ -189,6 +200,12 @@ private:
     // Rainwater pit fill session state (in-memory only).
     bool _rainwaterPitFillingSession = false;
     bool _outdoorPumpStoppedByLevel = false;
+
+    // Storage level trends, sampled once per 10 s pressure tick. Only valid
+    // samples are recorded; they let the pressure logic and the emergency path
+    // tell a progressing fill from a stalled one (main-loop only).
+    Neptunus::LevelTrendTracker _barrelLevelTrend;
+    Neptunus::LevelTrendTracker _pitLevelTrend;
 
     // Outdoor pump idle-flow protection state (main-loop only, static storage).
     // The slot about to be overwritten is the yard-meter sample from
