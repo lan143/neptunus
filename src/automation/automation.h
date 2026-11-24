@@ -25,6 +25,10 @@
 #define SWITCH_TO_HOME_PUMP_STATION_PRESSURE 3.1f
 #define EMERGENCY_PRESSURE 1.0f
 
+// Within this margin of WATER_MAX_LEVEL the barrel level cannot show fill
+// progress, so a flat trend there must not be read as a stalled fill.
+#define BARREL_LEVEL_NEAR_MAX_MARGIN_M 0.05f
+
 #define BARREL_FILL_ON_PERCENT 40.0f
 #define BARREL_FILL_OFF_PERCENT 95.0f
 #define RAINWATER_PIT_PUMP_DISABLE_PERCENT 8.0f
@@ -79,6 +83,7 @@
 #define OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS 2
 
 #include "bypass_mode.h"
+#include "emergency_mode.h"
 
 struct AutomationState
 {
@@ -182,6 +187,11 @@ private:
     uint64_t _lastUpdateTime = 0;
     uint64_t _pressureSensorLastUpdateTime = 0;
     BypassModeState _bypassMode;
+    // 10-s samples of bad/invalid supplier pressure, capped at
+    // EMERGENCY_BAD_PRESSURE_COUNT_MAX; emergency engages above
+    // EMERGENCY_BAD_PRESSURE_COUNT_THRESHOLD. Held while a supplier draw is
+    // active (a progressing fill, or bypass open + house flow). Yard meter flow
+    // never gates it: the yard branch does not touch the supplier line.
     uint32_t _badPressureCount = 0;
     bool _autoModeSeeding = false;
     bool _drainagePumpSeeding = false;

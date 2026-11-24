@@ -240,47 +240,48 @@ void Automation::update()
         const bool barrelLevelRising = _barrelLevelTrend.isRising(BARREL_LEVEL_RISING_DELTA_M, LEVEL_TREND_MAX_AGE_US, trendNowUs);
         const bool pitLevelRising = _pitLevelTrend.isRising(PIT_LEVEL_RISING_DELTA_PERCENT, LEVEL_TREND_MAX_AGE_US, trendNowUs);
 
-        // Water actually moving (a draw or a fill in progress) explains a pressure
-        // dip, so bad-pressure COUNTING freezes while flow is active on either
-        // meter, and the bypass state machine suppresses ENTRY for the same reason
-        // (H4); its EXIT transitions still run so a real supplier collapse escapes
-        // bypass mode mid-draw. A fill whose storage level RISES is real filling —
-        // the big-draw pit fill collapses city pressure to ~0 with sensor errors
-        // and that is normal. A flat/falling level with the valve open is a stalled
-        // fill on a dead supply. With no flow and no progressing fill, a low or
-        // unavailable supplier pressure is suspicious whether the filling valves
-        // are closed (idle line) or open and stalled. The relay-validity and
-        // progressing-fill guards suppress the whole block.
+        // Only fills and bypass draws go through the supplier pressure-sensor
+        // path: both the drinking-tank and outdoor-tank fills draw through the
+        // collector, and the bypass branch feeds the home pump line directly.
+        // House consumption behind the CLOSED bypass comes from the drinking
+        // tank, and all yard consumption comes from the outdoor tank; neither
+        // touches the supplier line. So only a progressing fill or a bypass
+        // draw (bypass open + house flow) explains a pressure dip.
+        //
+        // A fill whose storage level RISES is real filling, so the whole block
+        // is skipped (the dip is explained). A fill whose level is flat or
+        // falling with the valve open is a stalled fill on a dead supply and
+        // does NOT excuse the line. The relay-validity guard is conservative:
+        // an unavailable valve state freezes the block.
         if (
             fillingBarrel.second && rainwaterPit.second
             && !(barrelValveOpen && barrelLevelRising)
             && !(pitValveOpen && pitLevelRising)
         ) {
-            // A household draw explains a pressure dip, so the bypass state machine
-            // must still run mid-draw: exits (fast drop / low average) fire and engage
-            // the pump, while entry is suppressed for the same reason (H4). Only the
-            // bad-pressure counting is fully flow-gated.
-            const bool anyFlowActive = _meter->isFlowOfWaterActive() || _yardMeter->isFlowOfWaterActive();
+            // Only a bypass draw reaches the supplier pressure path. The bypass
+            // state machine still runs mid-draw: exits (fast drop / low average)
+            // fire and engage the pump, while ENTRY is suppressed for the same
+            // reason (H4). The bad-pressure clock is held while that draw is
+            // active, so a dip the draw explains never accrues suspicion.
+            auto bypassState = _bypassRelay->isEnabled();
+            const bool bypassOpen = bypassState.second && !bypassState.first;
+            const bool homeFlowActive = _meter->isFlowOfWaterActive();
+            const bool supplierDrawExcuse = bypassOpen && homeFlowActive;
+
             if (pressure.second) {
                 float_t calculatedPressure = pressure.first;
 
-                updateBypassMode(calculatedPressure, !anyFlowActive);
-
-                if (!anyFlowActive) {
-                    if (calculatedPressure < EMERGENCY_PRESSURE && _badPressureCount < 24) {
-                        _badPressureCount++;
-                    } else if (calculatedPressure > EMERGENCY_PRESSURE && _badPressureCount > 0) {
-                        _badPressureCount--;
-                    }
+                updateBypassMode(calculatedPressure, !homeFlowActive);
+                updateEmergencyBadPressureCount(_badPressureCount, true, calculatedPressure, supplierDrawExcuse);
+            } else {
+                if (!supplierDrawExcuse) {
+                    LOGE("update", "failed to get supplier water pressure");
                 }
-            } else if (!anyFlowActive) {
-                LOGE("update", "failed to get supplier water pressure");
-                // Unavailable pressure counts as bad pressure. Decay still requires
-                // a valid reading above EMERGENCY_PRESSURE, so a persistently
-                // unavailable sensor reaches the emergency threshold.
-                if (_badPressureCount < 24) {
-                    _badPressureCount++;
-                }
+                // Unavailable pressure counts as bad pressure unless a bypass
+                // draw explains the dip. Decay still requires a valid reading
+                // above EMERGENCY_PRESSURE, so a persistently unavailable sensor
+                // reaches the emergency threshold.
+                updateEmergencyBadPressureCount(_badPressureCount, false, 0.0f, supplierDrawExcuse);
             }
         }
 
@@ -616,21 +617,37 @@ void Automation::update()
         const int64_t trendNowUs = esp_timer_get_time();
         const bool barrelLevelRising = _barrelLevelTrend.isRising(BARREL_LEVEL_RISING_DELTA_M, LEVEL_TREND_MAX_AGE_US, trendNowUs);
         const bool pitLevelRising = _pitLevelTrend.isRising(PIT_LEVEL_RISING_DELTA_PERCENT, LEVEL_TREND_MAX_AGE_US, trendNowUs);
-        const bool fillProgressing = (barrelValveOpen && barrelLevelRising) || (pitValveOpen && pitLevelRising);
 
-        // A fill with no registered flow anywhere is stalled UNLESS the filled
-        // storage level is rising (dead supply: the valve is open but nothing
-        // comes through, so it must not block the emergency path).
-        bool fillingStalled = fillingActive
-            && !_meter->isFlowOfWaterActive()
-            && !_yardMeter->isFlowOfWaterActive()
-            && !fillProgressing;
+        // A flat level at/near the physical maximum cannot show fill progress,
+        // so flatness there proves nothing about a stalled fill. The pit target
+        // is the configured max fill level; without valid pit data the level is
+        // unknown and must not be treated as near maximum.
+        const bool barrelLevelNearMax = level >= WATER_MAX_LEVEL - BARREL_LEVEL_NEAR_MAX_MARGIN_M;
+        const bool pitLevelNearMax = pitDataOk && pitPct >= _config.rainwaterPitMaxFillLevel;
 
-        bool emergencyMode = false;
-        if ((!fillingActive || fillingStalled) && _badPressureCount > 12) { // fill the barrel completely on a suspicion of an accident, including a stalled fill on a dead supply
+        // The bypass valve uses open semantics: enabled==true means the relay is
+        // energized and the valve is CLOSED. An invalid relay state is treated
+        // as closed (the conservative default).
+        auto bypassRelay = _bypassRelay->isEnabled();
+        const bool bypassValveOpen = bypassRelay.second && !bypassRelay.first;
+        const bool homeFlowActive = _meter->isFlowOfWaterActive();
+
+        EmergencyModeInput emergencyInput;
+        emergencyInput.badPressureCount = _badPressureCount;
+        emergencyInput.bypassValveOpen = bypassValveOpen;
+        emergencyInput.homeFlowActive = homeFlowActive;
+        emergencyInput.barrelValveOpen = barrelValveOpen;
+        emergencyInput.barrelLevelRising = barrelLevelRising;
+        emergencyInput.barrelLevelNearMax = barrelLevelNearMax;
+        emergencyInput.pitValveOpen = pitValveOpen;
+        emergencyInput.pitLevelRising = pitLevelRising;
+        emergencyInput.pitLevelNearMax = pitLevelNearMax;
+
+        const EmergencyModeResult emergencyResult = evaluateEmergencyMode(emergencyInput);
+        bool emergencyMode = emergencyResult.active;
+        if (emergencyMode) { // fill the barrel completely on a suspicion of an accident, including a stalled fill on a dead supply
             enableLevel = WATER_MAX_LEVEL - WATER_MAX_LEVEL * 0.2f;
             disableLevel = WATER_MAX_LEVEL - WATER_MAX_LEVEL * 0.1f;
-            emergencyMode = true;
             // Re-overlay barrel hysteresis intent with the EMERGENCY thresholds, so
             // fillingActive reflects a barrel open commanded this tick before the
             // pit/bypass/pump decisions below.
