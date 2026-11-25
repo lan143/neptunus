@@ -316,11 +316,33 @@ void setup()
     automation.init(device, *configMgr.getData());
 
     // Subscribe the Arduino loop task to the task watchdog, then feed it from
-    // the top of loop(). This core (Arduino 2.0.x / ESP-IDF 4.x) does not
-    // necessarily initialize the TWDT for the app, so initialize it explicitly
-    // (5 s, panic on timeout; a no-op config update if already initialized) and
-    // tolerate an already-initialized/absent TWDT rather than aborting boot.
-    if (esp_task_wdt_init(5, true) != ESP_OK) {
+    // the top of loop(). The Arduino core's sdkconfig pre-initializes the TWDT
+    // at system startup (5 s timeout, panic on timeout, IDLE0 watched), so a
+    // plain esp_task_wdt_init() call is rejected with ESP_ERR_INVALID_STATE
+    // and does nothing — the timeout can only be changed by deinit + re-init.
+    //
+    // The synchronous full-partition erase that esp_ota_begin performs inside
+    // ArduinoOTA.handle() runs BEFORE any OTA callback: Update.begin() wipes
+    // the whole ~1.85 MB OTA app partition (29 x 64-KB block erases at
+    // ~120-400 ms each = ~4-11.6 s) while every subscribed task starves, so
+    // the core's fixed 5-s timeout panics mid-upload at 10-13% progress.
+    // Re-initialize the TWDT with a 20-s panic timeout: it covers the erase
+    // while still catching a genuine loop hang, and the OTA data-transfer
+    // phase stays watchdog-protected (a hang there reboots the device, which
+    // is desired).
+    //
+    // IDLE0 is unsubscribed first because a sustained WiFi retransmit storm
+    // during the OTA data pull can starve it for longer than any sane timeout,
+    // and a starved idle task is not a hung automation — the loop task remains
+    // the watched authority.
+    TaskHandle_t idle0 = xTaskGetIdleTaskHandleForCPU(0);
+    if (idle0 != nullptr) {
+        esp_task_wdt_delete(idle0);
+    }
+    if (esp_task_wdt_deinit() != ESP_OK) {
+        LOGE("setup", "failed to deinit watchdog");
+    }
+    if (esp_task_wdt_init(20, true) != ESP_OK) {
         LOGE("setup", "failed to init watchdog");
     }
     if (esp_task_wdt_add(NULL) != ESP_OK) {
