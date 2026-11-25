@@ -43,10 +43,12 @@
 // periods as invalid so a stalled Modbus/loop cannot freeze stale data.
 #define PRESSURE_READING_MAX_AGE_US 30000000
 
-// The barrel level is polled every ~1 s; a reading older than 30 s is unknown
-// (same policy family as the pressure sensor's 30 s window over a 10 s poll).
-// An unknown level forces the fill valve closed and the home pump off.
-#define WATER_LEVEL_READING_MAX_AGE_US 30000000
+// The barrel level is polled every ~1 s; a reading older than 5 minutes is
+// unknown. The window is deliberately wide: transient RS-485 bus hiccups must
+// not trip the safe state; a genuine sensor stall is what degrades the level
+// to unknown. An unknown level forces the fill valve closed and the home pump
+// off.
+#define WATER_LEVEL_READING_MAX_AGE_US 300000000
 
 // Hysteresis above WATER_MIN_LEVEL before the home-pump min-level latch is
 // released, so a level hovering at the minimum cannot chatter the pump.

@@ -559,19 +559,30 @@ void Automation::update()
 
         // STALE BARREL SAFE STATE (C2): with the barrel level unknown the fill
         // valve may be filling a full barrel and the home pump may be running
-        // dry. Force both to their safe state in EVERY mode and skip the rest of
-        // the level-dependent logic this tick. The pit/outdoor guards above have
-        // already run; the bypass and pit valves stay at their previous state.
+        // dry. In AUTOMATIC mode force both to their safe state and skip the
+        // rest of the level-dependent logic this tick. In MANUAL mode the
+        // operator has taken over watching the barrel level (the pump also has
+        // a mechanical dry-run guard), so leave both relays untouched and fall
+        // through: the manual-mode gate below ends the tick anyway. The
+        // pit/outdoor guards above have already run in every mode; the bypass
+        // and pit valves stay at their previous state.
         if (!barrelLevelOk) {
-            changeFillingBarrelValveOpenInternal(false);
-            changeHomePumpStationEnableInternal(false);
+            if (_autoModeRelay->isEnabled().first) {
+                changeFillingBarrelValveOpenInternal(false);
+                changeHomePumpStationEnableInternal(false);
+                if (!_barrelLevelStaleAnnounced) {
+                    _barrelLevelStaleAnnounced = true;
+                    LOGE("update", "barrel water level stale: fill valve closed, home pump off");
+                }
+                return;
+            }
             if (!_barrelLevelStaleAnnounced) {
                 _barrelLevelStaleAnnounced = true;
-                LOGE("update", "barrel water level stale: fill valve closed, home pump off");
+                LOGE("update", "barrel water level stale: manual mode, relays untouched");
             }
-            return;
+        } else {
+            _barrelLevelStaleAnnounced = false;
         }
-        _barrelLevelStaleAnnounced = false;
         // Overflow protection in every mode (manual included): the fill-valve
         // hysteresis below only runs in AUTO, so a manually opened fill valve
         // must still be force-closed when the barrel reaches the physical

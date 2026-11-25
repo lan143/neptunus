@@ -2,16 +2,25 @@
 
 #include <sensor/water_level.h>
 
+#include "last_good_reading.h"
+
 namespace Neptunus
 {
-    // QDY30A water-level sensor that exposes a last-poll timestamp so consumers
-    // can refuse stale readings. The base ed-common Sensor only keeps the last
-    // GOOD value with .second=true forever, so a stalled Modbus poll would
-    // otherwise freeze the barrel level and defeat every level-based safety
-    // rule. Derives from the ed-common sensor to reuse its init/MQTT/
-    // discovery plumbing unchanged; only the read path is wrapped.
+    // QDY30A water-level sensor that caches the last GOOD reading so consumers
+    // can apply a freshness window without a single transient Modbus timeout
+    // invalidating the level.
     //
-    // Mirrors ValidatedWBMAI6Pressure's freshness pattern.
+    // Failed polls preserve the last good value, so a Modbus hiccup does not
+    // trip the stale-barrel safe state (home pump off / fill valve closed) for
+    // a tick or two. The age window is still the only degradation path: a
+    // genuinely stalled poll (> WATER_LEVEL_READING_MAX_AGE_US without a good
+    // value) returns invalid and C2 fires as designed.
+    //
+    // This INTENTIONALLY diverges from ValidatedWBMAI6Pressure, whose
+    // fail-fast-on-invalid-sample semantics are load-bearing for the
+    // bad-pressure clock: a frozen pressure reading would mask a burst.
+    // Derives from the ed-common sensor to reuse its init/MQTT/discovery
+    // plumbing unchanged; only the read path is wrapped.
     class FreshWaterLevelSensor : public EDCommon::Sensor::WaterLevel
     {
     public:
@@ -20,22 +29,18 @@ namespace Neptunus
         {
         }
 
-        // Last reading only if it is valid and no older than maxAgeUs. Used by
-        // automation consumers so a stalled poll degrades to invalid instead of
-        // freezing a stale level.
+        // Last good reading only if it is no older than maxAgeUs. Used by
+        // automation consumers so a stalled poll degrades to invalid instead
+        // of freezing a stale level.
         std::pair<float_t, bool> getFreshReading(int64_t maxAgeUs) const;
 
     protected:
         std::pair<float_t, bool> getValueInternal() override;
 
     private:
-        void recordReading(float_t value, bool valid);
-
-    private:
         // Written on the loop task by getValueInternal(); read by the same task
-        // and by the async web task. The base sensor already exposes its
-        // unsynchronized cached value the same way.
-        std::pair<float_t, bool> _lastReading = {0.0f, false};
-        int64_t _lastReadingTimeUs = 0;
+        // and by the async web task. Like the base sensor's unsynchronized
+        // cached value, this is deliberately unsynchronized by design.
+        LastGoodReading _lastGood;
     };
 } // namespace Neptunus

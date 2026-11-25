@@ -50,3 +50,13 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined \
               test/wb_mai6_pressure_validation_scenarios.cpp -o /tmp/wb_pressure_validation_test \
               && /tmp/wb_pressure_validation_test
+
+      - name: Emergency mode scenarios
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined \
+              test/emergency_mode_scenarios.cpp -o /tmp/emergency_mode_test && /tmp/emergency_mode_test
+
+      - name: Fresh water level scenarios
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined \
+              test/fresh_water_level_scenarios.cpp -o /tmp/fresh_water_level_test && /tmp/fresh_water_level_test

@@ -40,9 +40,10 @@ the inlet pressure line. Only tank fills and an open bypass reach the pressure s
 
 - Two ticks: a 10-second pressure tick (bad-pressure clock, debounced bypass mode, level
   trends) and a 1-second decision tick (everything else).
-- Sensors are read with freshness windows (pressure 30 s over a 10 s poll, barrel level 30 s
-  over a 1 s poll). Stale data must degrade to a conservative safe action, never to "keep
-  going".
+- Sensors are read with freshness windows (pressure 30 s over a 10 s poll, barrel level 5 min
+  over a 1 s poll). In automatic mode stale data must degrade to a conservative safe action,
+  never to "keep going"; in manual mode stale-data safe actions are skipped and relays are
+  left to the operator.
 - `Relay::setState()` only enqueues; it is drained by `Relay::update()` on the loop task. A
   command issued this tick is NOT visible to `isEnabled()` until the next update, so overlay
   same-tick intent manually (see the barrel-valve pattern in `automation.cpp`).
