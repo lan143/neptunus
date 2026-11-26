@@ -1,7 +1,7 @@
 # AGENTS.md — Neptunus
 
 Orientation for coding agents. Read this first; user-facing docs are in `README.md`.
-`RTK.md` is not present in this repo, so there is no condensed-output override to follow.
+Read `RTK.md` for repo-specific `rtk` usage recipes; the global rtk contract still applies.
 
 ## What this is
 
