@@ -18,7 +18,7 @@
 #include "electricity_status_consumer.h"
 #include "wb_mai6_pressure_sensor.h"
 #include "fresh_water_level_sensor.h"
-#include "level_trend.h"
+#include "fill_progress.h"
 
 #define WATER_MIN_LEVEL 0.37f
 #define WATER_MAX_LEVEL 1.2f
@@ -26,7 +26,7 @@
 #define EMERGENCY_PRESSURE 1.0f
 
 // Within this margin of WATER_MAX_LEVEL the barrel level cannot show fill
-// progress, so a flat trend there must not be read as a stalled fill.
+// progress, so no progress there must not be read as a stalled fill.
 #define BARREL_LEVEL_NEAR_MAX_MARGIN_M 0.05f
 
 #define BARREL_FILL_ON_PERCENT 40.0f
@@ -68,15 +68,24 @@
 // filling tick after tick.
 #define RAINWATER_PIT_FILL_COOLDOWN_SEC 600
 
-// A fill whose storage level RISES is real filling: the big-draw outdoor pit
-// fill collapses city pressure to ~0 with sensor errors, and that is normal
-// operation, not an accident. A flat/falling level with the valve open is a
-// stalled fill on a dead supply. These thresholds are the minimum rise over the
-// ~10 min trend window (1 cm barrel / 0.5 % pit); level data older than
-// LEVEL_TREND_MAX_AGE_US cannot assert progress.
-#define BARREL_LEVEL_RISING_DELTA_M 0.01f
-#define PIT_LEVEL_RISING_DELTA_PERCENT 0.5f
-#define LEVEL_TREND_MAX_AGE_US 30000000
+// A fill whose storage level is progressing is real filling: the big-draw
+// outdoor pit fill collapses city pressure to ~0 with sensor errors, and that is
+// normal operation, not an accident. An open fill valve whose level has not
+// progressed within its window is a stalled fill on a dead supply.
+//
+// Each fill keeps a ratcheting baseline captured at valve-open; every rise of at
+// least delta above it pulls the baseline up and restarts the window. The deltas
+// sit above the sensor jitter so noise cannot ratchet the baseline.
+
+// Above the +/-8 mm barrel level jitter.
+#define BARREL_FILL_PROGRESS_DELTA_M 0.02f
+// Covers the ~1 cm per 2.5 min trickle ratchet cadence with margin; this is the
+// owner's "level does not change for a while" window.
+#define BARREL_FILL_PROGRESS_WINDOW_SEC 360
+// Above the +/-0.24 % rainwater-pit level jitter.
+#define PIT_FILL_PROGRESS_DELTA_PERCENT 0.3f
+// The pit fill rises ~0.5 % per 10 min, so its ratchet cadence is ~6 min.
+#define PIT_FILL_PROGRESS_WINDOW_SEC 600
 
 // Idle protection for the outdoor pump: pump continuously ON for
 // >= OUTDOOR_PUMP_IDLE_WINDOW_SEC with < OUTDOOR_PUMP_IDLE_MIN_FLOW_LITERS on
@@ -255,11 +264,13 @@ private:
     // One LOGE per staleness episode instead of one per tick.
     bool _barrelLevelStaleAnnounced = false;
 
-    // Storage level trends, sampled once per 10 s pressure tick. Only valid
-    // samples are recorded; they let the pressure logic and the emergency path
-    // tell a progressing fill from a stalled one (main-loop only).
-    Neptunus::LevelTrendTracker _barrelLevelTrend;
-    Neptunus::LevelTrendTracker _pitLevelTrend;
+    // Per-fill progress model, updated in the 1-s decision tick. Each fill owns
+    // a ratcheting baseline immune to the pre-fill level history (main-loop
+    // only).
+    Neptunus::FillProgressState _barrelFillProgress;
+    Neptunus::FillProgressState _pitFillProgress;
+    bool _barrelFillProgressing = false;
+    bool _pitFillProgressing = false;
 
     // Outdoor pump idle-flow protection state (main-loop only, static storage).
     // The slot about to be overwritten is the yard-meter sample from

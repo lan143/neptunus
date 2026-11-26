@@ -213,33 +213,14 @@ void Automation::update()
         auto fillingBarrel = _fillingBarrelRelay->isEnabled();
         auto rainwaterPit = _rainwaterPitRelay->isEnabled();
 
-        // Sample the storage levels once per pressure tick and track their
-        // trend. A fill whose storage level rises is real filling, even when it
-        // collapses city pressure (the big-draw outdoor pit fill drops the
-        // supplier line to ~0 bar and the WB-MAI6 often reports errors). A fill
-        // whose level stays flat or falls is stalled. Only valid samples are
-        // recorded; invalid data must not assert progress.
-        const int64_t trendNowUs = esp_timer_get_time();
-        if (_waterLevelSensor != nullptr) {
-            // Freshness-gated: a stale/unknown sample must never be recorded as
-            // fill progress, or a dead sensor would look like a rising fill.
-            auto barrelLevel = _waterLevelSensor->getFreshReading(WATER_LEVEL_READING_MAX_AGE_US);
-            if (barrelLevel.second) {
-                _barrelLevelTrend.record(trendNowUs, barrelLevel.first);
-            }
-        }
-        float pitTrendPct = 0.0f;
-        if (getRainwaterPitLevelPercent(&pitTrendPct)) {
-            _pitLevelTrend.record(trendNowUs, pitTrendPct);
-        }
-
-        // Relay pair semantics: .second is state validity, .first true means the
-        // relay is de-energized = valve CLOSED (valves use open semantics).
-        const bool barrelValveOpen = fillingBarrel.second && !fillingBarrel.first;
-        const bool pitValveOpen = rainwaterPit.second && !rainwaterPit.first;
-        const bool barrelLevelRising = _barrelLevelTrend.isRising(BARREL_LEVEL_RISING_DELTA_M, LEVEL_TREND_MAX_AGE_US, trendNowUs);
-        const bool pitLevelRising = _pitLevelTrend.isRising(PIT_LEVEL_RISING_DELTA_PERCENT, LEVEL_TREND_MAX_AGE_US, trendNowUs);
-
+        // A fill whose storage level is progressing is real filling, even when
+        // it collapses city pressure (the big-draw outdoor pit fill drops the
+        // supplier line to ~0 bar and the WB-MAI6 often reports errors). The
+        // per-fill progress flags are maintained by the 1-s decision tick from a
+        // ratcheting baseline captured at valve-open, so a fill that starts
+        // right after a level fall still registers as progressing. Only an open
+        // fill can assert progress; a stalled fill does not excuse the line.
+        //
         // Only fills and bypass draws go through the supplier pressure-sensor
         // path: both the drinking-tank and outdoor-tank fills draw through the
         // collector, and the bypass branch feeds the home pump line directly.
@@ -248,15 +229,12 @@ void Automation::update()
         // touches the supplier line. So only a progressing fill or a bypass
         // draw (bypass open + house flow) explains a pressure dip.
         //
-        // A fill whose storage level RISES is real filling, so the whole block
-        // is skipped (the dip is explained). A fill whose level is flat or
-        // falling with the valve open is a stalled fill on a dead supply and
-        // does NOT excuse the line. The relay-validity guard is conservative:
-        // an unavailable valve state freezes the block.
+        // The relay-validity guard is conservative: an unavailable valve state
+        // freezes the block.
         if (
             fillingBarrel.second && rainwaterPit.second
-            && !(barrelValveOpen && barrelLevelRising)
-            && !(pitValveOpen && pitLevelRising)
+            && !_barrelFillProgressing
+            && !_pitFillProgressing
         ) {
             // Only a bypass draw reaches the supplier pressure path. The bypass
             // state machine still runs mid-draw: exits (fast drop / low average)
@@ -622,12 +600,27 @@ void Automation::update()
 
         bool fillingActive = barrelValveOpen || pitValveOpen;
 
-        // Evaluation only: the 10 s tick records the level samples. A fill whose
-        // filled storage level is rising is making progress even when the home
-        // meter registers no flow (the pit fill's big draw bypasses it).
-        const int64_t trendNowUs = esp_timer_get_time();
-        const bool barrelLevelRising = _barrelLevelTrend.isRising(BARREL_LEVEL_RISING_DELTA_M, LEVEL_TREND_MAX_AGE_US, trendNowUs);
-        const bool pitLevelRising = _pitLevelTrend.isRising(PIT_LEVEL_RISING_DELTA_PERCENT, LEVEL_TREND_MAX_AGE_US, trendNowUs);
+        // Per-fill progress, updated after this tick's valve intent so the
+        // emergency decision sees the same open/closed state it will act on. A
+        // valve just commanded open baselines at the current level, so a fill
+        // that starts right after a level fall progresses immediately. An
+        // unknown level resets the state and cannot assert progress.
+        _barrelFillProgressing = updateFillProgress(
+            _barrelFillProgress,
+            barrelValveOpen,
+            barrelLevelOk,
+            level,
+            BARREL_FILL_PROGRESS_DELTA_M,
+            BARREL_FILL_PROGRESS_WINDOW_SEC,
+            esp_timer_get_time());
+        _pitFillProgressing = updateFillProgress(
+            _pitFillProgress,
+            pitValveOpen,
+            pitDataOk,
+            pitPct,
+            PIT_FILL_PROGRESS_DELTA_PERCENT,
+            PIT_FILL_PROGRESS_WINDOW_SEC,
+            esp_timer_get_time());
 
         // A flat level at/near the physical maximum cannot show fill progress,
         // so flatness there proves nothing about a stalled fill. The pit target
@@ -648,10 +641,10 @@ void Automation::update()
         emergencyInput.bypassValveOpen = bypassValveOpen;
         emergencyInput.homeFlowActive = homeFlowActive;
         emergencyInput.barrelValveOpen = barrelValveOpen;
-        emergencyInput.barrelLevelRising = barrelLevelRising;
+        emergencyInput.barrelFillProgressing = _barrelFillProgressing;
         emergencyInput.barrelLevelNearMax = barrelLevelNearMax;
         emergencyInput.pitValveOpen = pitValveOpen;
-        emergencyInput.pitLevelRising = pitLevelRising;
+        emergencyInput.pitFillProgressing = _pitFillProgressing;
         emergencyInput.pitLevelNearMax = pitLevelNearMax;
 
         const EmergencyModeResult emergencyResult = evaluateEmergencyMode(emergencyInput);
@@ -785,7 +778,7 @@ void Automation::update()
 
         LOGD(
             "update",
-            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, bad pressure count: %d, barrel level rising: %s, pit level rising: %s, min latch: %s",
+            "enable level: %f, disable level: %f, current level: %f, emergency mode: %s, filling active: %s, rainwater pit level: %f, pit session: %s, bad pressure count: %d, barrel fill progressing: %s, pit fill progressing: %s, min latch: %s",
             enableLevel,
             disableLevel,
             level,
@@ -794,8 +787,8 @@ void Automation::update()
             pitDataOk ? pitPct : -1.0f,
             _rainwaterPitFillingSession ? "true" : "false",
             _badPressureCount,
-            barrelLevelRising ? "true" : "false",
-            pitLevelRising ? "true" : "false",
+            _barrelFillProgressing ? "true" : "false",
+            _pitFillProgressing ? "true" : "false",
             _homePumpOffByMinLevel ? "true" : "false"
         );
     }

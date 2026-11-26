@@ -156,7 +156,7 @@ static void testFillProgressingIsInactive()
     EmergencyModeInput in;
     in.badPressureCount = EMERGENCY_BAD_PRESSURE_COUNT_THRESHOLD + 1;
     in.barrelValveOpen = true;
-    in.barrelLevelRising = true;
+    in.barrelFillProgressing = true;
     in.barrelLevelNearMax = false;
 
     const EmergencyModeResult result = evaluateEmergencyMode(in);
@@ -170,7 +170,7 @@ static void testFillStalledEngages()
     EmergencyModeInput in;
     in.badPressureCount = EMERGENCY_BAD_PRESSURE_COUNT_THRESHOLD + 1;
     in.barrelValveOpen = true;
-    in.barrelLevelRising = false;
+    in.barrelFillProgressing = false;
     in.barrelLevelNearMax = false;
 
     const EmergencyModeResult result = evaluateEmergencyMode(in);
@@ -179,14 +179,45 @@ static void testFillStalledEngages()
     assert(result.active);
 }
 
+static void testFillStalledAfterProgressWindowEngages()
+{
+    // The fill valve is open but the ratcheting baseline has not moved within
+    // the progress window: a stalled fill on a dead supply.
+    EmergencyModeInput in;
+    in.badPressureCount = EMERGENCY_BAD_PRESSURE_COUNT_THRESHOLD + 1;
+    in.barrelValveOpen = true;
+    in.barrelFillProgressing = false;
+    in.barrelLevelNearMax = false;
+
+    const EmergencyModeResult result = evaluateEmergencyMode(in);
+    assert(result.fillStalled);
+    assert(!result.fillProgressing);
+    assert(result.active);
+}
+
+static void testPitProgressingIsInactive()
+{
+    EmergencyModeInput in;
+    in.badPressureCount = EMERGENCY_BAD_PRESSURE_COUNT_THRESHOLD + 1;
+    in.barrelValveOpen = false;
+    in.pitValveOpen = true;
+    in.pitFillProgressing = true;
+    in.pitLevelNearMax = false;
+
+    const EmergencyModeResult result = evaluateEmergencyMode(in);
+    assert(result.fillProgressing);
+    assert(!result.fillStalled);
+    assert(!result.active);
+}
+
 static void testFillStalledNearMaxIsInactive()
 {
-    // At the physical maximum the level cannot move, so a flat trend proves
+    // At the physical maximum the level cannot move, so no progress proves
     // nothing and must not be read as a stalled fill.
     EmergencyModeInput in;
     in.badPressureCount = EMERGENCY_BAD_PRESSURE_COUNT_THRESHOLD + 1;
     in.barrelValveOpen = true;
-    in.barrelLevelRising = false;
+    in.barrelFillProgressing = false;
     in.barrelLevelNearMax = true;
 
     const EmergencyModeResult result = evaluateEmergencyMode(in);
@@ -201,7 +232,7 @@ static void testPitStalledWithBarrelClosedEngages()
     in.badPressureCount = EMERGENCY_BAD_PRESSURE_COUNT_THRESHOLD + 1;
     in.barrelValveOpen = false;
     in.pitValveOpen = true;
-    in.pitLevelRising = false;
+    in.pitFillProgressing = false;
     in.pitLevelNearMax = false;
 
     const EmergencyModeResult result = evaluateEmergencyMode(in);
@@ -214,10 +245,10 @@ static void testStalledWinsWhenBothFillsAreStalled()
     EmergencyModeInput in;
     in.badPressureCount = EMERGENCY_BAD_PRESSURE_COUNT_THRESHOLD + 1;
     in.barrelValveOpen = true;
-    in.barrelLevelRising = false;
+    in.barrelFillProgressing = false;
     in.barrelLevelNearMax = false;
     in.pitValveOpen = true;
-    in.pitLevelRising = false;
+    in.pitFillProgressing = false;
     in.pitLevelNearMax = false;
 
     const EmergencyModeResult result = evaluateEmergencyMode(in);
@@ -239,10 +270,12 @@ int main()
     testInvalidBypassStateTreatedAsClosedByCaller();
     testFillProgressingIsInactive();
     testFillStalledEngages();
+    testFillStalledAfterProgressWindowEngages();
+    testPitProgressingIsInactive();
     testFillStalledNearMaxIsInactive();
     testPitStalledWithBarrelClosedEngages();
     testStalledWinsWhenBothFillsAreStalled();
 
-    std::printf("emergency_mode scenarios passed: 15\n");
+    std::printf("emergency_mode scenarios passed: 17\n");
     return 0;
 }

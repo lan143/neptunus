@@ -240,6 +240,15 @@ void setup()
         s_otaSafeStateApplied = false;
         LOGE("setup", "OTA failed: resuming automation");
     });
+    ArduinoOTA.onProgress([](unsigned int done, unsigned int total) {
+        (void) done;
+        (void) total;
+        // The whole OTA data phase runs inside one blocking _runUpdate() loop
+        // on the loop task (ArduinoOTA 2.0.x receives every chunk inside a
+        // single handle() call), so esp_task_wdt_reset() at the top of loop()
+        // never runs during the transfer. Feed the watchdog per written chunk.
+        esp_task_wdt_reset();
+    });
     ArduinoOTA.begin();
 
     LOGI("setup", "mqtt init");
@@ -329,7 +338,10 @@ void setup()
     // Re-initialize the TWDT with a 20-s panic timeout: it covers the erase
     // while still catching a genuine loop hang, and the OTA data-transfer
     // phase stays watchdog-protected (a hang there reboots the device, which
-    // is desired).
+    // is desired). The 20-s timeout covers the pre-callback partition erase,
+    // and the per-chunk ArduinoOTA.onProgress() feed (see the OTA wiring in
+    // setup()) covers the blocking data-receive loop, so both OTA phases stay
+    // watchdog-safe while a genuine hang outside OTA still resets the device.
     //
     // IDLE0 is unsubscribed first because a sustained WiFi retransmit storm
     // during the OTA data pull can starve it for longer than any sane timeout,

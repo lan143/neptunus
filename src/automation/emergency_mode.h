@@ -44,19 +44,22 @@ inline void updateEmergencyBadPressureCount(
     }
 }
 
-// Caller precomputes the level booleans: this module has no access to the
-// sensors or the trend windows. bypassValveOpen must be false when the relay
-// state is invalid (an unknown valve is treated as closed).
+// Caller precomputes the fill-progress booleans: this module has no access to
+// the sensors. Each flag already encodes the valve-open state and a ratcheting
+// baseline captured at valve-open (see src/automation/fill_progress.h): true
+// means the fill valve is open and the level has risen by the delta within the
+// progress window. bypassValveOpen must be false when the relay state is
+// invalid (an unknown valve is treated as closed).
 struct EmergencyModeInput
 {
     uint32_t badPressureCount = 0;
     bool bypassValveOpen = false;
     bool homeFlowActive = false;
     bool barrelValveOpen = false;
-    bool barrelLevelRising = false;
+    bool barrelFillProgressing = false;
     bool barrelLevelNearMax = false;
     bool pitValveOpen = false;
-    bool pitLevelRising = false;
+    bool pitFillProgressing = false;
     bool pitLevelNearMax = false;
 };
 
@@ -69,11 +72,13 @@ struct EmergencyModeResult
 };
 
 // Pure emergency-mode decision. Plumbing rationale:
-// - A fill whose storage level rises is real filling and explains a pressure
-//   dip, so it blocks emergency. A fill whose level cannot move because it is
-//   near maximum cannot assert progress either; flatness there proves nothing.
-// - An open fill valve with a flat level is a stalled fill on a dead supply:
-//   water is not coming through, so the fill does not explain the bad line.
+// - A fill whose storage level is progressing is real filling and explains a
+//   pressure dip, so it blocks emergency. A fill whose level cannot move because
+//   it is near maximum cannot assert progress either; flatness there proves
+//   nothing.
+// - An open fill valve that is not progressing is a stalled fill on a dead
+//   supply: water is not coming through, so the fill does not explain the bad
+//   line.
 // - The bypass branch feeds the home pump line directly, so bypass open plus
 //   house meter flow is a real supplier draw and explains the dip. House flow
 //   behind a CLOSED bypass never touches the supplier line (it comes from the
@@ -83,12 +88,12 @@ inline EmergencyModeResult evaluateEmergencyMode(const EmergencyModeInput& in)
 {
     EmergencyModeResult result;
 
-    const bool barrelProgressing = in.barrelValveOpen && in.barrelLevelRising && !in.barrelLevelNearMax;
-    const bool pitProgressing = in.pitValveOpen && in.pitLevelRising && !in.pitLevelNearMax;
+    const bool barrelProgressing = in.barrelFillProgressing && !in.barrelLevelNearMax;
+    const bool pitProgressing = in.pitFillProgressing && !in.pitLevelNearMax;
     result.fillProgressing = barrelProgressing || pitProgressing;
 
-    const bool barrelStalled = in.barrelValveOpen && !in.barrelLevelRising && !in.barrelLevelNearMax;
-    const bool pitStalled = in.pitValveOpen && !in.pitLevelRising && !in.pitLevelNearMax;
+    const bool barrelStalled = in.barrelValveOpen && !in.barrelFillProgressing && !in.barrelLevelNearMax;
+    const bool pitStalled = in.pitValveOpen && !in.pitFillProgressing && !in.pitLevelNearMax;
     result.fillStalled = barrelStalled || pitStalled;
 
     // Only a bypass draw reaches the supplier pressure path; house consumption

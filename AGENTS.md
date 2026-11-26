@@ -25,7 +25,7 @@ the inlet pressure line. Only tank fills and an open bypass reach the pressure s
 ## Layout
 
 - `src/automation/` — decision logic. Pure, host-testable headers (no Arduino/ESP includes):
-  `bypass_mode.h`, `level_trend.h`, `emergency_mode.h`, `wb_mai6_pressure_validation.h`.
+  `bypass_mode.h`, `fill_progress.h`, `emergency_mode.h`, `wb_mai6_pressure_validation.h`.
   `automation.cpp` / `automation.h` wire them to relays, sensors, MQTT, config.
 - `src/controls/` — web API for manual device control and status.
 - `src/meter/` — pulse counters and their LittleFS ring-storage persistence.
@@ -68,8 +68,10 @@ the inlet pressure line. Only tank fills and an open bypass reach the pressure s
   exception is bypass open + house flow, which is a real supplier draw.
 - `isFlowOfWaterActive()` keeps a 120-second tail after the last pulse; bypass entry is
   suppressed for that whole tail.
-- `LevelTrendTracker` holds 64 samples ≈ 10.6 min at the 10 s cadence; its freshness window is
-  30 s. Do not change the cadence assumptions without revisiting the fill/pressure logic.
+- Fill progress uses a ratcheting baseline per fill (baseline set when the fill valve opens;
+  progressing = level rose by delta within the progress window; constants in `automation.h`).
+  Do not reintroduce window-vs-oldest checks, they misjudge a fill that starts right after a
+  level fall.
 - Persisted state (config, meter rings, auto mode, drainage pump) survives reboot and must stay
   backward-compatible. Config changes use the version + `static_assert` layout pattern in
   `src/config.h` (and the legacy-struct migration in `main.cpp`).
